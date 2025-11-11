@@ -1,1 +1,2 @@
 fastapi
+cos-python-sdk-v5
