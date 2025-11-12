@@ -1,11 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:instant_tale/app_globals.dart';
 
-/**
- * 每次请求自动加Authorization
- * 检测401自动刷新token
- * 刷新后重新发送请求
- */
+/// 每次请求自动加Authorization
+/// 检测401自动刷新token
+/// 刷新后重新发送请求
 class TokenInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -34,9 +32,7 @@ class TokenInterceptor extends Interceptor {
   }
 }
 
-/**
- * 防重复提交
- */
+/// 防重复提交
 class RepeatRequestInterceptor extends Interceptor {
   final _requestSet = <String>{};
 
@@ -68,3 +64,4 @@ class RepeatRequestInterceptor extends Interceptor {
     handler.next(err);
   }
 }
+
