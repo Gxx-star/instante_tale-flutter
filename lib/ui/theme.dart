@@ -158,9 +158,24 @@ class AppTheme {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        fillColor: const Color(0xFFFEF3F8),
+        fillColor: const Color(0xFFFEF3F7),
         filled: true,
-        border: OutlineInputBorder(
+        // 默认边框（未选中状态）
+        enabledBorder: OutlineInputBorder(
+          borderRadius: baseRadius,
+          borderSide: const BorderSide(color: Color(0x14000000)),
+        ),
+        // 选中时边框颜色不变（与默认边框颜色一致）
+        focusedBorder: OutlineInputBorder(
+          borderRadius: baseRadius,
+          borderSide: const BorderSide(color: Colors.black), // 保持原边框颜色
+        ),
+        // 配置输入框内边距，避免阴影挤压内容
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        // 可选：优化未选中/选中时的提示文本样式（保持原有风格）
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+        labelStyle: const TextStyle(color: Color(0xFF282828)),
+        focusedErrorBorder: OutlineInputBorder(
           borderRadius: baseRadius,
           borderSide: const BorderSide(color: Color(0x14000000)),
         ),

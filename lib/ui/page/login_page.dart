@@ -57,8 +57,7 @@ class LoginPage extends ConsumerWidget {
                     padding: EdgeInsets.only(top: 10, right: 10),
                     child: GestureDetector(
                       onTap: () {
-                        // 跳转到注册页
-                        context.push('/${AppRouteNames.register}');
+                        context.push('/${AppRouteNames.forgetPassword}');
                       },
                       child: Text(
                         "忘记密码",
@@ -100,7 +99,7 @@ class LoginPage extends ConsumerWidget {
                     Text("还没有账号？"),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/register');
+                        context.push('/${AppRouteNames.register}');
                       },
                       child: Text("注册"),
                     ),
