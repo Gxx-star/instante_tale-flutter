@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+// 推广内容
 class PromoButton extends StatefulWidget {
   // 移除 final VoidCallback onTap;
   const PromoButton({super.key}); // 移除 required this.onTap

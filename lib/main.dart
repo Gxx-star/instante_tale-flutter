@@ -60,16 +60,6 @@ final _router = GoRouter(
     GoRoute(
       path: '/${AppRouteNames.main}',
       builder: (context, state) => MainPage(),
-      routes: [
-        GoRoute(
-          path: '${AppRouteNames.homeTab}',
-          builder: (context, state) => HomeTab(),
-        ),
-        GoRoute(
-          path: '${AppRouteNames.myTab}',
-          builder: (context, state) => MyTab(),
-        ),
-      ],
     ),
   ],
 );
