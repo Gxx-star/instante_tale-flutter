@@ -51,23 +51,23 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/${AppRouteNames.register}',
-      builder: (context, state) => const RegisterPage(),
+      builder: (context, state) => RegisterPage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.forgetPassword}',
-      builder: (context, state) => const ForgetPasswordPage(),
+      builder: (context, state) => ForgetPasswordPage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.main}',
-      builder: (context, state) => const MainPage(),
+      builder: (context, state) => MainPage(),
       routes: [
         GoRoute(
           path: '${AppRouteNames.homeTab}',
-          builder: (context, state) => const HomeTab(),
+          builder: (context, state) => HomeTab(),
         ),
         GoRoute(
           path: '${AppRouteNames.myTab}',
-          builder: (context, state) => const MyTab(),
+          builder: (context, state) => MyTab(),
         ),
       ],
     ),
