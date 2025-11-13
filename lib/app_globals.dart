@@ -25,6 +25,7 @@ class AppGlobals {
   }
 
   Future<void> init() async {
+    _secureStorage.delete(key: 'token');
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
     final dir = await getApplicationCacheDirectory();

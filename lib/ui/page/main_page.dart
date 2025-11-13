@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -36,7 +37,9 @@ class MyTab extends StatefulWidget {
 class _MyTabState extends State<MyTab> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      body: Text("主页面"),
+    );
   }
 }
 

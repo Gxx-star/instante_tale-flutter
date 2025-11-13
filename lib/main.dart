@@ -7,6 +7,7 @@ import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
+import 'package:instant_tale/ui/theme.dart';
 
 import 'features/book/book_provider.dart';
 
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(routerConfig: _router);
+    return MaterialApp.router(routerConfig: _router, theme: AppTheme.light);
   }
 }
 
@@ -68,7 +69,7 @@ final _router = GoRouter(
           path: '${AppRouteNames.myTab}',
           builder: (context, state) => const MyTab(),
         ),
-      ]
+      ],
     ),
   ],
 );

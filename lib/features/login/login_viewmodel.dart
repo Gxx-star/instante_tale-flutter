@@ -1,22 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:instant_tale/features/login/login_repository.dart';
 
-class LoginViewModel extends StateNotifier<String> {
+import '../../database/dto/login_data.dart';
+
+class LoginViewModel extends StateNotifier<AsyncValue<LoginData?>> {
   final LoginRepository _loginRepository;
 
-  LoginViewModel(this._loginRepository) : super("") {
+  LoginViewModel(this._loginRepository) : super(AsyncValue.data(null)) {
     _init();
   }
 
   void _init() {}
 
-  Future<bool> login(String phoneNumber, String password) async {
+  Future<void> login(String phone, String password) async {
+    state = AsyncValue.loading();
     try {
-      String? token = await _loginRepository.login(phoneNumber, password);
-      return token != null;
-    } catch (e, st) {
-      state = "error";
-      return false;
+      final loginData = await _loginRepository.login(phone, password);
+      state = AsyncValue.data(loginData);
+    } on RepositoryException catch (e) {
+      state = AsyncValue.error(e.message, StackTrace.current);
+    } catch (e) {
+      state = AsyncValue.error('未知错误', StackTrace.current);
     }
   }
 }
