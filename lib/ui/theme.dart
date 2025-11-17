@@ -75,23 +75,15 @@ class AppTheme {
       hintColor: const Color(0xFF9CA3AF),
       dividerColor: const Color(0x14000000),
       colorScheme: const ColorScheme(
-        brightness: Brightness.light,
-        primary: Color(0xFFA78BFA),
-        onPrimary: Color(0xFFFFFFFF),
-        secondary: Color(0xFFFCE7F3),
-        onSecondary: Color(0xFF030213),
-        error: Color(0xFFD4183D),
-        onError: Color(0xFFFFFFFF),
-        background: Color(0xFFFAFBFF),
-        onBackground: Color(0xFF282828),
-        surface: Color(0xFFFFFFFF),
-        onSurface: Color(0xFF282828),
-        surfaceVariant: Color(0xFFFEF3F8),
-        tertiary: Color(0xFFF3E8FF),
-        surfaceTint: Color(0xFFA78BFA),
-        inverseSurface: Color(0xFF282828),
-        inversePrimary: Color(0xFFC4AFFF),
-        outline: Color(0x14000000),
+        brightness: Brightness.light, // 整体亮度
+        primary: Color(0xFFA78BFA), // 主色
+        onPrimary: Color(0xFFFFFFFF), // 写在主色上的文字或图标颜色
+        secondary: Color(0xFFA78BFA), // 辅助色
+        onSecondary: Color(0xFFFFFFFF), // 写在辅助色上的文字或图标颜色
+        error: Color(0xFFEF4444), // 错误色
+        onError: Color(0xFFFFFFFF), // 写在错误色上的文字或图标颜色
+        surface: Color(0xFFFFFFFF), // 表示背景色
+        onSurface: Color(0xFF1F1F1F), // 写在背景色上的文字色
       ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(

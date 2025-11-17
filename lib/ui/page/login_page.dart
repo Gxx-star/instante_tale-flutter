@@ -18,6 +18,7 @@ class LoginPage extends ConsumerWidget {
     final loginState = ref.watch(loginViewModelProvider);
     final loginViewModel = ref.read(loginViewModelProvider.notifier);
     return Scaffold(
+      extendBodyBehindAppBar: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -75,23 +76,12 @@ class LoginPage extends ConsumerWidget {
                   width: 200,
                   child: ElevatedButton(
                     onPressed: () {
-                      loginViewModel.login(_inputPhone, _inputPassword);
+                      loginViewModel.login();
                     },
                     child: Text("登录"),
                   ),
                 ),
-                loginState.when(
-                  data: (loginState) {
-                    // 初始状态
-                    if (loginState == null) {
-                      return Text("请登录"); // 正常展示登录按钮
-                    } else {
-                      return Text("登录成功"); // 跳转到主页面
-                    }
-                  },
-                  error: (error, stack) => Text('Error:$error'),
-                  loading: () => CircularProgressIndicator(),
-                ),
+                Text(loginState.errorMessage==null?"请登录":loginState.errorMessage!),
                 Spacer(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

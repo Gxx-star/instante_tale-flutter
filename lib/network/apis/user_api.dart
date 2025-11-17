@@ -4,23 +4,34 @@ import 'package:instant_tale/network/api_exceptions.dart';
 import 'package:instant_tale/network/api_response.dart';
 import 'package:instant_tale/network/http.dart';
 
-import '../../database/dto/login_data.dart';
+import '../dto/login_data.dart';
 
 class UserApi {
   final Dio _dio;
 
   UserApi(this._dio);
 
-  Future<ApiResponse<LoginData>> login(String phone, String password) async {
+  Future<ApiResponse<LoginData>> login({
+    required String phone,
+    required String loginMethod,
+    String? password,
+    String? authCode,
+  }) async {
     try {
-      Response response = await _dio.post(
-        '/user/login',
-        data: {'phone': phone, 'authCode': password},
-      );
+      final data = {
+        'phone_number': phone,
+        'login_method': loginMethod,
+        if (loginMethod == 'pwd') 'password': password,
+        if (loginMethod != 'pwd') 'auth_code': authCode,
+      };
+      final response = await _dio.post('/api/v1/auth/login', data: data);
+
       return ApiResponse(
         code: response.data['code'],
-        message: response.data['message'],
-        data: response.data['data'] != null ? LoginData.fromJson(response.data['data']): null,
+        message: response.data['msg'],
+        data: response.data['data'] != null
+            ? LoginData.fromJson(response.data['data'])
+            : null,
       );
     } on DioException catch (e) {
       throw ExceptionHandler.handle(e);

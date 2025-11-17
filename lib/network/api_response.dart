@@ -1,5 +1,5 @@
   import 'package:dio/src/dio_exception.dart';
-import 'package:instant_tale/database/dto/login_data.dart';
+import 'package:instant_tale/network/dto/login_data.dart';
 
 class ApiResponse<T> {
     final int code;

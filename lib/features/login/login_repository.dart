@@ -1,8 +1,9 @@
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/network/api_exceptions.dart';
+import 'package:instant_tale/network/api_response.dart';
 import 'package:instant_tale/network/apis/api_service.dart';
 import 'package:isar/isar.dart';
-import '../../database/dto/login_data.dart';
+import '../../network/dto/login_data.dart';
 import '../../network/apis/user_api.dart';
 
 class LoginRepository {
@@ -11,18 +12,43 @@ class LoginRepository {
 
   LoginRepository(this._isar);
 
-  Future<LoginData> login(String phone, String password) async {
+  Future<LoginData> loginWithPwd({
+    required String phone,
+    required String password,
+  }) async {
     try {
-      final response = await _api.login(phone, password);
+      final response = await _api.login(
+        phone: phone,
+        loginMethod: 'pwd',
+        password: password,
+      );
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(
-          response.message.isEmpty ? '登录失败' : response.message,
-        );
+        throw RepositoryException(response.message ?? '登录失败');
       }
       await AppGlobals().saveToken(response.data!.token);
       return response.data!;
     } on ApiException catch (e) {
-      throw RepositoryException('网络错误：${e.message}');
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<LoginData> loginWithSms({
+    required String phone,
+    required String authCode,
+  }) async {
+    try {
+      final response = await _api.login(
+        phone: phone,
+        loginMethod: 'sms',
+        authCode: authCode,
+      );
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '登录失败');
+      }
+      await AppGlobals().saveToken(response.data!.token);
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
     }
   }
 }

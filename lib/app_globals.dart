@@ -17,7 +17,7 @@ class AppGlobals {
   Map<String, dynamic>? userInfo;
   Isar? _isar;
 
-  // bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
+   // bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
   bool get isLoggedIn => true;
   Isar get isar {
     if (_isar == null) {

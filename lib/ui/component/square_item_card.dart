@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// 绘本广场 2x2 网格中的单个卡片
+// 绘本项目卡片
 class SquareItemCard extends StatelessWidget {
   final String title;
   final String author;

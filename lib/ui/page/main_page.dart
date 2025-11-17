@@ -2,12 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
+import 'package:instant_tale/ui/component/stat_item.dart';
+import 'package:instant_tale/ui/component/uiModel.dart';
 
+import '../component/add_character_card.dart';
+import '../component/book_card.dart';
+import '../component/character_card.dart';
 import '../component/circular_button.dart';
 import '../component/progress_indicator_bar.dart';
 import '../component/promo_button.dart';
 import '../component/ranking_item_card.dart';
 import '../component/reading_item_card.dart';
+import '../component/setting_item.dart';
 import '../component/square_item_card.dart';
 import '../component/stat_card.dart';
 
@@ -18,6 +24,7 @@ class MainPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final _currentIndex = ref.watch(_currentIndexProvider);
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.grey[100],
       body: IndexedStack(
         index: _currentIndex,
@@ -171,7 +178,7 @@ class HomePage extends ConsumerWidget {
         'imageUrl':
             'https://tse3.mm.bing.net/th/id/OIP.EIJplBRKzZiXAnpLCWn6VwHaHI?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
         'tagText': '热门',
-        'tagColor': Color(0xFFE91E63), // 热门 (粉色)
+        'tagColor': Color(0xFFE91E63),
       },
       {
         'title': '奇妙之旅',
@@ -179,7 +186,7 @@ class HomePage extends ConsumerWidget {
         'imageUrl':
             'https://tse2.mm.bing.net/th/id/OIP.kd_I0Ipb4W1dhnnle6OfrgHaHE?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
         'tagText': '推荐',
-        'tagColor': Color(0xFF673AB7), // 推荐 (紫色)
+        'tagColor': Color(0xFF673AB7),
       },
       {
         'title': '动物王国',
@@ -187,7 +194,7 @@ class HomePage extends ConsumerWidget {
         'imageUrl':
             'https://tse3.mm.bing.net/th/id/OIP.hKS5gt9rCzCou0rpZVPvhgHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
         'tagText': '新品',
-        'tagColor': Color(0xFF4CAF50), // 新品 (绿色)
+        'tagColor': Color(0xFF4CAF50),
       },
       {
         'title': '星空物语',
@@ -586,7 +593,7 @@ class HomePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // 【新增：绘本广场模块】
+                // 绘本广场模块
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
@@ -607,7 +614,7 @@ class HomePage extends ConsumerWidget {
                             Text(
                               '绘本广场',
                               style: TextStyle(
-                                 fontSize: 16,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey[800],
                               ),
@@ -670,10 +677,766 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class MyPage extends ConsumerWidget {
+class MyPage extends ConsumerStatefulWidget {
+  const MyPage({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold();
+  ConsumerState<MyPage> createState() => _MyPageState();
+}
+
+class _MyPageState extends ConsumerState<MyPage> {
+  final List<SettingItem> _settingsData = [
+    SettingItem(
+      iconData: Icons.person_outline,
+      iconColor: const Color(0xFF42A5F5),
+      // 蓝色
+      iconBackgroundColor: const Color(0xFFE3F2FD),
+      // 浅蓝色
+      title: '个人资料',
+      subtitle: '编辑昵称、头像等信息',
+      onTap: () {},
+    ),
+    SettingItem(
+      iconData: Icons.notifications_none,
+      iconColor: Color(0xFFAB47BC),
+      // 紫色
+      iconBackgroundColor: Color(0xFFF3E5F5),
+      // 浅紫色
+      title: '通知设置',
+      subtitle: '管理推送通知',
+      onTap: () {},
+    ),
+    SettingItem(
+      iconData: Icons.security,
+      // 更换为盾牌 icon
+      iconColor: Color(0xFF66BB6A),
+      // 翠绿色
+      iconBackgroundColor: Color(0xFFE8F5E9),
+      // 浅绿色
+      title: '隐私与安全',
+      subtitle: '密码、隐私设置',
+      onTap: () {},
+    ),
+    // 问号 Icon 使用自带的 Icons.help_outline
+    SettingItem(
+      iconData: Icons.help_outline,
+      iconColor: Color(0xFFFF7043),
+      // 橙色
+      iconBackgroundColor: Color(0xFFFFF3E0),
+      // 浅橙色
+      title: '帮助与反馈',
+      subtitle: '常见问题、联系客服',
+      onTap: () {},
+    ),
+    SettingItem(
+      iconData: Icons.star_outline,
+      iconColor: Color(0xFFFFCA28),
+      // 深黄色
+      iconBackgroundColor: Color(0xFFFFFDE7),
+      // 浅黄色
+      title: '关于我们',
+      subtitle: '版本 1.0.0',
+      onTap: () {},
+    ),
+  ];
+  final ScrollController _characterScrollController = ScrollController();
+  double _characterScrollPosition = 0.0;
+
+  void _updateCharacterScrollPosition() {
+    setState(() {
+      if (_characterScrollController.hasClients &&
+          _characterScrollController.position.maxScrollExtent > 0) {
+        _characterScrollPosition =
+            _characterScrollController.offset /
+            _characterScrollController.position.maxScrollExtent;
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _characterScrollController.addListener(_updateCharacterScrollPosition);
+  }
+
+  @override
+  void dispose() {
+    _characterScrollController.removeListener(_updateCharacterScrollPosition);
+    _characterScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarUrl = "";
+    final showAvatarVipBadge = true;
+    final showUsernameVipBadge = true;
+    final userId = "123456";
+    final userName = "用户名";
+    final babyCount = 2;
+    final bookCount = 12;
+    final favoriteCount = 5;
+    final isVipMember = true;
+    final vipExpiryDate = "2099-99-99";
+    final topThreeBooks = [
+      BookItem(
+        name: "森林小冒险",
+        author: "哈基米",
+        pages: 12,
+        clicks: 90,
+        liked: 10,
+        imageUrl:
+            "https://tse2.mm.bing.net/th/id/OIP.W0OMGHvfMpBzfz1re4au1gHaE8?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        favoritedTimestamp: DateTime.parse("2024-11-10 10:00:00"),
+      ),
+      BookItem(
+        name: "魔法世界",
+        author: "哈基米",
+        pages: 15,
+        clicks: 95,
+        liked: 10,
+        imageUrl:
+            "https://tse1.explicit.bing.net/th/id/OIP.sj1n5utS1PsL9DTB7m0ngAAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        favoritedTimestamp: DateTime.parse("2025-11-10 09:00:00"),
+      ),
+      BookItem(
+        name: "太空探险",
+        author: "哈基米",
+        pages: 10,
+        clicks: 87,
+        liked: 10,
+        imageUrl:
+            "https://tse4.mm.bing.net/th/id/OIP.q7CzKimWlj8ke0PXs2Z1tQHaEM?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        favoritedTimestamp: DateTime.parse("2025-11-11 12:00:00"),
+      ),
+    ];
+    final topThreeFavorites = [
+      BookItem(
+        name: "森林小冒险",
+        author: "哈基米",
+        pages: 12,
+        clicks: 90,
+        liked: 10,
+        imageUrl:
+            "https://tse2.mm.bing.net/th/id/OIP.W0OMGHvfMpBzfz1re4au1gHaE8?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        favoritedTimestamp: DateTime.parse("2024-11-10 10:00:00"),
+      ),
+      BookItem(
+        name: "魔法世界",
+        author: "哈基米",
+        pages: 15,
+        clicks: 95,
+        liked: 10,
+        imageUrl:
+            "https://tse1.explicit.bing.net/th/id/OIP.sj1n5utS1PsL9DTB7m0ngAAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        favoritedTimestamp: DateTime.parse("2025-11-10 09:00:00"),
+      ),
+      BookItem(
+        name: "太空探险",
+        author: "哈基米",
+        pages: 10,
+        clicks: 87,
+        liked: 10,
+        imageUrl:
+            "https://tse4.mm.bing.net/th/id/OIP.q7CzKimWlj8ke0PXs2Z1tQHaEM?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        favoritedTimestamp: DateTime.parse("2025-11-11 12:00:00"),
+      ),
+    ];
+    final sortedCharacters = [
+      CharacterItem(
+        name: "小明",
+        createdAt: DateTime.parse("2025-11-10 08:00:00"),
+        imageUrl:
+            "https://pica.zhimg.com/v2-06b6c550a514c770f9c6ee04e2b77944_1440w.jpg",
+        storyCount: 5,
+      ),
+      CharacterItem(
+        name: "小红",
+        createdAt: DateTime.parse("2025-11-12 14:00:00"),
+        imageUrl:
+            "https://pica.zhimg.com/v2-6ea3e148475ae548ccf70770eae8f8d2_1440w.jpg",
+        storyCount: 3,
+      ),
+      CharacterItem(
+        name: "豆豆",
+        createdAt: DateTime.parse("2025-11-09 10:00:00"),
+        imageUrl:
+            "https://pic1.zhimg.com/v2-7375759992f0e7192158716dedfc8d7e_b.jpg",
+        storyCount: 8,
+      ),
+    ];
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 380.0,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(40.0),
+              bottomRight: Radius.circular(40.0),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xffeacfe5), Color(0xfff1d1e8)],
+            ),
+          ),
+        ),
+        SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: [
+                SizedBox(height: 8),
+                // 个人资料
+                Container(
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 顶部信息：头像、文本、编辑按钮
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 左侧：头像 + 皇冠
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 36,
+                                  backgroundImage: NetworkImage(avatarUrl),
+                                  backgroundColor: Colors.grey[200],
+                                ),
+                              ),
+                              if (showAvatarVipBadge)
+                                Positioned(
+                                  bottom: -5,
+                                  right: -5,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFFF0C75A),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.workspace_premium,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(width: 14),
+                          // 2. 中间：文本信息
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // 第 1 行: 用户名 + VIP 标签
+                                Row(
+                                  children: [
+                                    Text(
+                                      userName,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    if (showUsernameVipBadge)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFFF0C75A),
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'VIP',
+                                          style: TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                // 第 2 行: ID
+                                Text(
+                                  'ID: $userId',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // 第 3 行: 统计数据 (使用 StatItem 组件)
+                                Row(
+                                  children: [
+                                    StatItem(
+                                      emoji: '👶',
+                                      text: '$babyCount个\n宝宝',
+                                    ),
+                                    const SizedBox(width: 12),
+                                    StatItem(
+                                      emoji: '📚',
+                                      text: '$bookCount本\n绘本',
+                                    ),
+                                    const SizedBox(width: 12),
+                                    StatItem(
+                                      emoji: '❤️',
+                                      text: '$favoriteCount个\n收藏',
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // 3. 右侧：编辑按钮
+                          Container(
+                            width: 34.0,
+                            height: 34.0,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(
+                                color: Colors.grey[300]!,
+                                width: 1,
+                              ),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: Colors.grey[700],
+                                size: 18.0,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints.tightFor(
+                                width: 34.0,
+                                height: 34.0,
+                              ),
+                              onPressed: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      // 底部 VIP 横幅
+                      if (true)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFFFBE6),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Color(0xFFE6A23C).withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isVipMember
+                                      ? Color(0xFFF0C75A)
+                                      : Colors.grey[400],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.workspace_premium_outlined,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'VIP会员',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '有效期至 $vipExpiryDate',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFFF0C75A),
+                                  foregroundColor: Colors.black87,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
+                                  elevation: 2,
+                                ),
+                                child: const Text(
+                                  '续费',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // 我的绘本
+                const SizedBox(height: 16),
+                Column(
+                  children: [
+                    // 头部标题和查看全部按钮
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Row(
+                        children: [
+                          // 左侧：Icon + 文本
+                          const Icon(
+                            Icons.book_outlined,
+                            color: Color(0xFFEA80B7),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '我的绘本',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const Spacer(),
+                          // 右侧：查看全部 > 按钮
+                          TextButton(
+                            onPressed: () {},
+                            style: TextButton.styleFrom(
+                              alignment: Alignment.centerRight,
+                              foregroundColor: Colors.grey[700],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('查看全部 >', style: TextStyle(fontSize: 14)),
+                                //1Icon(Icons.arrow_forward_ios, size: 14,),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 绘本列表 (只展示前三项)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // 使用 BookCard 组件
+                      children: topThreeBooks
+                          .map((book) => BookCard(book: book))
+                          .toList(),
+                    ),
+                  ],
+                ),
+                // 我的收藏
+                const SizedBox(height: 16),
+                Column(
+                  children: [
+                    // 头部标题和查看全部按钮
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                      // 【修改】水平 padding 调整为 0.0
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.favorite_outline, // 粉色爱心 icon
+                            color: Color(0xFFEA80B7),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '我的收藏',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              // TODO: 查看全部收藏
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              alignment: Alignment.centerRight,
+                              foregroundColor: Colors.grey[700],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('查看全部 >', style: TextStyle(fontSize: 14)),
+                                //Icon(Icons.arrow_forward_ios, size: 14),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // 收藏列表 (只展示前三项)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: topThreeFavorites.map((book) {
+                        return BookCard(
+                          book: book,
+                          showPageCount: false, // 不显示页数
+                          showFavoriteIcon: true, // 显示爱心
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+                // 我的人物
+                const SizedBox(height: 16),
+                Column(
+                  children: [
+                    // 头部标题和查看管理按钮 (Padding 4.0, 使得左侧边缘距 SingleChildScrollView 的 16.0 边界为 20.0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                      // 【修改】水平 padding 调整为 0.0
+                      child: Row(
+                        children: [
+                          // 左侧：Icon + 文本
+                          const Icon(
+                            Icons.person_outline, // 粉色人物 icon
+                            color: Color(0xFFEA80B7),
+                            size: 24, // 调整大小以匹配
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '我的人物',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const Spacer(),
+                          // 右侧：查看管理 > 按钮
+                          TextButton(
+                            onPressed: () {
+                              // TODO: 人物管理页面
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              alignment: Alignment.centerRight,
+                              foregroundColor: Colors.grey[700],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('管理 >', style: TextStyle(fontSize: 14)),
+                                //Icon(Icons.arrow_forward_ios, size: 14),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 可水平滑动的 List
+                    SizedBox(
+                      height: 190, // 设定一个合适的高度 (卡片 160 + padding/滑动条 30)
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 170, // 卡片实际高度
+                            child: ListView.builder(
+                              controller: _characterScrollController,
+                              scrollDirection: Axis.horizontal,
+                              // 【修改】Padding 调整：左侧 0.0
+                              padding: const EdgeInsets.only(left: 0.0),
+                              // 总数 = 1个添加按钮 + 排序后的人物列表
+                              itemCount: 1 + sortedCharacters.length,
+                              itemBuilder: (context, index) {
+                                // 第一个内容固定是“添加人物”按钮
+                                if (index == 0) {
+                                  // AddCharacterCard 内部移除了左侧 4.0 padding，确保第一张卡片紧贴 20.0 边缘
+                                  return AddCharacterCard();
+                                }
+                                // 之后是人物卡片
+                                final character = sortedCharacters[index - 1];
+                                return CharacterCard(character: character);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 8), // 卡片和滑动条的间距
+                          // 滑动栏
+                          Padding(
+                            // 【修改】Padding 调整：左侧 0.0
+                            padding: const EdgeInsets.only(
+                              left: 0.0,
+                              right: 16.0,
+                            ),
+                            child: ProgressIndicatorBar(
+                              progress: _characterScrollPosition,
+                              activeColor: Color(0xFFEA80B7),
+                              inactiveColor: Colors.grey[300]!,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                // 设置项
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 头部标题：设置 Icon + 账号管理 文本
+                    Padding(
+                      // 【修改】水平 padding 调整为 0.0，以使设置按钮横向更长
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.settings, // 粉色的设置 icon
+                            color: Color(0xFFEA80B7),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '账号管理',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 按钮列表
+                    ..._settingsData.map((item) {
+                      return SettingItem(
+                        iconData: item.iconData,
+                        iconColor: item.iconColor,
+                        iconBackgroundColor: item.iconBackgroundColor,
+                        title: item.title,
+                        subtitle: item.subtitle,
+                        onTap: () {
+                          // TODO: 实现按钮点击逻辑
+                          print('${item.title} button tapped');
+                        },
+                      );
+                    }).toList(),
+                  ],
+                ),
+                // 退出登录
+                Container(
+                  height: 45.0,
+                  margin: const EdgeInsets.symmetric(horizontal: 0.0), // 移除水平间距 (原 4.0)
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(
+                      color: Color(0xFFE57373).withOpacity(0.4), // 粉色边框 (使用 _logoutRed 红色以示警告)
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent, // 确保水波纹效果可见
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12.0),
+                      onTap: () {
+                        // TODO: 登出逻辑
+                        print('Logout button tapped');
+                      },
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min, // 使 Row 宽度适应其内容
+                          children: [
+                            // 登出 Icon
+                            Icon(
+                              Icons.exit_to_app, // 登出 Icon
+                              color: Color(0xFFE57373), // 粉色/红色字体
+                              size: 22, // 略微减小 Icon 尺寸 (原 24)
+                            ),
+                            const SizedBox(width: 8),
+                            // 退出登录 文本
+                            Text(
+                              '退出登录',
+                              style: TextStyle(
+                                fontSize: 15, // 减小字体 (原 16)
+                                fontWeight: FontWeight.w500, // 【修改】字体偏细 (原 w600)
+                                color: Color(0xFFE57373), // 粉色/红色字体
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
