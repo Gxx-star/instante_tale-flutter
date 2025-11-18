@@ -17,8 +17,7 @@ class AppGlobals {
   Map<String, dynamic>? userInfo;
   Isar? _isar;
 
-   // bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
-  bool get isLoggedIn => true;
+  bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
   Isar get isar {
     if (_isar == null) {
       throw Exception("Isar尚未初始化，请先调用init()");
@@ -26,7 +25,7 @@ class AppGlobals {
     return _isar!;
   }
 
-  Future<void> init() async {
+  Future<void> init() async {  // 初始化全局状态
     _secureStorage.delete(key: 'token');
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');

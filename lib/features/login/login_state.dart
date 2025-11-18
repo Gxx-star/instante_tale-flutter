@@ -3,28 +3,25 @@ import '../../network/dto/login_data.dart';
 
 class LoginState {
   final bool isLoading;
-  final String? errorMessage;
+  final String? message;
   final String loginMethod;
   final String phone;
   final String password;
   final String smsCode;
   final LoginData? loginData;
-
-  // 构造函数（推荐用 copyWith 方法，方便状态更新）
   LoginState({
     this.isLoading = false,
-    this.errorMessage,
-    this.loginMethod = "phone",
+    this.message,
+    this.loginMethod = "pwd",
     this.phone = "",
     this.password = "",
     this.smsCode = "",
     this.loginData,
   });
 
-  // 状态更新方法
   LoginState copyWith({
     bool? isLoading,
-    String? errorMessage,
+    String? message,
     String? loginMethod,
     String? phone,
     String? password,
@@ -33,7 +30,7 @@ class LoginState {
   }) {
     return LoginState(
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
+      message: message,
       loginMethod: loginMethod ?? this.loginMethod,
       phone: phone ?? this.phone,
       password: password ?? this.password,

@@ -4,7 +4,7 @@ import 'package:instant_tale/network/api_interceptor.dart';
 class Http {
   static final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://10.7.83.127:8080',
+      baseUrl: 'http://101.42.149.124:8000',
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
     ),

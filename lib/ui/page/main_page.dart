@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -739,32 +741,7 @@ class _MyPageState extends ConsumerState<MyPage> {
       onTap: () {},
     ),
   ];
-  final ScrollController _characterScrollController = ScrollController();
-  double _characterScrollPosition = 0.0;
 
-  void _updateCharacterScrollPosition() {
-    setState(() {
-      if (_characterScrollController.hasClients &&
-          _characterScrollController.position.maxScrollExtent > 0) {
-        _characterScrollPosition =
-            _characterScrollController.offset /
-            _characterScrollController.position.maxScrollExtent;
-      }
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _characterScrollController.addListener(_updateCharacterScrollPosition);
-  }
-
-  @override
-  void dispose() {
-    _characterScrollController.removeListener(_updateCharacterScrollPosition);
-    _characterScrollController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1215,9 +1192,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                           ),
                           const Spacer(),
                           TextButton(
-                            onPressed: () {
-                              // TODO: 查看全部收藏
-                            },
+                            onPressed: () {},
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               alignment: Alignment.centerRight,
@@ -1276,9 +1251,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                           const Spacer(),
                           // 右侧：查看管理 > 按钮
                           TextButton(
-                            onPressed: () {
-                              // TODO: 人物管理页面
-                            },
+                            onPressed: () {},
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               alignment: Alignment.centerRight,
@@ -1304,7 +1277,6 @@ class _MyPageState extends ConsumerState<MyPage> {
                           SizedBox(
                             height: 170, // 卡片实际高度
                             child: ListView.builder(
-                              controller: _characterScrollController,
                               scrollDirection: Axis.horizontal,
                               // 【修改】Padding 调整：左侧 0.0
                               padding: const EdgeInsets.only(left: 0.0),
@@ -1323,19 +1295,6 @@ class _MyPageState extends ConsumerState<MyPage> {
                             ),
                           ),
                           const SizedBox(height: 8), // 卡片和滑动条的间距
-                          // 滑动栏
-                          Padding(
-                            // 【修改】Padding 调整：左侧 0.0
-                            padding: const EdgeInsets.only(
-                              left: 0.0,
-                              right: 16.0,
-                            ),
-                            child: ProgressIndicatorBar(
-                              progress: _characterScrollPosition,
-                              activeColor: Color(0xFFEA80B7),
-                              inactiveColor: Colors.grey[300]!,
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -1348,7 +1307,10 @@ class _MyPageState extends ConsumerState<MyPage> {
                     // 头部标题：设置 Icon + 账号管理 文本
                     Padding(
                       // 【修改】水平 padding 调整为 0.0，以使设置按钮横向更长
-                      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 0.0,
+                        vertical: 8.0,
+                      ),
                       child: Row(
                         children: [
                           const Icon(
@@ -1378,7 +1340,6 @@ class _MyPageState extends ConsumerState<MyPage> {
                         title: item.title,
                         subtitle: item.subtitle,
                         onTap: () {
-                          // TODO: 实现按钮点击逻辑
                           print('${item.title} button tapped');
                         },
                       );
@@ -1388,12 +1349,14 @@ class _MyPageState extends ConsumerState<MyPage> {
                 // 退出登录
                 Container(
                   height: 45.0,
-                  margin: const EdgeInsets.symmetric(horizontal: 0.0), // 移除水平间距 (原 4.0)
+                  margin: const EdgeInsets.symmetric(horizontal: 0.0),
+                  // 移除水平间距 (原 4.0)
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12.0),
                     border: Border.all(
-                      color: Color(0xFFE57373).withOpacity(0.4), // 粉色边框 (使用 _logoutRed 红色以示警告)
+                      color: Color(0xFFE57373).withOpacity(0.4),
+                      // 粉色边框 (使用 _logoutRed 红色以示警告)
                       width: 1.2,
                     ),
                   ),
@@ -1402,7 +1365,6 @@ class _MyPageState extends ConsumerState<MyPage> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12.0),
                       onTap: () {
-                        // TODO: 登出逻辑
                         print('Logout button tapped');
                       },
                       child: Center(
@@ -1420,8 +1382,10 @@ class _MyPageState extends ConsumerState<MyPage> {
                             Text(
                               '退出登录',
                               style: TextStyle(
-                                fontSize: 15, // 减小字体 (原 16)
-                                fontWeight: FontWeight.w500, // 【修改】字体偏细 (原 w600)
+                                fontSize: 15,
+                                // 减小字体 (原 16)
+                                fontWeight: FontWeight.w500,
+                                // 【修改】字体偏细 (原 w600)
                                 color: Color(0xFFE57373), // 粉色/红色字体
                               ),
                             ),
@@ -1430,7 +1394,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),

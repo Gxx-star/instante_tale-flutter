@@ -4,11 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:instant_tale/features/login/login_provider.dart';
 
 class RegisterPage extends ConsumerWidget {
-  late String _inputPhone = "";
-  late String _inputCode = "";
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loginViewModel = ref.watch(loginViewModelProvider);
+    final loginViewModel = ref.watch(loginViewModelProvider.notifier);
+    final loginState = ref.read(loginViewModelProvider);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -32,7 +31,7 @@ class RegisterPage extends ConsumerWidget {
                 padding: EdgeInsets.only(top: 50),
                 child: TextField(
                   onChanged: (value) {
-                    _inputPhone = value;
+                    loginViewModel.updatePhone(value);
                   },
                   decoration: InputDecoration(hintText: "请输入手机号"),
                 ),
@@ -43,7 +42,7 @@ class RegisterPage extends ConsumerWidget {
                   Expanded(
                     child: TextField(
                       onChanged: (value) {
-                        _inputCode = value;
+                        loginViewModel.updateSmsCode(value);
                       },
                       decoration: InputDecoration(hintText: "请输入验证码"),
                     ),
@@ -53,6 +52,7 @@ class RegisterPage extends ConsumerWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         // 发送验证码
+                        loginViewModel.sendMsg();
                       },
                       child: Text("获取验证码"),
                     ),
@@ -61,7 +61,8 @@ class RegisterPage extends ConsumerWidget {
               ),
               Container(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: () {}, child: Text("注册")),
+                child: ElevatedButton(onPressed: () {
+                }, child: Text("注册")),
               ),
             ].map((child) {
               return Padding(

@@ -24,7 +24,7 @@ class UserApi {
         if (loginMethod == 'pwd') 'password': password,
         if (loginMethod != 'pwd') 'auth_code': authCode,
       };
-      final response = await _dio.post('/api/v1/auth/login', data: data);
+      final response = await _dio.post('/user/login', data: data);
 
       return ApiResponse(
         code: response.data['code'],
@@ -32,6 +32,24 @@ class UserApi {
         data: response.data['data'] != null
             ? LoginData.fromJson(response.data['data'])
             : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+  Future<ApiResponse<void>> sendMsg({
+    required String phone,
+  }) async {
+    try {
+      final data = {
+        'phone_number': phone,
+      };
+      final response = await _dio.post('/user/sendMsg', data: data);
+
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: null,
       );
     } on DioException catch (e) {
       throw ExceptionHandler.handle(e);

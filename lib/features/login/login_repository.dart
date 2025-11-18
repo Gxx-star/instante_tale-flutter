@@ -51,6 +51,20 @@ class LoginRepository {
       throw RepositoryException(e.message);
     }
   }
+  Future<void> sendMsg({
+    required String phone,
+  }) async {
+    try {
+      final response = await _api.sendMsg(
+        phone: phone
+      );
+      if (response.code != 200) {
+        throw RepositoryException(response.message ?? '登录失败');
+      }
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
 }
 
 class RepositoryException implements Exception {

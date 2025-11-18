@@ -13,24 +13,27 @@ class LoginViewModel extends StateNotifier<LoginState> {
 
   void _init() {}
 
+  void clearMessage() {
+    state = state.copyWith(message: null);
+  }
   void updatePhone(String value) {
-    state = state.copyWith(phone: value, errorMessage: null);
+    state = state.copyWith(phone: value, message: null);
   }
 
   void updateSmsCode(String value) {
-    state = state.copyWith(smsCode: value, errorMessage: null);
+    state = state.copyWith(smsCode: value, message: null);
   }
 
   void updatePassword(String value) {
-    state = state.copyWith(password: value, errorMessage: null);
+    state = state.copyWith(password: value, message: null);
   }
 
   void switchLoginMethod(String method) {
-    state = state.copyWith(loginMethod: method, errorMessage: null);
+    state = state.copyWith(loginMethod: method, message: null);
   }
 
   Future<void> login() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, message: null);
     try {
       LoginData data;
       if (state.loginMethod == "sms") {
@@ -47,12 +50,24 @@ class LoginViewModel extends StateNotifier<LoginState> {
       state = state.copyWith(
         isLoading: false,
         loginData: data,
-        errorMessage: null,
+        message: '欢迎回来',
       );
     } on RepositoryException catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.message);
+      state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, message: e.toString());
+    }
+  }
+
+  Future<void> sendMsg() async {
+    state = state.copyWith(isLoading: true, message: null);
+    try {
+      await _loginRepository.sendMsg(phone: state.phone);
+      state = state.copyWith(isLoading: false, message: '发送成功');
+    } on RepositoryException catch (e) {
+      state = state.copyWith(isLoading: false, message: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: e.toString());
     }
   }
 }
