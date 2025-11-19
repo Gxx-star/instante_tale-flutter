@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:instant_tale/database/models/book.dart';
+import 'package:instant_tale/database/models/user.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -14,10 +15,10 @@ class AppGlobals {
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String? globalToken;
-  Map<String, dynamic>? userInfo;
   Isar? _isar;
 
   bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
+  //bool  get isLoggedIn => true;
   Isar get isar {
     if (_isar == null) {
       throw Exception("Isar尚未初始化，请先调用init()");
@@ -30,7 +31,7 @@ class AppGlobals {
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
     final dir = await getApplicationCacheDirectory();
-    _isar = await Isar.open([BookSchema], directory: dir.path);
+    _isar = await Isar.open([BookSchema, UserSchema], directory: dir.path);
   }
 
   Future<void> saveToken(String token) async {
@@ -41,13 +42,5 @@ class AppGlobals {
   Future<void> clearTokens() async {
     globalToken = null;
     await _secureStorage.deleteAll();
-  }
-
-  void setUserInfo(Map<String, dynamic>? info) {
-    userInfo = info;
-  }
-
-  void clearUserInfo() {
-    userInfo = null;
   }
 }

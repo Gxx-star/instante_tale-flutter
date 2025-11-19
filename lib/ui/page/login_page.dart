@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,10 +5,11 @@ import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/login/login_viewmodel.dart';
 import '../../features/login/login_provider.dart';
 import '../../features/login/login_state.dart';
+import '../../features/user/user_provider.dart';
 import '../../main.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -20,6 +20,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginViewModelProvider);
     final loginViewModel = ref.read(loginViewModelProvider.notifier);
+    final userViewModel = ref.watch(userViewModelProvider.notifier);
     ref.listen<String?>(
       loginViewModelProvider.select((state) => state.message),
       (previous, next) {

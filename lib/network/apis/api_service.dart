@@ -1,3 +1,4 @@
+import 'package:instant_tale/network/apis/character_api.dart';
 import 'package:instant_tale/network/apis/user_api.dart';
 
 import '../http.dart';
@@ -14,5 +15,10 @@ class ApiService {
   UserApi get userApi {
     _userApi ??= UserApi(Http.dio);
     return _userApi!;
+  }
+  CharacterApi? _characterApi;
+  CharacterApi get characterApi {
+    _characterApi ??= CharacterApi(Http.dio);
+    return _characterApi!;
   }
 }

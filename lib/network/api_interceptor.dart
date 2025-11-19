@@ -9,8 +9,9 @@ class TokenInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final token = AppGlobals().globalToken;
     if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+      options.headers['Authorization'] = 'Bear $token';
     }
+    print(token);
     handler.next(options);
   }
 

@@ -1,12 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
 import 'package:instant_tale/ui/component/stat_item.dart';
 import 'package:instant_tale/ui/component/uiModel.dart';
 
+import '../../features/user/user_viewmodel.dart';
+import '../../main.dart';
 import '../component/add_character_card.dart';
 import '../component/book_card.dart';
 import '../component/character_card.dart';
@@ -115,6 +121,9 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final _userState = ref.watch(userViewModelProvider);
+    final _user = _userState.user;
+    final _userViewModel = ref.watch(userViewModelProvider.notifier);
     // 阅读记录
     final List<Map<String, dynamic>> _readingList = [
       {
@@ -243,10 +252,10 @@ class HomePage extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 20,
                         backgroundImage: NetworkImage(
-                          'https://tse1.explicit.bing.net/th/id/OIP.HQ6SWtXliC_0akDP_Bd4IQHaID?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
+                          _user!.avatar,
                         ),
                         backgroundColor: Colors.white,
                       ),
@@ -559,11 +568,7 @@ class HomePage extends ConsumerWidget {
                             const Spacer(),
                             // 更多按钮
                             TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('查看更多热门榜单')),
-                                );
-                              },
+                              onPressed: () {},
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: const Size(50, 20),
@@ -696,7 +701,9 @@ class _MyPageState extends ConsumerState<MyPage> {
       // 浅蓝色
       title: '个人资料',
       subtitle: '编辑昵称、头像等信息',
-      onTap: () {},
+      onTap: () {
+        // 进入个人资料
+      },
     ),
     SettingItem(
       iconData: Icons.notifications_none,
@@ -742,19 +749,31 @@ class _MyPageState extends ConsumerState<MyPage> {
     ),
   ];
 
-
   @override
   Widget build(BuildContext context) {
-    final avatarUrl = "";
+    final _userState = ref.watch(userViewModelProvider);
+    final _user = _userState.user;
+    final _userViewModel = ref.watch(userViewModelProvider.notifier);
+    if(_user == null){
+      context.go('/${AppRouteNames.login}');
+    }
+    ref.listen<String?>(
+      userViewModelProvider.select((state) => state.message),
+      (previous, next) {
+        if (next != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(next)));
+        }
+      },
+    );
     final showAvatarVipBadge = true;
     final showUsernameVipBadge = true;
-    final userId = "123456";
-    final userName = "用户名";
+    final isVipMember = true;
+    final vipExpiryDate = "2099-99-99";
     final babyCount = 2;
     final bookCount = 12;
     final favoriteCount = 5;
-    final isVipMember = true;
-    final vipExpiryDate = "2099-99-99";
     final topThreeBooks = [
       BookItem(
         name: "森林小冒险",
@@ -890,24 +909,30 @@ class _MyPageState extends ConsumerState<MyPage> {
                           Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(3),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 5,
-                                    ),
-                                  ],
+                              GestureDetector(
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 5,
+                                      ),
+                                    ],
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 36,
+                                    backgroundImage: NetworkImage('${_user!.avatar}'),
+                                    backgroundColor: Colors.grey[200],
+                                  ),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 36,
-                                  backgroundImage: NetworkImage(avatarUrl),
-                                  backgroundColor: Colors.grey[200],
-                                ),
+                                onTap: () {
+                                  _pickImage(ref, _userViewModel);
+                                },
                               ),
+
                               if (showAvatarVipBadge)
                                 Positioned(
                                   bottom: -5,
@@ -942,7 +967,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 Row(
                                   children: [
                                     Text(
-                                      userName,
+                                      '${_user!.name}',
                                       style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -975,7 +1000,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 ),
                                 // 第 2 行: ID
                                 Text(
-                                  'ID: $userId',
+                                  'ID: ${_user!.userId}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[800],
@@ -1401,6 +1426,18 @@ class _MyPageState extends ConsumerState<MyPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _pickImage(WidgetRef ref, UserViewModel userViewModel) async {
+    final _imagePicker = ImagePicker();
+    final XFile? pickedImage = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 1080,
+    );
+    if(pickedImage == null)return ;
+    final File avatarFile = File(pickedImage.path);
+    await userViewModel.updateUserAvatar(avatarFile);
   }
 }
 

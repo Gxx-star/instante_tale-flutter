@@ -1,4 +1,5 @@
 import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/database/models/user.dart';
 import 'package:instant_tale/network/api_exceptions.dart';
 import 'package:instant_tale/network/api_response.dart';
 import 'package:instant_tale/network/apis/api_service.dart';
@@ -26,6 +27,9 @@ class LoginRepository {
         throw RepositoryException(response.message ?? '登录失败');
       }
       await AppGlobals().saveToken(response.data!.token);
+      await _isar.writeTxn(() async {
+        await _isar.users.put(response.data!.user);
+      });
       return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
@@ -46,6 +50,9 @@ class LoginRepository {
         throw RepositoryException(response.message ?? '登录失败');
       }
       await AppGlobals().saveToken(response.data!.token);
+      await _isar.writeTxn(() async {
+        await _isar.users.put(response.data!.user);
+      });
       return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
