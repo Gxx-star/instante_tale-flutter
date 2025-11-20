@@ -421,8 +421,8 @@ class HomePage extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: const [
-                      CircularButton(
+                    children: [
+                      const CircularButton(
                         icon: Icons.star,
                         label: '创建绘本',
                         color: Color(0xFFdb519d),
@@ -430,14 +430,17 @@ class HomePage extends ConsumerWidget {
                       CircularButton(
                         icon: Icons.local_fire_department,
                         label: '热门广场',
-                        color: Color(0xFFbf91fe),
+                        color: const Color(0xFFbf91fe),
+                        onTap: (){
+                          context.push('/${AppRouteNames.bookSquare}');
+                        },
                       ),
-                      CircularButton(
+                      const CircularButton(
                         icon: Icons.menu_book,
                         label: '我的作品',
                         color: Color(0xFFdb519d),
                       ),
-                      CircularButton(
+                      const CircularButton(
                         icon: Icons.schedule,
                         label: '浏览历史',
                         color: Color(0xFFbf91fe),

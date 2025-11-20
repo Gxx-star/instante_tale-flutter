@@ -9,6 +9,7 @@ import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
+import 'package:instant_tale/ui/page/storybook_plaza_page.dart';
 import 'package:instant_tale/ui/theme.dart';
 
 import 'features/book/book_provider.dart';
@@ -37,6 +38,7 @@ class AppRouteNames {
   static const String homeTab = 'home-tab';
   static const String myTab = 'my-tab';
   static const String editProfilePage = 'edit-profile-page';
+  static const String bookSquare = 'book-square';
 }
 
 final _router = GoRouter(
@@ -48,6 +50,10 @@ final _router = GoRouter(
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
       },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.bookSquare}',
+      builder: (context, state) => StorybookPlazaPage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.editProfilePage}',
