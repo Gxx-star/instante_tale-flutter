@@ -29,6 +29,7 @@ class UserViewModel extends StateNotifier<UserState> {
   Future<void> updateUserAvatar(File file) async {
     state = state.copyWith(isLoading: true, message: null);
     try {
+      await _userRepository.updateAvatar(file);
       state = state.copyWith(
         isLoading: false,
         message: '更换头像成功'

@@ -5,23 +5,26 @@ import 'package:instant_tale/database/models/character.dart';
 
 import '../api_exceptions.dart';
 import '../api_response.dart';
-import '../dto/login_data.dart';
 class CharacterApi {
   final Dio _dio;
 
   CharacterApi(this._dio);
   Future<ApiResponse<Character>> addCharacter(
-      String characterPhoto,
+      File characterPhoto,
       String characterName,
       String desc
       ) async {
     try {
       final data = {
-        'character_photo': characterPhoto,
+        'character_photo': await MultipartFile.fromFile(
+          characterPhoto.path,
+          filename: characterPhoto.path.split('/').last,
+        ),
         'character_name': characterName,
         'desc': desc,
       };
-      final response = await _dio.post('/character/add', data: data);
+      final fromData = FormData.fromMap(data);
+      final response = await _dio.post('/character/add', data: fromData);
       return ApiResponse(
         code: response.data['code'],
         message: response.data['msg'],

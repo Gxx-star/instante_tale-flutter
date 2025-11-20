@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/login/login_viewmodel.dart';
+import 'package:instant_tale/ui/component/my_snackbar.dart';
 import '../../features/login/login_provider.dart';
 import '../../features/login/login_state.dart';
 import '../../features/user/user_provider.dart';
@@ -25,29 +26,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       loginViewModelProvider.select((state) => state.message),
       (previous, next) {
         if (next != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                next,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black),
-              ),
-              behavior: SnackBarBehavior.floating,
-              // 悬浮
-              backgroundColor: Colors.grey[200],
-              // 深灰背景
-              margin: const EdgeInsets.only(
-                bottom: 60, // 距离底部距离
-                left: 40, // 左右 padding（通过 margin 实现）
-                right: 40,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12), // 小圆角
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          MySnackBar.show(context, next);
         }
       },
     );

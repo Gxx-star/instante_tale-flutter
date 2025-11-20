@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/database/models/book.dart';
 import 'package:instant_tale/network/http.dart';
+import 'package:instant_tale/ui/page/edit_profile_page.dart';
 import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
@@ -35,6 +36,7 @@ class AppRouteNames {
   static const String main = 'main';
   static const String homeTab = 'home-tab';
   static const String myTab = 'my-tab';
+  static const String editProfilePage = 'edit-profile-page';
 }
 
 final _router = GoRouter(
@@ -46,6 +48,10 @@ final _router = GoRouter(
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
       },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.editProfilePage}',
+      builder: (context, state) => EditProfilePage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.login}',

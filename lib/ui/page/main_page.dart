@@ -17,6 +17,7 @@ import '../component/add_character_card.dart';
 import '../component/book_card.dart';
 import '../component/character_card.dart';
 import '../component/circular_button.dart';
+import '../component/my_snackbar.dart';
 import '../component/progress_indicator_bar.dart';
 import '../component/promo_button.dart';
 import '../component/ranking_item_card.dart';
@@ -692,65 +693,65 @@ class MyPage extends ConsumerStatefulWidget {
 }
 
 class _MyPageState extends ConsumerState<MyPage> {
-  final List<SettingItem> _settingsData = [
-    SettingItem(
-      iconData: Icons.person_outline,
-      iconColor: const Color(0xFF42A5F5),
-      // 蓝色
-      iconBackgroundColor: const Color(0xFFE3F2FD),
-      // 浅蓝色
-      title: '个人资料',
-      subtitle: '编辑昵称、头像等信息',
-      onTap: () {
-        // 进入个人资料
-      },
-    ),
-    SettingItem(
-      iconData: Icons.notifications_none,
-      iconColor: Color(0xFFAB47BC),
-      // 紫色
-      iconBackgroundColor: Color(0xFFF3E5F5),
-      // 浅紫色
-      title: '通知设置',
-      subtitle: '管理推送通知',
-      onTap: () {},
-    ),
-    SettingItem(
-      iconData: Icons.security,
-      // 更换为盾牌 icon
-      iconColor: Color(0xFF66BB6A),
-      // 翠绿色
-      iconBackgroundColor: Color(0xFFE8F5E9),
-      // 浅绿色
-      title: '隐私与安全',
-      subtitle: '密码、隐私设置',
-      onTap: () {},
-    ),
-    // 问号 Icon 使用自带的 Icons.help_outline
-    SettingItem(
-      iconData: Icons.help_outline,
-      iconColor: Color(0xFFFF7043),
-      // 橙色
-      iconBackgroundColor: Color(0xFFFFF3E0),
-      // 浅橙色
-      title: '帮助与反馈',
-      subtitle: '常见问题、联系客服',
-      onTap: () {},
-    ),
-    SettingItem(
-      iconData: Icons.star_outline,
-      iconColor: Color(0xFFFFCA28),
-      // 深黄色
-      iconBackgroundColor: Color(0xFFFFFDE7),
-      // 浅黄色
-      title: '关于我们',
-      subtitle: '版本 1.0.0',
-      onTap: () {},
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final List<SettingItem> _settingsData = [
+      SettingItem(
+        iconData: Icons.person_outline,
+        iconColor: const Color(0xFF42A5F5),
+        // 蓝色
+        iconBackgroundColor: const Color(0xFFE3F2FD),
+        // 浅蓝色
+        title: '个人资料',
+        subtitle: '编辑昵称、头像等信息',
+        onTap: () {
+          // 进入个人资料
+          context.push('/${AppRouteNames.editProfilePage}');
+        },
+      ),
+      SettingItem(
+        iconData: Icons.notifications_none,
+        iconColor: Color(0xFFAB47BC),
+        // 紫色
+        iconBackgroundColor: Color(0xFFF3E5F5),
+        // 浅紫色
+        title: '通知设置',
+        subtitle: '管理推送通知',
+        onTap: () {MySnackBar.show(context, '功能开发中');},
+      ),
+      SettingItem(
+        iconData: Icons.security,
+        // 更换为盾牌 icon
+        iconColor: Color(0xFF66BB6A),
+        // 翠绿色
+        iconBackgroundColor: Color(0xFFE8F5E9),
+        // 浅绿色
+        title: '隐私与安全',
+        subtitle: '密码、隐私设置',
+        onTap: () {MySnackBar.show(context, '功能开发中');},
+      ),
+      SettingItem(
+        iconData: Icons.help_outline,
+        iconColor: Color(0xFFFF7043),
+        // 橙色
+        iconBackgroundColor: Color(0xFFFFF3E0),
+        // 浅橙色
+        title: '帮助与反馈',
+        subtitle: '常见问题、联系客服',
+        onTap: () {MySnackBar.show(context, '功能开发中');},
+      ),
+      SettingItem(
+        iconData: Icons.star_outline,
+        iconColor: Color(0xFFFFCA28),
+        // 深黄色
+        iconBackgroundColor: Color(0xFFFFFDE7),
+        // 浅黄色
+        title: '关于我们',
+        subtitle: '版本 1.0.0',
+        onTap: () {MySnackBar.show(context, '功能开发中');},
+      ),
+    ];
     final _userState = ref.watch(userViewModelProvider);
     final _user = _userState.user;
     final _userViewModel = ref.watch(userViewModelProvider.notifier);
@@ -761,9 +762,7 @@ class _MyPageState extends ConsumerState<MyPage> {
       userViewModelProvider.select((state) => state.message),
       (previous, next) {
         if (next != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(next)));
+          MySnackBar.show(context, next);
         }
       },
     );
@@ -929,7 +928,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                                   ),
                                 ),
                                 onTap: () {
-                                  _pickImage(ref, _userViewModel);
+                                  context.push('/${AppRouteNames.editProfilePage}');
                                 },
                               ),
 
@@ -1054,7 +1053,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 width: 34.0,
                                 height: 34.0,
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                context.push('/${AppRouteNames.editProfilePage}');
+                              },
                             ),
                           ),
                         ],
@@ -1365,7 +1366,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                         title: item.title,
                         subtitle: item.subtitle,
                         onTap: () {
-                          print('${item.title} button tapped');
+                          item.onTap();
                         },
                       );
                     }).toList(),

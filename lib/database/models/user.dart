@@ -12,6 +12,8 @@ class User {
   bool hasPassword;
   int createdAt;
   String phone;
+  String location = "北京市朝阳区";
+  String personalProfile = "这个人很懒，什么都没有留下。。。";
   User({
     required this.userId,
     required this.avatar,
