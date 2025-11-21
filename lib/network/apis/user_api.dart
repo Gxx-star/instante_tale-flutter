@@ -91,10 +91,14 @@ class UserApi {
     }
   }
   Future<ApiResponse<User>> updateUserInfo(
-      String newNickName
+      User user
       ) async {
     try {
-      final data = {'nickname': newNickName};
+      final data = {
+        'nickname': user.name,
+        'address': user.location,
+        'introduction': user.personalProfile
+      };
       final response = await _dio.post('/user/update', data: data);
 
       return ApiResponse(

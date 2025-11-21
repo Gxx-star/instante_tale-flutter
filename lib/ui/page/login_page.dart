@@ -155,7 +155,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             onPressed: () {
               loginViewModel.login().then((_){
                 if (AppGlobals().isLoggedIn) {
-                  context.push('/${AppRouteNames.main}');
+                  context.go('/${AppRouteNames.main}');
                 }
               });
             },
@@ -214,7 +214,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             onPressed: () {
               loginViewModel.login().then((_){
                 if (AppGlobals().isLoggedIn) {
-                  context.push('/${AppRouteNames.main}');
+                  context.go('/${AppRouteNames.main}');
                 }
               });
             },

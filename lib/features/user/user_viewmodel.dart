@@ -16,9 +16,6 @@ class UserViewModel extends StateNotifier<UserState> {
   UserViewModel(this._userRepository) : super(UserState()) {
     _init();
   }
-  void updateUser(User user){
-    state = state.copyWith(user: user);
-  }
   void _init() {
     _sub = _isar.users.watchLazy().listen((_)async{
       state = state.copyWith(
@@ -54,10 +51,10 @@ class UserViewModel extends StateNotifier<UserState> {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
   }
-  Future<void> updateUserInfo(String newNickName) async {
+  Future<void> updateUserInfo(User user) async {
     state = state.copyWith(isLoading: true, message: null);
     try {
-      await _userRepository.updateUserInfo(newNickName);
+      await _userRepository.updateUserInfo(user);
       state = state.copyWith(
           isLoading: false,
           message: '修改信息成功'

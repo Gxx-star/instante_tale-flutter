@@ -12,8 +12,8 @@ class User {
   bool hasPassword;
   int createdAt;
   String phone;
-  String location = "北京市朝阳区";
-  String personalProfile = "这个人很懒，什么都没有留下。。。";
+  String? location;
+  String? personalProfile;
   User({
     required this.userId,
     required this.avatar,
@@ -21,6 +21,8 @@ class User {
     required this.hasPassword,
     required this.createdAt,
     required this.phone,
+    required this.location,
+    required this.personalProfile,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,8 @@ class User {
       phone: json['phone_number'],
       hasPassword: json['has_password'],
       createdAt: (json['created_at'] as num).toInt(),
+      location: json['address'],
+      personalProfile: json['introduction'],
     );
   }
   User copyWith({
@@ -40,6 +44,8 @@ class User {
     bool? hasPassword,
     int? createdAt,
     String? phone,
+    String? location,
+    String? personalProfile,
   }){
     return User(
       userId: userId ?? this.userId,
@@ -48,6 +54,8 @@ class User {
       phone: phone ?? this.phone,
       hasPassword: hasPassword ?? this.hasPassword,
       createdAt: createdAt ?? this.createdAt,
+      location: location ?? this.location,
+      personalProfile: personalProfile ?? this.personalProfile,
     );
   }
 }

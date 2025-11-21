@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:instant_tale/features/login/login_repository.dart';
 import 'package:instant_tale/network/api_exceptions.dart';
-import 'package:instant_tale/network/api_response.dart';
 import 'package:instant_tale/network/apis/api_service.dart';
 import 'package:isar/isar.dart';
 
@@ -38,9 +37,9 @@ class UserRepository{
       throw RepositoryException(e.message);
     }
   }
-  Future<void> updateUserInfo(String newNickName) async{
+  Future<void> updateUserInfo(User user) async{
     try{
-      final response = await _userApi.updateUserInfo(newNickName);
+      final response = await _userApi.updateUserInfo(user);
       if(response.code!= 200 || response.data == null){
         throw RepositoryException(response.message ?? '修改失败');
       }

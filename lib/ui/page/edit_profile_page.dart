@@ -1,5 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:instant_tale/features/user/user_provider.dart';
+import 'package:instant_tale/ui/component/my_snackbar.dart';
+import '../../features/user/user_viewmodel.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
@@ -9,10 +15,28 @@ class EditProfilePage extends ConsumerStatefulWidget {
 }
 
 class _EditProfilePageState extends ConsumerState<EditProfilePage> {
-  final TextEditingController _nameController = TextEditingController(text: "小明妈妈");
-  final TextEditingController _bioController = TextEditingController(text: "热爱阅读的妈妈，喜欢和孩子一起探索绘本的世界。");
-  final TextEditingController _phoneController = TextEditingController(text: "13800138000");
-  final TextEditingController _locationController = TextEditingController(text: "北京市朝阳区");
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _locationController;
+  late TextEditingController _bioController; // 简介
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _phoneController = TextEditingController();
+    _locationController = TextEditingController();
+    _bioController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
   // --- 静态渐变色配置 ---
   static const _appBarGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -32,18 +56,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     colors: [Color(0xFFDE65BD), Color(0xFF8E70F5)],
   );
 
-  static const _cameraIconGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFDE65BD), Color(0xFF8E70F5)],
-  );
-
-  static const _titleGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFFE87AB5), Color(0xFF8A9EFC)],
-  );
-
   static const _tipIconGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -52,6 +64,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(userViewModelProvider.select((state)=>state.message), (previous, next) {
+      if (next != null) {
+        MySnackBar.show(context, next);
+      }
+    });
+    final _userState = ref.watch(userViewModelProvider);
+    final _user = _userState.user!;
+    final _userViewModel = ref.watch(userViewModelProvider.notifier);
+    _nameController.text = _user.name;
+    _phoneController.text = _user.phone;
+    _locationController.text = _user.location ?? '';
+    _bioController.text = _user.personalProfile ?? '';
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -76,12 +100,63 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
           ),
           flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: _appBarGradient,
+            decoration: const BoxDecoration(gradient: _appBarGradient),
+          ),
+        ),
+        bottomNavigationBar: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 16.6),
+          child: SafeArea(
+            top: false,
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: _buttonGradient,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF8A9EFC).withOpacity(0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    ref
+                        .read(userViewModelProvider.notifier)
+                        .updateUserInfo(
+                          _user.copyWith(
+                            name: _nameController.text,
+                            location: _locationController.text,
+                            personalProfile: _bioController.text,
+                          ),
+                        );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.save_outlined, color: Colors.white, size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        '保存修改',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-        bottomNavigationBar: _buildBottomSaveButton(context),
         body: Column(
           children: [
             Expanded(
@@ -90,11 +165,245 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 10),
-                    _buildAvatarSection(),
+                    // 头像模块
+                    GestureDetector(
+                      onTap: () {
+                        _pickImage(ref, _userViewModel);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 30.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: Colors.pinkAccent.withOpacity(0.25),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Center(
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 110,
+                                    height: 110,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: _avatarBorderGradient,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: CircleAvatar(
+                                      radius: 50,
+                                      backgroundImage: NetworkImage(
+                                        _user.avatar,
+                                      ),
+                                      backgroundColor: Colors.grey,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        gradient: _avatarBorderGradient,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.1,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            const Text(
+                              '点击图标更换头像',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 30),
-                    _buildFormSection(),
+                    // 基本信息模块
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader("基本信息"),
+                        const SizedBox(height: 15),
+                        _buildInfoCard(
+                          label: "昵称",
+                          controller: _nameController,
+                          icon: Icons.person_outline,
+                          iconColor: const Color(0xFFE87AB5),
+                        ),
+                        const SizedBox(height: 15),
+                        _buildInfoCard(
+                          label: "手机号",
+                          controller: _phoneController,
+                          icon: Icons.phone_outlined,
+                          iconColor: const Color(0xFF6CA0DC),
+                          isReadOnly: true,
+                          suffixWidget: Container(
+                            height: 28,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              '修改',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        _buildInfoCard(
+                          label: "所在地",
+                          controller: _locationController,
+                          icon: Icons.location_on_outlined,
+                          iconColor: const Color(0xFF9C27B0),
+                        ),
+                        const SizedBox(height: 30),
+                        _buildSectionHeader("个人简介"),
+                        const SizedBox(height: 15),
+                        Container(
+                          padding: const EdgeInsets.all(17),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.grey.withOpacity(0.3),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              // 【重要修改】：移除了内层装饰性 Container
+                              // 直接使用 TextField，让它继承全局 Theme
+                              TextField(
+                                controller: _bioController,
+                                maxLength: 80,
+                                maxLines: 4,
+                                minLines: 2,
+                                keyboardType: TextInputType.multiline,
+                                style: const TextStyle(
+                                  fontSize: 15.4,
+                                  color: Colors.black87,
+                                  height: 1.5,
+                                ),
+                                // 移除样式覆盖，使用全局 Theme
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  counterText: "", // 隐藏自带计数器，使用自定义的
+                                  hintText: "请输入个人简介...",
+                                  hintStyle: TextStyle(color: Colors.black26),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 10,
+                                right: 15,
+                                child: Text(
+                                  '${_bioController.text.length} / 80',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: Colors.grey.withOpacity(0.6),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 30),
-                    _buildTipsSection(),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF6F5FE),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: const Color(0xFFD1C4E9).withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 68,
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: _tipIconGradient,
+                            ),
+                            child: const Text(
+                              "💡",
+                              style: TextStyle(fontSize: 22),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  "温馨提示",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF333333),
+                                  ),
+                                ),
+                                SizedBox(height: 5),
+                                Text(
+                                  "完善个人资料可以让其他用户更好地了解你，也能获得更个性化的绘本推荐哦！",
+                                  style: TextStyle(
+                                    fontSize: 12.3,
+                                    color: Colors.grey,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -106,114 +415,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     );
   }
 
-  // --- 1. 头像模块 (保持不变) ---
-  Widget _buildAvatarSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 30.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.pinkAccent.withOpacity(0.25), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Center(
-            child: Stack(
-              children: [
-                Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: _avatarBorderGradient,
-                  ),
-                  alignment: Alignment.center,
-                  child: const CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage("https://i.pravatar.cc/300"),
-                    backgroundColor: Colors.grey,
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: _cameraIconGradient,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2))
-                      ],
-                    ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 15),
-          const Text(
-            '点击图标更换头像',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- 2. 表单模块 ---
-  Widget _buildFormSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader("基本信息"),
-        const SizedBox(height: 15),
-        _buildInfoCard(
-          label: "昵称",
-          controller: _nameController,
-          icon: Icons.person_outline,
-          iconColor: const Color(0xFFE87AB5),
-        ),
-        const SizedBox(height: 15),
-        _buildInfoCard(
-          label: "手机号",
-          controller: _phoneController,
-          icon: Icons.phone_outlined,
-          iconColor: const Color(0xFF6CA0DC),
-          isReadOnly: true,
-          suffixWidget: _buildModifyButton(),
-        ),
-        const SizedBox(height: 15),
-        _buildInfoCard(
-          label: "所在地",
-          controller: _locationController,
-          icon: Icons.location_on_outlined,
-          iconColor: const Color(0xFF9C27B0),
-        ),
-        const SizedBox(height: 30),
-        _buildSectionHeader("个人简介"),
-        const SizedBox(height: 15),
-        _buildBioCard(),
-      ],
-    );
-  }
-
   // 标题组件
   Widget _buildSectionHeader(String title) {
     return Row(
@@ -222,13 +423,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           width: 3,
           height: 24,
           decoration: BoxDecoration(
-            gradient: _titleGradient,
+            gradient: _buttonGradient,
             borderRadius: BorderRadius.circular(6),
           ),
         ),
         const SizedBox(width: 8),
         ShaderMask(
-          shaderCallback: (bounds) => _titleGradient.createShader(
+          shaderCallback: (bounds) => _buttonGradient.createShader(
             Rect.fromLTWH(0, 0, bounds.width, bounds.height),
           ),
           child: Text(
@@ -244,7 +445,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     );
   }
 
-  // --- 核心修改 1: 通用信息卡片 ---
+  // 通用信息卡片
   Widget _buildInfoCard({
     required String label,
     required TextEditingController controller,
@@ -300,177 +501,23 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               if (suffixWidget != null) ...[
                 const SizedBox(width: 8),
                 suffixWidget,
-              ]
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- 核心修改 2: 简介卡片 ---
-  Widget _buildBioCard() {
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 0.8),
-      ),
-      child: Stack(
-        children: [
-          // 【重要修改】：移除了内层装饰性 Container
-          // 直接使用 TextField，让它继承全局 Theme
-          TextField(
-            controller: _bioController,
-            maxLength: 80,
-            maxLines: 4,
-            minLines: 2,
-            keyboardType: TextInputType.multiline,
-            style: const TextStyle(
-              fontSize: 15.4,
-              color: Colors.black87,
-              height: 1.5,
-            ),
-            // 移除样式覆盖，使用全局 Theme
-            decoration: const InputDecoration(
-              isDense: true,
-              counterText: "", // 隐藏自带计数器，使用自定义的
-              hintText: "请输入个人简介...",
-              hintStyle: TextStyle(color: Colors.black26),
-            ),
-          ),
-          Positioned(
-            bottom: 10,
-            right: 15,
-            child: Text(
-              '${_bioController.text.length} / 80',
-              style: TextStyle(
-                fontSize: 12.5,
-                color: Colors.grey.withOpacity(0.6),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 修改按钮
-  Widget _buildModifyButton() {
-    return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(14),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        '修改',
-        style: TextStyle(
-          fontSize: 12.5,
-          color: Colors.black54,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  // --- 3. 提示模块 ---
-  Widget _buildTipsSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF6F5FE),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: const Color(0xFFD1C4E9).withOpacity(0.5),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 50,
-            height: 68,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: _tipIconGradient,
-            ),
-            child: const Text("💡", style: TextStyle(fontSize: 22)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "温馨提示",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  "完善个人资料可以让其他用户更好地了解你，也能获得更个性化的绘本推荐哦！",
-                  style: TextStyle(fontSize: 12.3, color: Colors.grey, height: 1.5),
-                ),
               ],
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // --- 4. 底部按钮 ---
-  Widget _buildBottomSaveButton(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 16.6),
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: _buttonGradient,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF8A9EFC).withOpacity(0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => Navigator.pop(context),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.save_outlined, color: Colors.white, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    '保存修改',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 1),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+  Future<void> _pickImage(WidgetRef ref, UserViewModel userViewModel) async {
+    final _imagePicker = ImagePicker();
+    final XFile? pickedImage = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 1080,
     );
+    if (pickedImage == null) return;
+    final File avatarFile = File(pickedImage.path);
+    await userViewModel.updateUserAvatar(avatarFile);
   }
 }

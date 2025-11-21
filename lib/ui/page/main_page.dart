@@ -102,7 +102,9 @@ class MainPage extends ConsumerWidget {
           ),
           shape: CircleBorder(),
           // 保持完美圆形
-          onPressed: () {},
+          onPressed: () {
+            context.push('/${AppRouteNames.createBook}');
+          },
           child: Icon(Icons.add, size: 32, color: Colors.white),
         ),
       ),
@@ -422,10 +424,13 @@ class HomePage extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      const CircularButton(
+                      CircularButton(
                         icon: Icons.star,
                         label: '创建绘本',
-                        color: Color(0xFFdb519d),
+                        color: const Color(0xFFdb519d),
+                        onTap: (){
+                          context.push('/${AppRouteNames.createBook}');
+                        },
                       ),
                       CircularButton(
                         icon: Icons.local_fire_department,
@@ -758,9 +763,6 @@ class _MyPageState extends ConsumerState<MyPage> {
     final _userState = ref.watch(userViewModelProvider);
     final _user = _userState.user;
     final _userViewModel = ref.watch(userViewModelProvider.notifier);
-    if(_user == null){
-      context.go('/${AppRouteNames.login}');
-    }
     ref.listen<String?>(
       userViewModelProvider.select((state) => state.message),
       (previous, next) {
@@ -1430,18 +1432,6 @@ class _MyPageState extends ConsumerState<MyPage> {
         ),
       ],
     );
-  }
-
-  Future<void> _pickImage(WidgetRef ref, UserViewModel userViewModel) async {
-    final _imagePicker = ImagePicker();
-    final XFile? pickedImage = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: 1080,
-    );
-    if(pickedImage == null)return ;
-    final File avatarFile = File(pickedImage.path);
-    await userViewModel.updateUserAvatar(avatarFile);
   }
 }
 
