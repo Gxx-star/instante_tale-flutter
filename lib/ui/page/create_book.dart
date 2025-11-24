@@ -2,27 +2,39 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/features/book/book_view_model.dart';
+import 'package:instant_tale/features/character/character_provider.dart';
+import 'package:instant_tale/ui/component/my_snackbar.dart';
 
 import '../../database/models/character.dart';
+import '../../features/book/book_provider.dart';
+import '../../features/book/book_state.dart';
+import '../../features/character/character_state.dart';
+import '../../features/character/character_viewmodel.dart';
 
-class CreateBookPage extends StatefulWidget {
+class CreateBookPage extends ConsumerStatefulWidget {
   const CreateBookPage({super.key});
 
   @override
-  State<CreateBookPage> createState() => _CreateBookPageState();
+  ConsumerState<CreateBookPage> createState() => _CreateBookPageState();
 }
 
-class _CreateBookPageState extends State<CreateBookPage> {
-  final int _totalPages = 4; // Total pages
-  int _currentPage = 0; // Current page index
+class _CreateBookPageState extends ConsumerState<CreateBookPage> {
+  late CharacterViewModel _characterViewModel;
+  late CharacterState _characterState;
+  late BookViewModel _bookViewModel;
+  late BookState _bookState;
+  final int _totalPages = 4;
+  int _currentPage = 0;
   final PageController _pageController = PageController();
   int _selectedBookType = 0;
   bool _hasCharacterSelected = false;
   String? _selectedCharacterName;
   final Set<String> _selectedStyles = {};
-  final int _maxStyles = 3; // Max 3 styles
-  bool _isCollectionBook = false; // Collection book status
+  final int _maxStyles = 3;
+  bool _isCollectionBook = false;
   String _storyTheme = '';
   int? _selectedVoiceIndex;
 
@@ -157,6 +169,18 @@ class _CreateBookPageState extends State<CreateBookPage> {
 
   @override
   Widget build(BuildContext context) {
+    _characterViewModel = ref.watch(characterViewModelProvider.notifier);
+    _characterState = ref.watch(characterViewModelProvider);
+    _bookViewModel = ref.watch(bookViewModelProvider.notifier);
+    _bookState = ref.watch(bookViewModelProvider);
+    ref.listen<String?>(
+      bookViewModelProvider.select((state) => state.message),
+      (previous, next) {
+        if (next != null) {
+          MySnackBar.show(context, next);
+        }
+      },
+    );
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
     const _headerGradient = LinearGradient(
@@ -286,9 +310,14 @@ class _CreateBookPageState extends State<CreateBookPage> {
                           if (_currentPage < _totalPages - 1) {
                             _navigateToPage(_currentPage + 1);
                           } else {
-                            print(
-                              "Creation Complete: Voice Index: $_selectedVoiceIndex",
+                            final List<String> storyTypes = _selectedStyles
+                                .toList();
+                            final List<String> storyQualities = [_storyTheme];
+                            _bookViewModel.createBook(
+                              storyTypes,
+                              storyQualities,
                             );
+                            context.pop();
                           }
                         }
                       : null,
@@ -319,9 +348,10 @@ class _CreateBookPageState extends State<CreateBookPage> {
     );
   }
 }
+
 // 角色列表
-final List<Character> _characterList = [
-  Character(
+final List<CharacterCollection> _characterList = [
+  CharacterCollection(
     characterId: "1",
     characterName: "哈基米",
     desc: "耄耋",
@@ -332,7 +362,7 @@ final List<Character> _characterList = [
     authorId: "1",
     createdAt: 123456789,
   ),
-  Character(
+  CharacterCollection(
     characterId: "2",
     characterName: "耄耋女",
     desc: "女孩",
@@ -354,7 +384,6 @@ class SelectCharacterPage extends StatefulWidget {
 }
 
 class _SelectCharacterPageState extends State<SelectCharacterPage> {
-
   String? _selectedCharacterId; // 跟踪当前选中的人物ID
 
   @override
@@ -550,9 +579,9 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
             onPressed: _selectedCharacterId == null
                 ? null
                 : () {
-              // 确认选择，关闭此页面并返回选中的ID
-              Navigator.of(context).pop(_selectedCharacterId);
-            },
+                    // 确认选择，关闭此页面并返回选中的ID
+                    Navigator.of(context).pop(_selectedCharacterId);
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
               foregroundColor: Colors.white,
@@ -582,7 +611,7 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
 
 // 人物卡片
 class _CharacterCard extends StatelessWidget {
-  final Character character;
+  final CharacterCollection character;
   final bool isSelected;
   final VoidCallback onPressed;
 
@@ -719,6 +748,7 @@ class _InfoTag extends StatelessWidget {
     );
   }
 }
+
 // Page1
 class Page1Type extends StatelessWidget {
   final int selectedBookType;
@@ -931,8 +961,7 @@ class _TypeSelectionButton extends StatelessWidget {
   final int type;
   final int selectedBookType;
   final VoidCallback onPressed;
-  final VoidCallback
-  onSelectCharacter;
+  final VoidCallback onSelectCharacter;
   final bool hasCharacterSelected;
   final String? selectedCharacterName;
 
@@ -947,7 +976,9 @@ class _TypeSelectionButton extends StatelessWidget {
     required this.hasCharacterSelected,
     this.selectedCharacterName,
   });
+
   bool get isSelected => type == selectedBookType;
+
   bool get isExpanded => isSelected && type == 2 && !hasCharacterSelected;
 
   @override
@@ -1213,10 +1244,7 @@ class _StyleSelectionButton extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 34.0),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 34.0)),
           const SizedBox(height: 6.0),
           Container(
             padding: const EdgeInsets.symmetric(
@@ -1288,11 +1316,7 @@ class _BookCollectionCheckbox extends StatelessWidget {
                 color: value ? checkedBgColor : uncheckedBgColor,
               ),
               child: value
-                  ? const Icon(
-                      Icons.check,
-                      size: 18.0,
-                      color: checkedIconColor,
-                    )
+                  ? const Icon(Icons.check, size: 18.0, color: checkedIconColor)
                   : null,
             ),
             const SizedBox(width: 16.0),
@@ -1417,6 +1441,7 @@ class _Page3ContentState extends State<Page3Content> {
     _focusNode.dispose();
     super.dispose();
   }
+
   // 处理主题选择
   void _handleThemeSelection(int index) {
     if (_controller.text.isNotEmpty) {
@@ -2004,6 +2029,7 @@ class _Page4VoiceState extends State<Page4Voice> {
       ),
     );
   }
+
   // 音色卡片
   Widget _buildVoiceCard({
     required int index,

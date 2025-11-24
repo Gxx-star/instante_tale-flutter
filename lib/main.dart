@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/database/models/book.dart';
 import 'package:instant_tale/network/http.dart';
+import 'package:instant_tale/ui/page/book_reader_page.dart';
 import 'package:instant_tale/ui/page/create_book.dart';
+import 'package:instant_tale/ui/page/create_character.dart';
 import 'package:instant_tale/ui/page/edit_profile_page.dart';
 import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
@@ -41,6 +43,8 @@ class AppRouteNames {
   static const String editProfilePage = 'edit-profile-page';
   static const String bookSquare = 'book-square';
   static const String createBook = 'create-book';
+  static const String createCharacter = 'create-character';
+  static const String bookReader = 'book-reader';
 }
 
 final _router = GoRouter(
@@ -52,6 +56,16 @@ final _router = GoRouter(
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
       },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.bookReader}',
+      builder: (context, state) {
+        return BookReaderPage();
+      },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.createCharacter}',
+      builder: (context, state) => CreateCharacterPage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.createBook}',

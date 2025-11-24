@@ -13,30 +13,57 @@ class CharacterRepository {
 
   CharacterRepository(this._isar);
 
-  Stream<List<Character>> watchCharacters() {
-    return _isar.characters.where().watch(fireImmediately: true);
+  Stream<List<CharacterCollection>> watchCharacters() {
+    return _isar.characterCollections.where().watch(fireImmediately: true);
   }
 
-  Future<Character> addCharacter(File photo, String name, String desc) async {
+  Future<CharacterCollection> addCharacter(File photo, String name, String desc) async {
     try {
       final response = await _api.addCharacter(photo, name, desc);
       if (response.code != 200 || response.data == null) {
         throw RepositoryException(response.message ?? '登录失败');
       }
-      // 保存到本地
+      await _isar.writeTxn(() async {
+        await _isar.characterCollections.put(response.data!);
+      });
       return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
     }
   }
-
-  Future<List<Character>> findCharacterList(String keyword) async {
+  // 同步角色列表
+  Future<List<CharacterCollection>> fetchCharacterList() async {
+    try {
+      final response = await _api.findCharacterList("");
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '查询失败');
+      }
+      await _isar.writeTxn(() async {
+        await _isar.characterCollections.clear();
+        await _isar.characterCollections.putAll(response.data!);
+      });
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+  Future<List<CharacterCollection>> findCharacterList(String keyword) async {
     try {
       final response = await _api.findCharacterList(keyword);
       if (response.code != 200 || response.data == null) {
         throw RepositoryException(response.message ?? '查询失败');
       }
-      // 保存到本地
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+  Future<List<CharacterCollection>> findCharacterListById(String characterId) async {
+    try {
+      final response = await _api.findCharacterListById(characterId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '查询失败');
+      }
       return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
@@ -49,13 +76,15 @@ class CharacterRepository {
       if (response.code != 200) {
         throw RepositoryException(response.message ?? '删除失败');
       }
-      // 保存到本地
+      await _isar.writeTxn(() async {
+        await _isar.characterCollections.filter().characterIdEqualTo(characterId).deleteAll();
+      });
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
     }
   }
 
-  Future<Character> updateCharacter(
+  Future<CharacterCollection> updateCharacter(
     String characterId,
     String name,
     String desc,
@@ -66,6 +95,9 @@ class CharacterRepository {
         throw RepositoryException(response.message ?? '修改失败');
       }
       // 保存到本地
+      await _isar.writeTxn(() async {
+        await _isar.characterCollections.put(response.data!);
+      });
       return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);

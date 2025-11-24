@@ -5,15 +5,17 @@ import 'package:instant_tale/database/models/character.dart';
 
 import '../api_exceptions.dart';
 import '../api_response.dart';
+
 class CharacterApi {
   final Dio _dio;
 
   CharacterApi(this._dio);
-  Future<ApiResponse<Character>> addCharacter(
-      File characterPhoto,
-      String characterName,
-      String desc
-      ) async {
+
+  Future<ApiResponse<CharacterCollection>> addCharacter(
+    File characterPhoto,
+    String characterName,
+    String desc,
+  ) async {
     try {
       final data = {
         'character_photo': await MultipartFile.fromFile(
@@ -24,25 +26,28 @@ class CharacterApi {
         'desc': desc,
       };
       final fromData = FormData.fromMap(data);
-      final response = await _dio.post('/character/add', data: fromData);
+      final response = await _dio.post(
+        '/character/add',
+        data: fromData,
+        options: Options(receiveTimeout: Duration(minutes: 7)),
+      );
       return ApiResponse(
         code: response.data['code'],
         message: response.data['msg'],
         data: response.data['data'] != null
-            ? Character.fromJson(response.data['data']['character_info'])
+            ? CharacterCollection.fromJson(
+                response.data['data']['character_info'],
+              )
             : null,
       );
     } on DioException catch (e) {
       throw ExceptionHandler.handle(e);
     }
   }
-  Future<ApiResponse<void>> deleteCharacter(
-      String characterId
-      ) async {
+
+  Future<ApiResponse<void>> deleteCharacter(String characterId) async {
     try {
-      final data = {
-        'character_id': characterId
-      };
+      final data = {'character_id': characterId};
       final response = await _dio.delete('/character/delete', data: data);
       return ApiResponse(
         code: response.data['code'],
@@ -53,16 +58,17 @@ class CharacterApi {
       throw ExceptionHandler.handle(e);
     }
   }
-  Future<ApiResponse<List<Character>>> findCharacterList(
-      String keyword
-      ) async {
+
+  Future<ApiResponse<List<CharacterCollection>>> findCharacterList(
+    String keyword,
+  ) async {
     try {
-      final data = {
-        'keyword': keyword
-      };
+      final data = {'keyword': keyword};
       final response = await _dio.get('/character/query', data: data);
       final listJson = response.data['data']['list'] as List<dynamic>;
-      final characters = listJson.map((e) => Character.fromJson(e)).toList();
+      final characters = listJson
+          .map((e) => CharacterCollection.fromJson(e))
+          .toList();
       return ApiResponse(
         code: response.data['code'],
         message: response.data['msg'],
@@ -72,11 +78,31 @@ class CharacterApi {
       throw ExceptionHandler.handle(e);
     }
   }
-  Future<ApiResponse<Character>> updateCharacter(
+  Future<ApiResponse<List<CharacterCollection>>> findCharacterListById(
       String characterId,
-      String characterName,
-      String desc
       ) async {
+    try {
+      final data = {'character_id': characterId};
+      final response = await _dio.get('/character/query', data: data);
+      final listJson = response.data['data']['list'] as List<dynamic>;
+      final characters = listJson
+          .map((e) => CharacterCollection.fromJson(e))
+          .toList();
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: characters,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
+  Future<ApiResponse<CharacterCollection>> updateCharacter(
+    String characterId,
+    String characterName,
+    String desc,
+  ) async {
     try {
       final data = {
         'character_id': characterId,
@@ -88,7 +114,9 @@ class CharacterApi {
         code: response.data['code'],
         message: response.data['msg'],
         data: response.data['data'] != null
-            ? Character.fromJson(response.data['data']['character_info'])
+            ? CharacterCollection.fromJson(
+                response.data['data']['character_info'],
+              )
             : null,
       );
     } on DioException catch (e) {

@@ -8,10 +8,11 @@ final characterRepositoryProvider = Provider<CharacterRepository>((ref) {
   final isar = AppGlobals().isar;
   return CharacterRepository(isar);
 });
-final characterListProvider = StreamProvider((ref){
-  return ref.watch(characterRepositoryProvider).watchCharacters();
-});
 final characterViewModelProvider = StateNotifierProvider((ref){
   final repository = ref.watch(characterRepositoryProvider);
   return CharacterViewModel(repository);
+});
+final characterListProvider = StreamProvider((ref){
+  final repository = ref.watch(characterRepositoryProvider);
+  return repository.watchCharacters();
 });

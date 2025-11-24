@@ -27,19 +27,25 @@ const BookSchema = CollectionSchema(
       name: r'bookName',
       type: IsarType.string,
     ),
-    r'content': PropertySchema(
+    r'characters': PropertySchema(
       id: 2,
+      name: r'characters',
+      type: IsarType.objectList,
+      target: r'CharacterEmbedded',
+    ),
+    r'content': PropertySchema(
+      id: 3,
       name: r'content',
       type: IsarType.objectList,
       target: r'pages',
     ),
     r'coverUrl': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'coverUrl',
       type: IsarType.string,
     ),
     r'createdAt': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'createdAt',
       type: IsarType.long,
     )
@@ -51,7 +57,10 @@ const BookSchema = CollectionSchema(
   idName: r'id',
   indexes: {},
   links: {},
-  embeddedSchemas: {r'pages': PageSchema},
+  embeddedSchemas: {
+    r'pages': BookPageSchema,
+    r'CharacterEmbedded': CharacterEmbeddedSchema
+  },
   getId: _bookGetId,
   getLinks: _bookGetLinks,
   attach: _bookAttach,
@@ -66,12 +75,21 @@ int _bookEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.bookId.length * 3;
   bytesCount += 3 + object.bookName.length * 3;
+  bytesCount += 3 + object.characters.length * 3;
+  {
+    final offsets = allOffsets[CharacterEmbedded]!;
+    for (var i = 0; i < object.characters.length; i++) {
+      final value = object.characters[i];
+      bytesCount +=
+          CharacterEmbeddedSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
   bytesCount += 3 + object.content.length * 3;
   {
-    final offsets = allOffsets[Page]!;
+    final offsets = allOffsets[BookPage]!;
     for (var i = 0; i < object.content.length; i++) {
       final value = object.content[i];
-      bytesCount += PageSchema.estimateSize(value, offsets, allOffsets);
+      bytesCount += BookPageSchema.estimateSize(value, offsets, allOffsets);
     }
   }
   bytesCount += 3 + object.coverUrl.length * 3;
@@ -86,14 +104,20 @@ void _bookSerialize(
 ) {
   writer.writeString(offsets[0], object.bookId);
   writer.writeString(offsets[1], object.bookName);
-  writer.writeObjectList<Page>(
+  writer.writeObjectList<CharacterEmbedded>(
     offsets[2],
     allOffsets,
-    PageSchema.serialize,
+    CharacterEmbeddedSchema.serialize,
+    object.characters,
+  );
+  writer.writeObjectList<BookPage>(
+    offsets[3],
+    allOffsets,
+    BookPageSchema.serialize,
     object.content,
   );
-  writer.writeString(offsets[3], object.coverUrl);
-  writer.writeLong(offsets[4], object.createdAt);
+  writer.writeString(offsets[4], object.coverUrl);
+  writer.writeLong(offsets[5], object.createdAt);
 }
 
 Book _bookDeserialize(
@@ -105,15 +129,22 @@ Book _bookDeserialize(
   final object = Book(
     bookId: reader.readString(offsets[0]),
     bookName: reader.readString(offsets[1]),
-    content: reader.readObjectList<Page>(
+    characters: reader.readObjectList<CharacterEmbedded>(
           offsets[2],
-          PageSchema.deserialize,
+          CharacterEmbeddedSchema.deserialize,
           allOffsets,
-          Page(),
+          CharacterEmbedded(),
         ) ??
         [],
-    coverUrl: reader.readString(offsets[3]),
-    createdAt: reader.readLong(offsets[4]),
+    content: reader.readObjectList<BookPage>(
+          offsets[3],
+          BookPageSchema.deserialize,
+          allOffsets,
+          BookPage(),
+        ) ??
+        [],
+    coverUrl: reader.readString(offsets[4]),
+    createdAt: reader.readLong(offsets[5]),
   );
   object.id = id;
   return object;
@@ -131,16 +162,24 @@ P _bookDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readObjectList<Page>(
+      return (reader.readObjectList<CharacterEmbedded>(
             offset,
-            PageSchema.deserialize,
+            CharacterEmbeddedSchema.deserialize,
             allOffsets,
-            Page(),
+            CharacterEmbedded(),
           ) ??
           []) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readObjectList<BookPage>(
+            offset,
+            BookPageSchema.deserialize,
+            allOffsets,
+            BookPage(),
+          ) ??
+          []) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -492,6 +531,90 @@ extension BookQueryFilter on QueryBuilder<Book, Book, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'characters',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'characters',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'characters',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'characters',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'characters',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'characters',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Book, Book, QAfterFilterCondition> contentLengthEqualTo(
       int length) {
     return QueryBuilder.apply(this, (query) {
@@ -811,8 +934,15 @@ extension BookQueryFilter on QueryBuilder<Book, Book, QFilterCondition> {
 }
 
 extension BookQueryObject on QueryBuilder<Book, Book, QFilterCondition> {
+  QueryBuilder<Book, Book, QAfterFilterCondition> charactersElement(
+      FilterQuery<CharacterEmbedded> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'characters');
+    });
+  }
+
   QueryBuilder<Book, Book, QAfterFilterCondition> contentElement(
-      FilterQuery<Page> q) {
+      FilterQuery<BookPage> q) {
     return QueryBuilder.apply(this, (query) {
       return query.object(q, r'content');
     });
@@ -981,7 +1111,14 @@ extension BookQueryProperty on QueryBuilder<Book, Book, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Book, List<Page>, QQueryOperations> contentProperty() {
+  QueryBuilder<Book, List<CharacterEmbedded>, QQueryOperations>
+      charactersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'characters');
+    });
+  }
+
+  QueryBuilder<Book, List<BookPage>, QQueryOperations> contentProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'content');
     });

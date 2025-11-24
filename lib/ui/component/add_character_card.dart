@@ -5,6 +5,8 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:instant_tale/main.dart';
 
 class AddCharacterCard extends StatelessWidget {
   const AddCharacterCard({super.key});
@@ -20,7 +22,7 @@ class AddCharacterCard extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8.0, top: 4.0, bottom: 4.0),
       child: InkWell(
         onTap: () {
-
+          context.push('/${AppRouteNames.createCharacter}');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(

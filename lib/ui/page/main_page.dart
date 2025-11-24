@@ -5,13 +5,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
 import 'package:instant_tale/ui/component/stat_item.dart';
-import 'package:instant_tale/ui/component/uiModel.dart';
-
-import '../../features/user/user_viewmodel.dart';
+import '../../features/character/character_provider.dart';
 import '../../main.dart';
 import '../component/add_character_card.dart';
 import '../component/book_card.dart';
@@ -26,12 +24,48 @@ import '../component/setting_item.dart';
 import '../component/square_item_card.dart';
 import '../component/stat_card.dart';
 
-class MainPage extends ConsumerWidget {
+class MainPage extends ConsumerStatefulWidget {
+  const MainPage({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends ConsumerState<MainPage> {
   final _currentIndexProvider = StateProvider<int>((ref) => 0);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    // 延迟到页面构建完成之后执行
+    Future.microtask(
+      () => ref.read(characterViewModelProvider.notifier).fetchCharacter(),
+    );
+    Future.microtask(
+      () => ref.read(bookViewModelProvider.notifier).fetchBookList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final _characterViewModel = ref.watch(characterViewModelProvider.notifier);
     final _currentIndex = ref.watch(_currentIndexProvider);
+    ref.listen<String?>(
+      bookViewModelProvider.select((state) => state.message),
+      (previous, next) {
+        if (next != null) {
+          MySnackBar.show(context, next);
+        }
+      },
+    );
+    ref.listen<String?>(
+      characterViewModelProvider.select((state) => state.message),
+      (previous, next) {
+        if (next != null) {
+          MySnackBar.show(context, next);
+        }
+      },
+    );
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.grey[100],
@@ -178,8 +212,7 @@ class HomePage extends ConsumerWidget {
         'rank': 3,
         'title': '海洋生物图鉴',
         'description': '小小科学家',
-        'imageUrl':
-            'https://tse1.mm.bing.net/th/id/OIP.b01-M8lF5v_82X9_wH_Q-AAAAA?rs=1&pid=ImgDetMain',
+        'imageUrl': '',
         'likes': 5, // 0.5k
         'reads': 8.2, // 8.2k
       },
@@ -257,9 +290,7 @@ class HomePage extends ConsumerWidget {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundImage: NetworkImage(
-                          _user!.avatar,
-                        ),
+                        backgroundImage: NetworkImage(_user!.avatar),
                         backgroundColor: Colors.white,
                       ),
                       const SizedBox(width: 12),
@@ -345,7 +376,7 @@ class HomePage extends ConsumerWidget {
                       children: [
                         Positioned.fill(
                           child: Image.network(
-                            'https://tse2.mm.bing.net/th/id/OIP.eBdtn7ZmxyGWmo-MCxZJygAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
+                            'https://postimg.cc/9wpTG4Wf',
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -428,7 +459,7 @@ class HomePage extends ConsumerWidget {
                         icon: Icons.star,
                         label: '创建绘本',
                         color: const Color(0xFFdb519d),
-                        onTap: (){
+                        onTap: () {
                           context.push('/${AppRouteNames.createBook}');
                         },
                       ),
@@ -436,7 +467,7 @@ class HomePage extends ConsumerWidget {
                         icon: Icons.local_fire_department,
                         label: '热门广场',
                         color: const Color(0xFFbf91fe),
-                        onTap: (){
+                        onTap: () {
                           context.push('/${AppRouteNames.bookSquare}');
                         },
                       ),
@@ -701,9 +732,9 @@ class MyPage extends ConsumerStatefulWidget {
 }
 
 class _MyPageState extends ConsumerState<MyPage> {
-
   @override
   Widget build(BuildContext context) {
+    final _characterViewModel = ref.watch(characterViewModelProvider.notifier);
     final List<SettingItem> _settingsData = [
       SettingItem(
         iconData: Icons.person_outline,
@@ -726,7 +757,9 @@ class _MyPageState extends ConsumerState<MyPage> {
         // 浅紫色
         title: '通知设置',
         subtitle: '管理推送通知',
-        onTap: () {MySnackBar.show(context, '功能开发中');},
+        onTap: () {
+          MySnackBar.show(context, '功能开发中');
+        },
       ),
       SettingItem(
         iconData: Icons.security,
@@ -737,7 +770,9 @@ class _MyPageState extends ConsumerState<MyPage> {
         // 浅绿色
         title: '隐私与安全',
         subtitle: '密码、隐私设置',
-        onTap: () {MySnackBar.show(context, '功能开发中');},
+        onTap: () {
+          MySnackBar.show(context, '功能开发中');
+        },
       ),
       SettingItem(
         iconData: Icons.help_outline,
@@ -747,7 +782,9 @@ class _MyPageState extends ConsumerState<MyPage> {
         // 浅橙色
         title: '帮助与反馈',
         subtitle: '常见问题、联系客服',
-        onTap: () {MySnackBar.show(context, '功能开发中');},
+        onTap: () {
+          MySnackBar.show(context, '功能开发中');
+        },
       ),
       SettingItem(
         iconData: Icons.star_outline,
@@ -757,7 +794,9 @@ class _MyPageState extends ConsumerState<MyPage> {
         // 浅黄色
         title: '关于我们',
         subtitle: '版本 1.0.0',
-        onTap: () {MySnackBar.show(context, '功能开发中');},
+        onTap: () {
+          MySnackBar.show(context, '功能开发中');
+        },
       ),
     ];
     final _userState = ref.watch(userViewModelProvider);
@@ -778,93 +817,9 @@ class _MyPageState extends ConsumerState<MyPage> {
     final babyCount = 2;
     final bookCount = 12;
     final favoriteCount = 5;
-    final topThreeBooks = [
-      BookItem(
-        name: "森林小冒险",
-        author: "哈基米",
-        pages: 12,
-        clicks: 90,
-        liked: 10,
-        imageUrl:
-            "https://tse2.mm.bing.net/th/id/OIP.W0OMGHvfMpBzfz1re4au1gHaE8?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        favoritedTimestamp: DateTime.parse("2024-11-10 10:00:00"),
-      ),
-      BookItem(
-        name: "魔法世界",
-        author: "哈基米",
-        pages: 15,
-        clicks: 95,
-        liked: 10,
-        imageUrl:
-            "https://tse1.explicit.bing.net/th/id/OIP.sj1n5utS1PsL9DTB7m0ngAAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        favoritedTimestamp: DateTime.parse("2025-11-10 09:00:00"),
-      ),
-      BookItem(
-        name: "太空探险",
-        author: "哈基米",
-        pages: 10,
-        clicks: 87,
-        liked: 10,
-        imageUrl:
-            "https://tse4.mm.bing.net/th/id/OIP.q7CzKimWlj8ke0PXs2Z1tQHaEM?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        favoritedTimestamp: DateTime.parse("2025-11-11 12:00:00"),
-      ),
-    ];
-    final topThreeFavorites = [
-      BookItem(
-        name: "森林小冒险",
-        author: "哈基米",
-        pages: 12,
-        clicks: 90,
-        liked: 10,
-        imageUrl:
-            "https://tse2.mm.bing.net/th/id/OIP.W0OMGHvfMpBzfz1re4au1gHaE8?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        favoritedTimestamp: DateTime.parse("2024-11-10 10:00:00"),
-      ),
-      BookItem(
-        name: "魔法世界",
-        author: "哈基米",
-        pages: 15,
-        clicks: 95,
-        liked: 10,
-        imageUrl:
-            "https://tse1.explicit.bing.net/th/id/OIP.sj1n5utS1PsL9DTB7m0ngAAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        favoritedTimestamp: DateTime.parse("2025-11-10 09:00:00"),
-      ),
-      BookItem(
-        name: "太空探险",
-        author: "哈基米",
-        pages: 10,
-        clicks: 87,
-        liked: 10,
-        imageUrl:
-            "https://tse4.mm.bing.net/th/id/OIP.q7CzKimWlj8ke0PXs2Z1tQHaEM?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        favoritedTimestamp: DateTime.parse("2025-11-11 12:00:00"),
-      ),
-    ];
-    final sortedCharacters = [
-      CharacterItem(
-        name: "小明",
-        createdAt: DateTime.parse("2025-11-10 08:00:00"),
-        imageUrl:
-            "https://pica.zhimg.com/v2-06b6c550a514c770f9c6ee04e2b77944_1440w.jpg",
-        storyCount: 5,
-      ),
-      CharacterItem(
-        name: "小红",
-        createdAt: DateTime.parse("2025-11-12 14:00:00"),
-        imageUrl:
-            "https://pica.zhimg.com/v2-6ea3e148475ae548ccf70770eae8f8d2_1440w.jpg",
-        storyCount: 3,
-      ),
-      CharacterItem(
-        name: "豆豆",
-        createdAt: DateTime.parse("2025-11-09 10:00:00"),
-        imageUrl:
-            "https://pic1.zhimg.com/v2-7375759992f0e7192158716dedfc8d7e_b.jpg",
-        storyCount: 8,
-      ),
-    ];
+    final topThreeBooks = ref.watch(booksProvider);
+    final topThreeFavorites = [];
+    final sortedCharacters = ref.watch(characterListProvider);
     return Stack(
       children: [
         Container(
@@ -928,12 +883,16 @@ class _MyPageState extends ConsumerState<MyPage> {
                                   ),
                                   child: CircleAvatar(
                                     radius: 36,
-                                    backgroundImage: NetworkImage('${_user!.avatar}'),
+                                    backgroundImage: NetworkImage(
+                                      '${_user!.avatar}',
+                                    ),
                                     backgroundColor: Colors.grey[200],
                                   ),
                                 ),
                                 onTap: () {
-                                  context.push('/${AppRouteNames.editProfilePage}');
+                                  context.push(
+                                    '/${AppRouteNames.editProfilePage}',
+                                  );
                                 },
                               ),
 
@@ -1059,7 +1018,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 height: 34.0,
                               ),
                               onPressed: () {
-                                context.push('/${AppRouteNames.editProfilePage}');
+                                context.push(
+                                  '/${AppRouteNames.editProfilePage}',
+                                );
                               },
                             ),
                           ),
@@ -1191,9 +1152,15 @@ class _MyPageState extends ConsumerState<MyPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       // 使用 BookCard 组件
-                      children: topThreeBooks
-                          .map((book) => BookCard(book: book))
-                          .toList(),
+                      children: topThreeBooks.when(
+                        data: (books) {
+                          return books
+                              .map((book) => BookCard(book: book))
+                              .toList();
+                        },
+                        error: (error, stack) => [Text('Error:$error')],
+                        loading: () => [CircularProgressIndicator()],
+                      ),
                     ),
                   ],
                 ),
@@ -1303,30 +1270,35 @@ class _MyPageState extends ConsumerState<MyPage> {
                     // 可水平滑动的 List
                     SizedBox(
                       height: 190, // 设定一个合适的高度 (卡片 160 + padding/滑动条 30)
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 170, // 卡片实际高度
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              // 【修改】Padding 调整：左侧 0.0
-                              padding: const EdgeInsets.only(left: 0.0),
-                              // 总数 = 1个添加按钮 + 排序后的人物列表
-                              itemCount: 1 + sortedCharacters.length,
-                              itemBuilder: (context, index) {
-                                // 第一个内容固定是“添加人物”按钮
-                                if (index == 0) {
-                                  // AddCharacterCard 内部移除了左侧 4.0 padding，确保第一张卡片紧贴 20.0 边缘
-                                  return AddCharacterCard();
-                                }
-                                // 之后是人物卡片
-                                final character = sortedCharacters[index - 1];
-                                return CharacterCard(character: character);
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 8), // 卡片和滑动条的间距
-                        ],
+                      child: sortedCharacters.when(
+                        data: (data) {
+                          return Column(
+                            children: [
+                              SizedBox(
+                                height: 170, // 卡片实际高度
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.only(left: 0.0),
+                                  // 总数 = 1个添加按钮 + 排序后的人物列表
+                                  itemCount: 1 + data.length,
+                                  itemBuilder: (context, index) {
+                                    // 第一个内容固定是“添加人物”按钮
+                                    if (index == 0) {
+                                      // AddCharacterCard 内部移除了左侧 4.0 padding，确保第一张卡片紧贴 20.0 边缘
+                                      return AddCharacterCard();
+                                    }
+                                    // 之后是人物卡片
+                                    final character = data[index - 1];
+                                    return CharacterCard(character: character);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 8), // 卡片和滑动条的间距
+                            ],
+                          );
+                        },
+                        error: (error, stack) => Text('Error:$error'),
+                        loading: () => CircularProgressIndicator(),
                       ),
                     ),
                   ],

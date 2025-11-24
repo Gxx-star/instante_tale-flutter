@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:instant_tale/database/models/book.dart';
+import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/user.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,7 +32,7 @@ class AppGlobals {
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
     final dir = await getApplicationCacheDirectory();
-    _isar = await Isar.open([BookSchema, UserSchema], directory: dir.path);
+    _isar = await Isar.open([BookSchema, UserSchema,CharacterCollectionSchema], directory: dir.path);
   }
 
   Future<void> saveToken(String token) async {

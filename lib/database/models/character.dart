@@ -1,39 +1,50 @@
 import 'package:isar/isar.dart';
 
 part 'character.g.dart';
+mixin CharacterFields {
+  String characterId = '';
+  String characterName = '';
+  String desc = '';
+  String avatarUrl = '';
+  String threeViewUrl = '';
+  String authorId = '';
+  int createdAt = 0;
+}
+@embedded
+class CharacterEmbedded with CharacterFields {
+  CharacterEmbedded({
+    String characterId = '',
+    String characterName = '',
+    String desc = '',
+    String avatarUrl = '',
+    String threeViewUrl = '',
+    String authorId = '',
+    int createdAt = 0,
+  }) {
+    this.characterId = characterId;
+    this.characterName = characterName;
+    this.desc = desc;
+    this.avatarUrl = avatarUrl;
+    this.threeViewUrl = threeViewUrl;
+    this.authorId = authorId;
+    this.createdAt = createdAt;
+  }
 
-@collection
-@Name('characters')
-class Character {
-  Id id = Isar.autoIncrement;
-  String characterId;
-  String characterName;
-  String desc;
-  String avatarUrl;
-  String threeViewUrl;
-  String authorId;
-  int createdAt;
-  Character({
-    required this.characterId,
-    required this.characterName,
-    required this.desc,
-    required this.avatarUrl,
-    required this.threeViewUrl,
-    required this.authorId,
-    required this.createdAt,
-  });
-  factory Character.fromJson(Map<String, dynamic> json) {
-    return Character(
-      characterId: json['character_id'],
-      characterName: json['character_name'],
-      desc: json['desc'],
-      avatarUrl: json['avatar_url'],
-      threeViewUrl: json['three_view_url'],
-      authorId: json['author_id'],
-      createdAt: (json['created_at'] as num).toInt(),
+  // 这里的 fromJson 返回的是嵌入版实例
+  factory CharacterEmbedded.fromJson(Map<String, dynamic> json) {
+    return CharacterEmbedded(
+      characterId: json['character_id'] ?? '',
+      characterName: json['character_name'] ?? '',
+      desc: json['desc'] ?? '',
+      avatarUrl: json['avatar_url'] ?? '',
+      threeViewUrl: json['three_view_url'] ?? '',
+      authorId: json['author_id'] ?? '',
+      createdAt: (json['created_at'] as num?)?.toInt() ?? 0,
     );
   }
-  Character copyWith({
+
+  // CopyWith 返回嵌入版实例
+  CharacterEmbedded copyWith({
     String? characterId,
     String? characterName,
     String? desc,
@@ -41,8 +52,8 @@ class Character {
     String? threeViewUrl,
     String? authorId,
     int? createdAt,
-  }){
-    return Character(
+  }) {
+    return CharacterEmbedded(
       characterId: characterId ?? this.characterId,
       characterName: characterName ?? this.characterName,
       desc: desc ?? this.desc,
@@ -50,6 +61,45 @@ class Character {
       threeViewUrl: threeViewUrl ?? this.threeViewUrl,
       authorId: authorId ?? this.authorId,
       createdAt: createdAt ?? this.createdAt,
+    );
+  }
+}
+@collection
+@Name('characterCollections')
+class CharacterCollection with CharacterFields {
+  // 必须：Isar 集合必须有一个整型 Id
+  // 你的 characterId 是 String，所以这里需要一个额外的内部 ID
+  Id id = Isar.autoIncrement;
+
+  // 构造函数
+  CharacterCollection({
+    String characterId = '',
+    String characterName = '',
+    String desc = '',
+    String avatarUrl = '',
+    String threeViewUrl = '',
+    String authorId = '',
+    int createdAt = 0,
+  }) {
+    this.characterId = characterId;
+    this.characterName = characterName;
+    this.desc = desc;
+    this.avatarUrl = avatarUrl;
+    this.threeViewUrl = threeViewUrl;
+    this.authorId = authorId;
+    this.createdAt = createdAt;
+  }
+
+  // 集合版的 fromJson
+  factory CharacterCollection.fromJson(Map<String, dynamic> json) {
+    return CharacterCollection(
+      characterId: json['character_id'] ?? '',
+      characterName: json['character_name'] ?? '',
+      desc: json['desc'] ?? '',
+      avatarUrl: json['avatar_url'] ?? '',
+      threeViewUrl: json['three_view_url'] ?? '',
+      authorId: json['author_id'] ?? '',
+      createdAt: (json['created_at'] as num?)?.toInt() ?? 0,
     );
   }
 }

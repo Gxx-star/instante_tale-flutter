@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:instant_tale/ui/component/uiModel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:instant_tale/features/book/book_provider.dart';
+import 'package:instant_tale/main.dart';
+
+import '../../database/models/book.dart';
 
 // 绘本卡片
-class BookCard extends StatelessWidget {
-  final BookItem book;
+class BookCard extends ConsumerWidget {
+  final Book book;
   // 【新增】控制UI显示
   final bool showPageCount;
   final bool showFavoriteIcon;
@@ -16,14 +21,16 @@ class BookCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // 使用 Expanded 确保三个卡片平分空间
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0), // 确保卡片间有间隔
         child: InkWell(
           onTap: () {
-            // 点击事件逻辑
+            // 点击卡片后跳转
+            ref.watch(bookViewModelProvider.notifier).loadBook(book);
+            context.push('/${AppRouteNames.bookReader}');
           },
           // 【修复】添加 borderRadius，确保点击水波纹和阴影是圆角
           borderRadius: BorderRadius.circular(16),
@@ -57,7 +64,7 @@ class BookCard extends StatelessWidget {
                         // 图片
                         Positioned.fill(
                           child: Image.network(
-                            book.imageUrl,
+                            book.coverUrl,
                             fit: BoxFit.cover,
                             width: double.infinity,
                             loadingBuilder: (context, child, loadingProgress) {
@@ -108,7 +115,7 @@ class BookCard extends StatelessWidget {
                       children: [
                         // 作品名
                         Text(
-                          book.name,
+                          book.bookName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -121,7 +128,7 @@ class BookCard extends StatelessWidget {
                         if (showPageCount) ...[
                           const SizedBox(height: 2),
                           Text(
-                            '${book.pages} 页',
+                            '${book.content.length} 页',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],

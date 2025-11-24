@@ -2,6 +2,7 @@ import 'package:instant_tale/network/apis/character_api.dart';
 import 'package:instant_tale/network/apis/user_api.dart';
 
 import '../http.dart';
+import 'book_api.dart';
 
 class ApiService {
 
@@ -20,5 +21,10 @@ class ApiService {
   CharacterApi get characterApi {
     _characterApi ??= CharacterApi(Http.dio);
     return _characterApi!;
+  }
+  BookApi? _bookApi;
+  BookApi get bookApi {
+    _bookApi ??= BookApi(Http.dio);
+    return _bookApi!;
   }
 }

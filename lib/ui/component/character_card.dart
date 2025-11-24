@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:instant_tale/ui/component/uiModel.dart';
+import 'package:instant_tale/database/models/character.dart';
 
 // 已有人物卡片
 class CharacterCard extends StatelessWidget {
-  final CharacterItem character;
+  final CharacterCollection character;
 
   const CharacterCard({super.key, required this.character});
 
@@ -28,18 +28,17 @@ class CharacterCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start, // 顶部对齐以匹配 AddCharacterCard
             children: [
-              // 【修改】确保 CircleAvatar 与 AddCharacterCard 的 Icon 垂直中心对齐
               const SizedBox(height: 24), // 调整此高度以确保人物头像的垂直中心与星形图标的垂直中心对齐
               // 圆形人物图片
               CircleAvatar(
                 radius: 32, // 直径 64，与 AddCharacterCard 保持一致
-                backgroundImage: NetworkImage(character.imageUrl),
+                backgroundImage: NetworkImage(character.avatarUrl),
                 backgroundColor: Colors.grey[200],
               ),
               const SizedBox(height: 12),
               // 人物姓名
               Text(
-                character.name,
+                character.characterName,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[700],
@@ -49,7 +48,7 @@ class CharacterCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 6),
-              // x个故事
+              // 描述
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -57,7 +56,7 @@ class CharacterCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${character.storyCount} 个故事',
+                  character.desc,
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

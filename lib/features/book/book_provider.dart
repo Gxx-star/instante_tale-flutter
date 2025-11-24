@@ -3,10 +3,11 @@ import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_repository.dart';
 
 import '../../database/models/book.dart';
+import 'book_state.dart';
 import 'book_view_model.dart';
 
 final bookViewModelProvider =
-    StateNotifierProvider<BookViewModel, AsyncValue<List<Book>>>((ref) {
+    StateNotifierProvider<BookViewModel, BookState>((ref) {
       final repository = ref.watch(bookRepositoryProvider);
       return BookViewModel(repository);
     });
