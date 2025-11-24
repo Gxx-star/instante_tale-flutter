@@ -3,10 +3,11 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide Page;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/page.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
-import 'package:instant_tale/database/models/page.dart' hide BookPage;
+import 'package:preload_page_view/preload_page_view.dart';
 class BookReaderPage extends ConsumerStatefulWidget {
   const BookReaderPage({super.key});
 
@@ -14,8 +15,7 @@ class BookReaderPage extends ConsumerStatefulWidget {
   ConsumerState<BookReaderPage> createState() => _BookReaderPageState();
 }
 class _BookReaderPageState extends ConsumerState<BookReaderPage> {
-  final PageController _pageController = PageController();
-
+  final PreloadPageController _pageController = PreloadPageController();
   @override
   void initState() {
     super.initState();
@@ -67,8 +67,9 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           Positioned.fill(
             child: GestureDetector(
               onTap: () => ref.read(bookViewModelProvider.notifier).toggleControls(),
-              child: PageView.builder(
+              child: PreloadPageView.builder(
                 controller: _pageController,
+                preloadPagesCount: book.content.length,
                 itemCount: book.content.length,
                 onPageChanged: (index) {
                   ref.read(bookViewModelProvider.notifier).onPageChanged(index);
@@ -87,7 +88,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             top: state.isControlsVisible ? 0 : -100,
             left: 0,
             right: 0,
-            child: _buildTopBar(context, book.bookName ?? "绘本"),
+            child: _buildTopBar(context, book.bookName),
           ),
 
           // 4. 底部文本与控制区 (可隐藏)
@@ -96,7 +97,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             bottom: state.isControlsVisible ? 30 : -200,
             left: 20,
             right: 20,
-            child: _buildBottomPanel(currentContent, book.content!.length, state.currentPage + 1),
+            child: _buildBottomPanel(currentContent, book.content.length, state.currentPage + 1),
           ),
 
           // 5. 角色浮窗按钮 (如果当前页有特定角色交互，可以在这里增加逻辑)
@@ -161,7 +162,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           children: [
             _glassButton(
               icon: Icons.arrow_back_rounded,
-              onTap: () => Navigator.pop(context),
+              onTap: () => context.pop(),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -175,7 +176,6 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            _glassButton(icon: Icons.more_horiz_rounded, onTap: () {}),
           ],
         ),
       ),
@@ -225,14 +225,14 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                content.text ?? "",
+                content.text,
                 style: const TextStyle(
                   fontSize: 16,
                   color: Color(0xFF4A4A4A),
                   height: 1.5,
                   fontWeight: FontWeight.w500,
                 ),
-                maxLines: 3,
+                maxLines: 6,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
@@ -324,15 +324,15 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                             CircleAvatar(
                               radius: 40,
                               backgroundColor: const Color(0xFFF0EBFF),
-                              backgroundImage: NetworkImage("https://picsum.photos/seed/${char.characterId}/200"),
+                              backgroundImage: NetworkImage(char.avatarUrl),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              char.characterName?.trim() ?? "",
+                              char.characterName.trim(),
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              char.desc ?? "",
+                              char.desc,
                               maxLines: 2,
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
@@ -352,7 +352,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
     );
   }
 
-  // 玻璃拟态按钮组件
+  // 按钮组件
   Widget _glassButton({required IconData icon, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,

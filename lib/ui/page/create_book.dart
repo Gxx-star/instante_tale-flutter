@@ -1188,11 +1188,11 @@ class Page2Style extends StatelessWidget {
               },
             ),
             const SizedBox(height: 0.0),
-            _BookCollectionCheckbox(
-              value: isCollectionBook,
-              onChanged: onCollectionToggle,
-            ),
-            const SizedBox(height: 12.0),
+            // _BookCollectionCheckbox(
+            //   value: isCollectionBook,
+            //   onChanged: onCollectionToggle,
+            // ),
+            // const SizedBox(height: 12.0),
           ],
         ),
       ),

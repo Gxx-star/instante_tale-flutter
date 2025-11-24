@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:instant_tale/features/character/character_repository.dart';
 import 'package:instant_tale/features/character/character_state.dart';
+import 'package:lpinyin/lpinyin.dart';
+import '../../database/models/character.dart';
 import '../login/login_repository.dart';
 
 class CharacterViewModel extends StateNotifier<CharacterState> {
@@ -13,6 +15,11 @@ class CharacterViewModel extends StateNotifier<CharacterState> {
   }
 
   void _init() {}
+
+  void updateSearchKeyword(String s) {
+    state = state.copyWith(searchKeyword: s);
+    findCharacter();
+  }
 
   Future<void> addCharacter(
     File characterPhoto,
@@ -67,7 +74,7 @@ class CharacterViewModel extends StateNotifier<CharacterState> {
   }
 
   Future<void> fetchCharacter() async {
-      state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(isLoading: true, message: null);
     try {
       await _characterRepository.fetchCharacterList();
       state = state.copyWith(isLoading: false, message: null);
@@ -78,11 +85,20 @@ class CharacterViewModel extends StateNotifier<CharacterState> {
     }
   }
 
-  Future<void> findCharacter(String keyword) async {
+  Future<void> findCharacter() async {
     state = state.copyWith(isLoading: true, message: null);
     try {
-      await _characterRepository.findCharacterList(keyword);
-      state = state.copyWith(isLoading: false, message: null);
+      final characterQueryData = await _characterRepository.findCharacterList(
+        state.searchKeyword,
+      );
+      final list = characterQueryData.characters;
+      if (characterQueryData.keyword == state.searchKeyword) {
+        state = state.copyWith(
+          isLoading: false,
+          message: null,
+          filteredList: list,
+        );
+      }
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {

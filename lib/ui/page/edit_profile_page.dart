@@ -176,10 +176,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: Colors.pinkAccent.withOpacity(0.25),
-                            width: 1.5,
-                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -198,7 +194,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                     height: 110,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      gradient: _avatarBorderGradient,
+                                      border: Border.all(
+                                        color: const Color(0xFFD1C4FF),
+                                        width: 2,
+                                      ),
                                     ),
                                     alignment: Alignment.center,
                                     child: CircleAvatar(

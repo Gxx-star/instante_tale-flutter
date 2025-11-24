@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:lpinyin/lpinyin.dart';
 
 part 'character.g.dart';
 mixin CharacterFields {
@@ -101,5 +102,10 @@ class CharacterCollection with CharacterFields {
       authorId: json['author_id'] ?? '',
       createdAt: (json['created_at'] as num?)?.toInt() ?? 0,
     );
+  }
+  String get pinyinInitial {
+    if (characterName.isEmpty) return '#';
+    final pinyin = PinyinHelper.getPinyin(characterName, separator: '');
+    return pinyin.isNotEmpty ? pinyin[0].toUpperCase() : '#';
   }
 }

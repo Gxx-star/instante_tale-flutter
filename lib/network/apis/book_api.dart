@@ -20,7 +20,7 @@ class BookApi {
         'story_type': storyTypes,
         'story_quality': storyQualities
       };
-      final response = await _dio.post('/book/generate', data: data,options: Options(
+      final response = await _dio.post('/book/generate_creativity', data: data,options: Options(
           receiveTimeout: Duration(minutes: 7)
       ));
 

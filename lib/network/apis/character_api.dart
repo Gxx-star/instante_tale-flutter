@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:instant_tale/database/models/character.dart';
+import 'package:instant_tale/network/dto/character_query_data.dart';
 
 import '../api_exceptions.dart';
 import '../api_response.dart';
@@ -59,7 +60,7 @@ class CharacterApi {
     }
   }
 
-  Future<ApiResponse<List<CharacterCollection>>> findCharacterList(
+  Future<ApiResponse<CharacterQueryData>> findCharacterList(
     String keyword,
   ) async {
     try {
@@ -69,10 +70,11 @@ class CharacterApi {
       final characters = listJson
           .map((e) => CharacterCollection.fromJson(e))
           .toList();
+      final resKeyword = response.data['data']['keyword'];
       return ApiResponse(
         code: response.data['code'],
         message: response.data['msg'],
-        data: characters,
+        data: CharacterQueryData(characters: characters, keyword: resKeyword),
       );
     } on DioException catch (e) {
       throw ExceptionHandler.handle(e);

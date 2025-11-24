@@ -29,8 +29,8 @@ class BookViewModel extends StateNotifier<BookState> {
   ) async {
     state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
     try {
-      // await _bookRepository.createBook(storyTypes, storyQualities);
-      await Future.delayed(Duration(seconds: 10));
+      await _bookRepository.createBook(storyTypes, storyQualities);
+      // await Future.delayed(Duration(seconds: 10));
       state = state.copyWith(
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
@@ -70,6 +70,6 @@ class BookViewModel extends StateNotifier<BookState> {
 
   // 打开绘本
   Future<void> loadBook(Book book) async {
-    state = state.copyWith(isLoading: false, message: null, currentBook: book);
+    state = state.copyWith(isLoading: false, message: null, currentBook: book,currentPage: 0);
   }
 }

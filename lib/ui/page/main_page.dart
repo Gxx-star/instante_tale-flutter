@@ -1249,7 +1249,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                           const Spacer(),
                           // 右侧：查看管理 > 按钮
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push('/${AppRouteNames.characterManagementPage}');
+                            },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               alignment: Alignment.centerRight,
@@ -1259,7 +1261,6 @@ class _MyPageState extends ConsumerState<MyPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text('管理 >', style: TextStyle(fontSize: 14)),
-                                //Icon(Icons.arrow_forward_ios, size: 14),
                               ],
                             ),
                           ),
