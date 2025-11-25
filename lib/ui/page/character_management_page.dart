@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 
 import '../../database/models/character.dart';
@@ -20,14 +21,20 @@ class _CharacterManagementPageState
   final TextEditingController _searchController = TextEditingController();
 
   // 字母导航条：A-Z + #
-  final List<String> _initials = List.generate(
+    final List<String> _initials = List.generate(
     26,
     (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
   ).toList()..add('#');
 
   // 用于存储每个字母组的第一个列表项的 GlobalKey
   final Map<String, GlobalKey> _initialKeys = {};
-
+  @override
+  void initState(){
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(characterViewModelProvider.notifier).updateSearchKeyword('');
+    });
+  }
   @override
   void dispose() {
     _scrollController.dispose();
@@ -68,7 +75,7 @@ class _CharacterManagementPageState
             children: [
               _glassButton(
                 icon: Icons.arrow_back_ios_new_rounded,
-                onTap: () => Navigator.pop(context),
+                onTap: () => context.pop(),
               ),
               const Expanded(
                 child: Center(

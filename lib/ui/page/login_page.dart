@@ -17,6 +17,8 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  bool _isHidden = true;
+
   @override
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginViewModelProvider);
@@ -124,10 +126,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           child: Padding(padding: EdgeInsets.only(top: 10), child: Text("密码")),
         ),
         TextField(
-          decoration: InputDecoration(hintText: "请输入密码"),
+          decoration: InputDecoration(
+            hintText: "请输入密码",
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isHidden ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isHidden = !_isHidden;
+                });
+              },
+            ),
+          ),
           onChanged: (value) {
             loginViewModel.updatePassword(value);
           },
+          obscureText: _isHidden,
         ),
         Align(
           alignment: Alignment.centerRight,
@@ -153,7 +169,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           width: 200,
           child: ElevatedButton(
             onPressed: () {
-              loginViewModel.login().then((_){
+              loginViewModel.login().then((_) {
                 if (AppGlobals().isLoggedIn) {
                   context.go('/${AppRouteNames.main}');
                 }
@@ -212,7 +228,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           width: 200,
           child: ElevatedButton(
             onPressed: () {
-              loginViewModel.login().then((_){
+              loginViewModel.login().then((_) {
                 if (AppGlobals().isLoggedIn) {
                   context.go('/${AppRouteNames.main}');
                 }

@@ -771,7 +771,7 @@ class _MyPageState extends ConsumerState<MyPage> {
         title: '隐私与安全',
         subtitle: '密码、隐私设置',
         onTap: () {
-          MySnackBar.show(context, '功能开发中');
+          context.push('/${AppRouteNames.privacySecurityPage}');
         },
       ),
       SettingItem(

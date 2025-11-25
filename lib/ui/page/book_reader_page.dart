@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/page.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
+import 'package:instant_tale/ui/component/glass_button.dart';
 import 'package:preload_page_view/preload_page_view.dart';
 class BookReaderPage extends ConsumerStatefulWidget {
   const BookReaderPage({super.key});
@@ -16,15 +17,6 @@ class BookReaderPage extends ConsumerStatefulWidget {
 }
 class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   final PreloadPageController _pageController = PreloadPageController();
-  @override
-  void initState() {
-    super.initState();
-    // 绘制完成之后的回调
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 加载绘本数据
-      ref.read(bookViewModelProvider.notifier);
-    });
-  }
 
   @override
   void dispose() {
@@ -47,7 +39,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
       backgroundColor: const Color(0xFFF5F0FF), // 柔和的淡紫色背景
       body: Stack(
         children: [
-          // 1. 沉浸式背景层 (用于填充整个屏幕的氛围)
+          // 背景层 (用于填充整个屏幕的氛围)
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -63,7 +55,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             ),
           ),
 
-          // 2. 绘本核心内容 (PageView)
+          // 绘本核心内容 (PageView)
           Positioned.fill(
             child: GestureDetector(
               onTap: () => ref.read(bookViewModelProvider.notifier).toggleControls(),
@@ -82,7 +74,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             ),
           ),
 
-          // 3. 顶部导航栏 (可隐藏)
+          // 顶部导航栏 (可隐藏)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             top: state.isControlsVisible ? 0 : -100,
@@ -91,7 +83,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             child: _buildTopBar(context, book.bookName),
           ),
 
-          // 4. 底部文本与控制区 (可隐藏)
+          // 底部文本与控制区 (可隐藏)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             bottom: state.isControlsVisible ? 30 : -200,
@@ -100,7 +92,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             child: _buildBottomPanel(currentContent, book.content.length, state.currentPage + 1),
           ),
 
-          // 5. 角色浮窗按钮 (如果当前页有特定角色交互，可以在这里增加逻辑)
+          // 角色浮窗按钮 (如果当前页有特定角色交互，可以在这里增加逻辑)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             right: 20,
@@ -160,7 +152,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            _glassButton(
+            GlassButton(
               icon: Icons.arrow_back_rounded,
               onTap: () => context.pop(),
             ),
@@ -349,28 +341,6 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             ),
           );
         }
-    );
-  }
-
-  // 按钮组件
-  Widget _glassButton({required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: const Color(0xFF5A4C75)),
-          ),
-        ),
-      ),
     );
   }
 }
