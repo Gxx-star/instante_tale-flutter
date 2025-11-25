@@ -4,19 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/features/login/login_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
+
 class ForgetPasswordPage extends ConsumerStatefulWidget {
   @override
   _ForgetPasswordPageState createState() => _ForgetPasswordPageState();
 }
+
 class _ForgetPasswordPageState extends ConsumerState<ForgetPasswordPage> {
-  late String _inputPhone = "";
-  late String _inputCode = "";
-  late String _inputPassword = "";
+  String _inputPhone = "";
+  String _inputCode = "";
+  String _inputPassword = "";
   bool _isHidden = true;
+
   @override
   Widget build(BuildContext context) {
     final loginViewModel = ref.watch(loginViewModelProvider.notifier);
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
