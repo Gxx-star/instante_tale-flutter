@@ -2,13 +2,13 @@
 一款基于 Flutter 开发的 AI 驱动即时绘本生成应用，专注于为用户提供个性化绘本创作、角色管理及绘本浏览的全流程体验，采用现代化技术栈构建高效、流畅的跨平台应用。
 技术栈
 
-    UI 框架：Flutter（跨平台统一体验，替代传统原生 UI 开发）
-    架构：MVVM + 单 Activity 多页面（页面解耦，便于维护扩展）
-    状态管理：StateFlow + ViewModel（响应式状态处理，数据流向清晰）
-    依赖注入：GetIt/Hilt（可选，简化组件依赖管理）
+    UI 框架：Flutter
+    架构：MVVM
+    状态管理：Riverpod + ViewModel（响应式状态处理，数据流向清晰）
+    依赖注入：Riverpod
     网络：Dio（网络请求封装，含重复请求拦截、错误统一处理）
     本地存储：
-        Room/Hive（核心业务数据存储，如绘本、角色、收藏记录）
+        Hive/Isar（核心业务数据存储，如绘本、角色、收藏记录）
         SharedPreferences（轻量配置存储，如用户偏好、页面状态）
         FlutterSecureStorage（敏感数据存储，如登录 Token、隐私信息）
     其他：Coil（图片加载缓存）、flutter_svg（矢量图展示）
