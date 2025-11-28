@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
+import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/main.dart';
 
 import '../../database/models/book.dart';
@@ -198,7 +199,12 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                     return MyBookCard(
                       book: book,
                       onTap: () {
-                        ref.read(bookViewModelProvider.notifier).loadBook(book);
+                        final userId = ref.watch(userViewModelProvider).user?.userId;
+                        if (userId == null) {
+                          context.go('/${AppRouteNames.login}');
+                          return;
+                        }
+                        ref.read(bookViewModelProvider.notifier).loadBook(book,userId);
                         context.push('/${AppRouteNames.bookReader}');
                       },
                       onLongPress: () {

@@ -12,7 +12,9 @@ class LoginViewModel extends StateNotifier<LoginState> {
   }
 
   void _init() {}
-
+  void logout(){
+    state = state.copyWith(loginData: null,message: null);
+  }
   void clearMessage() {
     state = state.copyWith(message: null);
   }

@@ -1,3 +1,4 @@
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/database/models/reading_history.dart';
 import 'package:isar/isar.dart';
 
@@ -18,26 +19,38 @@ class BookRepository {
     return isar.books.where().watch(fireImmediately: true);
   }
 
-  Stream<List<ReadingHistoryItem>> watchReadingHistory() {
-    final historyStream = isar.readingHistorys.where().sortByLastReadAtDesc().watch(fireImmediately: true);
+  Stream<List<ReadingHistoryItem>> watchReadingHistory(String userId) {
+    final historyStream = isar.readingHistorys
+        .where()
+        .userIdEqualTo(userId)
+        .sortByLastReadAtDesc()
+        .watch(fireImmediately: true);
     return historyStream.asyncMap((_) async {
-      final histories = await isar.readingHistorys.where().sortByLastReadAtDesc().findAll();
-      List<ReadingHistoryItem>items = [];
-      for(var h in histories){
-        final book = await isar.books.where().bookIdEqualTo(h.bookId).findFirst();
-        if(book!=null){
+      final histories = await isar.readingHistorys
+          .where()
+          .userIdEqualTo(userId)
+          .sortByLastReadAtDesc()
+          .findAll();
+      List<ReadingHistoryItem> items = [];
+      for (var h in histories) {
+        final book = await isar.books
+            .where()
+            .bookIdEqualTo(h.bookId)
+            .findFirst();
+        if (book != null) {
           items.add(ReadingHistoryItem(book, h));
         }
       }
-        return items;
+      return items;
     });
   }
 
-  Future<void> saveReadingHistory(String bookId) async {
+  Future<void> saveReadingHistory(String bookId, String userId) async {
     await isar.writeTxn(() async {
       final lastHistory = await isar.readingHistorys
           .filter()
           .bookIdEqualTo(bookId)
+          .userIdEqualTo(userId)
           .findFirst();
       if (lastHistory != null) {
         lastHistory.lastReadAt = DateTime.now();
@@ -45,9 +58,16 @@ class BookRepository {
       } else {
         final history = ReadingHistory()
           ..bookId = bookId
+          ..userId = userId
           ..lastReadAt = DateTime.now();
         await isar.readingHistorys.put(history);
       }
+    });
+  }
+
+  Future<void> clearReadingHistory() async {
+    await isar.writeTxn(() async {
+      await isar.readingHistorys.where().deleteAll();
     });
   }
 
@@ -67,9 +87,8 @@ class BookRepository {
       throw RepositoryException(e.message);
     }
   }
-  Future<void> deleteBook(
-      String bookId
-      ) async {
+
+  Future<void> deleteBook(String bookId) async {
     try {
       final response = await _api.deleteBook(bookId);
       if (response.code != 200) {

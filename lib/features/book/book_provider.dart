@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/database/models/reading_history.dart';
 import 'package:instant_tale/features/book/book_repository.dart';
+import 'package:instant_tale/features/user/user_provider.dart';
 
 import '../../database/models/book.dart';
 import 'book_state.dart';
@@ -25,5 +26,9 @@ final booksProvider = StreamProvider<List<Book>>((ref) {
 
 final readingHistoryProvider = StreamProvider<List<ReadingHistoryItem>>((ref) {
   final repository = ref.watch(bookRepositoryProvider);
-  return repository.watchReadingHistory();
+  final userId = ref.watch(userViewModelProvider).user?.userId;
+  if (userId == null) {
+    return Stream.value([]);
+  }
+  return repository.watchReadingHistory(userId);
 });

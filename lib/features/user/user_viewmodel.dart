@@ -16,6 +16,12 @@ class UserViewModel extends StateNotifier<UserState> {
   UserViewModel(this._userRepository) : super(UserState()) {
     _init();
   }
+  void logout() async {
+    state = state.copyWith(
+      message: null,
+      user: null
+    );
+  }
   void _init() {
     _sub = _isar.users.watchLazy().listen((_)async{
       state = state.copyWith(

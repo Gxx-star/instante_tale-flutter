@@ -110,13 +110,21 @@ class BookViewModel extends StateNotifier<BookState> {
   }
 
   // 打开绘本
-  Future<void> loadBook(Book book) async {
+  Future<void> loadBook(Book book,String userId) async {
     state = state.copyWith(
       isLoading: false,
       message: null,
       currentBook: book,
       currentPage: 0,
     );
-    _bookRepository.saveReadingHistory(book.bookId);
+    await _bookRepository.saveReadingHistory(book.bookId, userId);
+  }
+  Future<void>clearReadingHistory() async {
+    state = state.copyWith(
+      isLoading: false,
+      message: null,
+    );
+    await _bookRepository.clearReadingHistory();
+    print('清空记录');
   }
 }

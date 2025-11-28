@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_swiper_null_safety/flutter_swiper_null_safety.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/database/models/user.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
+import 'package:instant_tale/features/login/login_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
 import 'package:instant_tale/ui/component/stat_item.dart';
@@ -209,6 +212,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final _userState = ref.watch(userViewModelProvider);
     final _user = _userState.user;
     final _userViewModel = ref.watch(userViewModelProvider.notifier);
+    final _bookViewModel = ref.watch(bookViewModelProvider.notifier);
     // 阅读记录
     final _readingList = ref.watch(readingHistoryProvider);
     // 榜单
@@ -539,9 +543,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   title: item.book.bookName,
                                   imageUrl: item.book.coverUrl,
                                   callback: () {
+                                    final userId = ref.watch(userViewModelProvider).user?.userId;
+                                    if (userId == null) {
+                                      context.go('/${AppRouteNames.login}');
+                                      return;
+                                    }
                                     ref
                                         .read(bookViewModelProvider.notifier)
-                                        .loadBook(item.book);
+                                        .loadBook(item.book,userId);
                                     context.push(
                                       '/${AppRouteNames.bookReader}',
                                     );
@@ -1184,10 +1193,11 @@ class _MyPageState extends ConsumerState<MyPage> {
                       // 使用 BookCard 组件
                       children: books.when(
                         data: (books) {
-                          return books
-                              .take(3)
-                              .map((book) => BookCard(book: book))
-                              .toList();
+                          var bookWidgets = books.take(3).map<Widget>((book)=>BookCard(book: book)).toList();
+                          while(bookWidgets.length < 3){
+                            bookWidgets.add(Spacer());
+                          }
+                          return bookWidgets;
                         },
                         error: (error, stack) => [Text('Error:$error')],
                         loading: () => [CircularProgressIndicator()],
@@ -1401,8 +1411,16 @@ class _MyPageState extends ConsumerState<MyPage> {
                     color: Colors.transparent, // 确保水波纹效果可见
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12.0),
-                      onTap: () {
-                        print('Logout button tapped');
+                      onTap: () async{
+                        await AppGlobals().clearTokens();
+                        await AppGlobals().isar.writeTxn(()async{
+                          await AppGlobals().isar.users.clear();
+                        });
+                        ref.read(loginViewModelProvider.notifier).logout();
+                        ref.read(userViewModelProvider.notifier).logout();
+                        if(mounted){
+                          context.go('/${AppRouteNames.login}');
+                        }
                       },
                       child: Center(
                         child: Row(

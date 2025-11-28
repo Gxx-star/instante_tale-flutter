@@ -26,6 +26,11 @@ const ReadingHistorySchema = CollectionSchema(
       id: 1,
       name: r'lastReadAt',
       type: IsarType.dateTime,
+    ),
+    r'userId': PropertySchema(
+      id: 2,
+      name: r'userId',
+      type: IsarType.string,
     )
   },
   estimateSize: _readingHistoryEstimateSize,
@@ -33,7 +38,21 @@ const ReadingHistorySchema = CollectionSchema(
   deserialize: _readingHistoryDeserialize,
   deserializeProp: _readingHistoryDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'userId': IndexSchema(
+      id: -2005826577402374815,
+      name: r'userId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'userId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _readingHistoryGetId,
@@ -49,6 +68,7 @@ int _readingHistoryEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.bookId.length * 3;
+  bytesCount += 3 + object.userId.length * 3;
   return bytesCount;
 }
 
@@ -60,6 +80,7 @@ void _readingHistorySerialize(
 ) {
   writer.writeString(offsets[0], object.bookId);
   writer.writeDateTime(offsets[1], object.lastReadAt);
+  writer.writeString(offsets[2], object.userId);
 }
 
 ReadingHistory _readingHistoryDeserialize(
@@ -72,6 +93,7 @@ ReadingHistory _readingHistoryDeserialize(
   object.bookId = reader.readString(offsets[0]);
   object.id = id;
   object.lastReadAt = reader.readDateTimeOrNull(offsets[1]);
+  object.userId = reader.readString(offsets[2]);
   return object;
 }
 
@@ -86,6 +108,8 @@ P _readingHistoryDeserializeProp<P>(
       return (reader.readString(offset)) as P;
     case 1:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -181,6 +205,51 @@ extension ReadingHistoryQueryWhere
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterWhereClause> userIdEqualTo(
+      String userId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId',
+        value: [userId],
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterWhereClause>
+      userIdNotEqualTo(String userId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId',
+              lower: [],
+              upper: [userId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId',
+              lower: [userId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId',
+              lower: [userId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId',
+              lower: [],
+              upper: [userId],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -451,6 +520,142 @@ extension ReadingHistoryQueryFilter
       ));
     });
   }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'userId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'userId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterFilterCondition>
+      userIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'userId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension ReadingHistoryQueryObject
@@ -485,6 +690,19 @@ extension ReadingHistoryQuerySortBy
       sortByLastReadAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastReadAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterSortBy> sortByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterSortBy>
+      sortByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -529,6 +747,19 @@ extension ReadingHistoryQuerySortThenBy
       return query.addSortBy(r'lastReadAt', Sort.desc);
     });
   }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterSortBy> thenByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QAfterSortBy>
+      thenByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
+    });
+  }
 }
 
 extension ReadingHistoryQueryWhereDistinct
@@ -544,6 +775,13 @@ extension ReadingHistoryQueryWhereDistinct
       distinctByLastReadAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastReadAt');
+    });
+  }
+
+  QueryBuilder<ReadingHistory, ReadingHistory, QDistinct> distinctByUserId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -566,6 +804,12 @@ extension ReadingHistoryQueryProperty
       lastReadAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastReadAt');
+    });
+  }
+
+  QueryBuilder<ReadingHistory, String, QQueryOperations> userIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userId');
     });
   }
 }
