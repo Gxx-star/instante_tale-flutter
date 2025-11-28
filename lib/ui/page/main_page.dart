@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,8 @@ import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
 import 'package:instant_tale/ui/component/stat_item.dart';
+import '../../database/models/book.dart';
+import '../../database/models/character.dart';
 import '../../features/character/character_provider.dart';
 import '../../main.dart';
 import '../component/add_character_card.dart';
@@ -161,7 +164,14 @@ class _MainPageState extends ConsumerState<MainPage> {
   }
 }
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
   final _scrollController = ScrollController();
   double _scrollPosition = 0.0;
   final swiperImages = [
@@ -173,8 +183,29 @@ class HomePage extends ConsumerWidget {
     'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-3fbf8ae1450353c2ad9db108c587d00a.jpg',
   ];
 
+  Future<void> _preloadSwiperImages(List<String> swiperImages) async {
+    if (swiperImages.isNotEmpty) {
+      // 如果有多个预加载项futures可以并发预加载
+      final futures = <Future<void>>[];
+      for (var swiperImage in swiperImages) {
+        futures.add(
+          precacheImage(CachedNetworkImageProvider(swiperImage), context),
+        );
+      }
+      await Future.wait(futures); // 等待所有图片加载完成
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadSwiperImages(swiperImages);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final _userState = ref.watch(userViewModelProvider);
     final _user = _userState.user;
     final _userViewModel = ref.watch(userViewModelProvider.notifier);
@@ -204,7 +235,8 @@ class HomePage extends ConsumerWidget {
         'rank': 3,
         'title': '海洋生物图鉴',
         'description': '小小科学家',
-        'imageUrl': 'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-a723f22b34355ddca9ba2fb08d720ef4.jpg',
+        'imageUrl':
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-a723f22b34355ddca9ba2fb08d720ef4.jpg',
         'likes': 5, // 0.5k
         'reads': 8.2, // 8.2k
       },
@@ -369,9 +401,7 @@ class HomePage extends ConsumerWidget {
                       },
                       itemCount: swiperImages.length,
                       autoplay: true,
-                      control: SwiperControl(
-                        color: Colors.white,
-                      ),
+                      control: SwiperControl(color: Colors.white),
                     ),
                   ),
                 ),
@@ -400,7 +430,7 @@ class HomePage extends ConsumerWidget {
                         imgUrl: 'assets/images/cang_shu.png',
                         title: '收藏',
                         value: '$collectionCount本',
-                        color:Colors.orange.shade900,
+                        color: Colors.orange.shade900,
                         backgroundColor: Color(0xFFFBD9CE),
                       ),
                     ],
@@ -686,6 +716,62 @@ class MyPage extends ConsumerStatefulWidget {
 }
 
 class _MyPageState extends ConsumerState<MyPage> {
+  Future<void> _preloadCharacters(List<CharacterCollection> characters) async {
+    if (characters.isNotEmpty) {
+      final futures = <Future<void>>[];
+      for (var character in characters) {
+        if (character.avatarUrl.isNotEmpty) {
+          futures.add(
+            precacheImage(
+              CachedNetworkImageProvider(character.avatarUrl),
+              context,
+            ),
+          );
+        }
+        if (character.threeViewUrl.isNotEmpty) {
+          futures.add(
+            precacheImage(
+              CachedNetworkImageProvider(character.threeViewUrl),
+              context,
+            ),
+          );
+        }
+      }
+      await Future.wait(futures);
+    }
+  }
+
+  Future<void> _preloadBooks(List<Book> books) async {
+    if (books.isNotEmpty) {
+      final futures = <Future<void>>[];
+      for (var book in books) {
+        if (book.coverUrl.isNotEmpty) {
+          futures.add(
+            precacheImage(CachedNetworkImageProvider(book.coverUrl), context),
+          );
+        }
+      }
+      await Future.wait(futures);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listenManual(characterListProvider, (previous, next) {
+        if (next is AsyncData && next.value != null) {
+          _preloadCharacters(next.value!); // 数据就绪后执行预加载
+        }
+      });
+      ref.listenManual(booksProvider, (previous, next) {
+        if (next is AsyncData && next.value != null) {
+          _preloadBooks(next.value!); // 数据就绪后执行预加载
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final _characterViewModel = ref.watch(characterViewModelProvider.notifier);

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/database/models/character.dart';
@@ -34,7 +35,7 @@ class CharacterCard extends StatelessWidget {
               // 圆形人物图片
               CircleAvatar(
                 radius: 32, // 直径 64，与 AddCharacterCard 保持一致
-                backgroundImage: NetworkImage(character.avatarUrl),
+                backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
                 backgroundColor: Colors.grey[200],
               ),
               const SizedBox(height: 12),

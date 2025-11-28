@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 // 用于表示”继续阅读“中的卡片内容
 class ReadingItemCard extends StatelessWidget {
@@ -38,8 +39,8 @@ class ReadingItemCard extends StatelessWidget {
             Positioned.fill(
               child: ColorFiltered(
                 colorFilter: const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                child: Image.network(
-                  imageUrl,
+                child: Image(
+                  image:CachedNetworkImageProvider(imageUrl),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.black,

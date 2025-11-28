@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,8 +46,8 @@ class MyBookCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               // 封面图片
-              Image.network(
-                book.coverUrl,
+              Image(
+                image: CachedNetworkImageProvider(book.coverUrl),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   // 封面加载失败时的占位

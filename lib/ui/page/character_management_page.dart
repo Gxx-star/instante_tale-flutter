@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -217,10 +218,17 @@ class _CharacterManagementPageState
                     child: _showAvatar
                         ? CircleAvatar(
                             radius: 60,
-                            backgroundImage: NetworkImage(character.avatarUrl),
+                            backgroundImage: CachedNetworkImageProvider(
+                              character.avatarUrl,
+                            ),
                             backgroundColor: const Color(0xFFF0EBFF),
                           )
-                        : Image.network(character.threeViewUrl, height: 200),
+                        : Image(
+                            image: CachedNetworkImageProvider(
+                              character.threeViewUrl,
+                            ),
+                            height: 200,
+                          ),
                   );
                 },
               ),
@@ -406,9 +414,7 @@ class _CharacterManagementPageState
                                 ),
                                 leading: CircleAvatar(
                                   radius: 25,
-                                  backgroundImage: NetworkImage(
-                                    character.avatarUrl,
-                                  ),
+                                  backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
                                   backgroundColor: const Color(0xFFF0EBFF),
                                 ),
                                 title: Text(
