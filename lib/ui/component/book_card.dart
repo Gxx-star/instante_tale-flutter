@@ -6,7 +6,7 @@ import 'package:instant_tale/main.dart';
 
 import '../../database/models/book.dart';
 
-// 绘本卡片
+// 绘本卡片（白底）
 class BookCard extends ConsumerWidget {
   final Book book;
   // 【新增】控制UI显示

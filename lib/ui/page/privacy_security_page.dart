@@ -160,6 +160,10 @@ class _SetPasswordPageState extends ConsumerState<SetPasswordPage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
+        title: Text(
+          "设置密码",
+          style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           onPressed: () {
             context.pop();
@@ -172,10 +176,6 @@ class _SetPasswordPageState extends ConsumerState<SetPasswordPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children:
             [
-              Text(
-                "设置密码",
-                style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
-              ),
               Padding(
                 padding: EdgeInsets.only(top: 50),
                 child: TextField(

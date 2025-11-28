@@ -4,10 +4,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_view_model.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
-
 import '../../database/models/character.dart';
 import '../../features/book/book_provider.dart';
 import '../../features/book/book_state.dart';
@@ -30,7 +30,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   int _currentPage = 0;
   final PageController _pageController = PageController();
   int _selectedBookType = 0;
-  bool _hasCharacterSelected = false;
+  String? _selectedCharacterId = null;
   String? _selectedCharacterName;
   final Set<String> _selectedStyles = {};
   final int _maxStyles = 3;
@@ -96,7 +96,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
     setState(() {
       _selectedBookType = type;
       if (type == 1) {
-        _hasCharacterSelected = false;
+        _selectedCharacterId = null;
         _selectedCharacterName = null;
       }
     });
@@ -105,7 +105,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   // Page1: 选择角色之后的回调
   void _handleCharacterSelection(String? id, String? name) {
     setState(() {
-      _hasCharacterSelected = id != null;
+      _selectedCharacterId = id;
       _selectedCharacterName = name;
     });
   }
@@ -147,7 +147,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
           return true;
         }
         if (_selectedBookType == 2) {
-          return _hasCharacterSelected;
+          return _selectedCharacterId != null;
         }
         return false;
       case 1:
@@ -234,7 +234,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   selectedBookType: _selectedBookType,
                   onSelectionChanged: _handleBookTypeSelection,
                   onCharacterSelected: _handleCharacterSelection,
-                  hasCharacterSelected: _hasCharacterSelected,
+                  hasCharacterSelected: _selectedCharacterId != null,
                   selectedCharacterName: _selectedCharacterName,
                 ),
                 Page2Style(
@@ -310,13 +310,23 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                           if (_currentPage < _totalPages - 1) {
                             _navigateToPage(_currentPage + 1);
                           } else {
+                            List<String> characters = [];
                             final List<String> storyTypes = _selectedStyles
                                 .toList();
                             final List<String> storyQualities = [_storyTheme];
-                            _bookViewModel.createBook(
-                              storyTypes,
-                              storyQualities,
-                            );
+                            if (_selectedCharacterId != null) {
+                              characters.add(_selectedCharacterId!);
+                              _bookViewModel.createExclusiveBook(
+                                storyTypes,
+                                storyQualities,
+                                characters,
+                              );
+                            } else {
+                              _bookViewModel.createBook(
+                                storyTypes,
+                                storyQualities,
+                              );
+                            }
                             context.pop();
                           }
                         }
@@ -349,52 +359,21 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   }
 }
 
-// 角色列表
-final List<CharacterCollection> _characterList = [
-  CharacterCollection(
-    characterId: "1",
-    characterName: "哈基米",
-    desc: "耄耋",
-    avatarUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    threeViewUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    authorId: "1",
-    createdAt: 123456789,
-  ),
-  CharacterCollection(
-    characterId: "2",
-    characterName: "耄耋女",
-    desc: "女孩",
-    avatarUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    threeViewUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    authorId: "2",
-    createdAt: 123456789,
-  ),
-];
-
 // “选择专属人物”页面
-class SelectCharacterPage extends StatefulWidget {
+class SelectCharacterPage extends ConsumerStatefulWidget {
   const SelectCharacterPage({super.key});
 
   @override
-  State<SelectCharacterPage> createState() => _SelectCharacterPageState();
+  ConsumerState<SelectCharacterPage> createState() =>
+      _SelectCharacterPageState();
 }
 
-class _SelectCharacterPageState extends State<SelectCharacterPage> {
-  String? _selectedCharacterId; // 跟踪当前选中的人物ID
-
-  @override
-  void initState() {
-    super.initState();
-    // 按照 createdAt 从早到晚排序
-    _characterList.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-  }
+class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
+  CharacterCollection? _selectedCharacter; // 跟踪当前选中的人物ID
 
   @override
   Widget build(BuildContext context) {
+    final _charactersListAsync = ref.watch(characterListProvider);
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
 
@@ -407,93 +386,103 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
         Color(0xFFe8d4f6), // Bottom-right softer pink
       ],
     );
-
-    return Scaffold(
-      backgroundColor: primaryColor,
-      appBar: AppBar(
-        toolbarHeight: 40.0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
-          onPressed: () => Navigator.of(context).pop(), // 默认返回 null
-        ),
-        title: const Text(
-          '选择专属人物',
-          style: TextStyle(
-            color: Color(0xfffbfafd),
-            fontWeight: FontWeight.w500,
-            fontSize: 18.0,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        titleSpacing: 0.0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: _headerGradient),
-        ),
-      ),
-      body: Column(
-        children: [
-          // AppBar 下方的副标题
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(10.0, 3.0, 20.0, 15.5),
-            decoration: const BoxDecoration(gradient: _headerGradient),
-            child: const Text(
-              '为绘本选择一个专属主角，让故事更生动',
-              style: TextStyle(color: Colors.white, fontSize: 15.0),
+    return _charactersListAsync.when(
+      data: (_characterList) {
+        return Scaffold(
+          backgroundColor: primaryColor,
+          appBar: AppBar(
+            toolbarHeight: 40.0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
+              onPressed: () => Navigator.of(context).pop(), // 默认返回 null
             ),
-          ),
-          // 滚动内容区域
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. 创建新人物按钮 (虚线边框) - *** COMPLETED HERE ***
-                  _buildCreateNewButton(context),
-                  const SizedBox(height: 24.0),
-
-                  // 2. "我的人物" 标题
-                  const Text(
-                    '我的人物',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-
-                  // 3. 人物列表
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _characterList.length,
-                    itemBuilder: (context, index) {
-                      final character = _characterList[index];
-                      final isSelected = _selectedCharacterId == character.id;
-                      return _CharacterCard(
-                        character: character,
-                        isSelected: isSelected,
-                        onPressed: () {
-                          setState(() {
-                            _selectedCharacterId = character.characterId;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ],
+            title: const Text(
+              '选择专属人物',
+              style: TextStyle(
+                color: Color(0xfffbfafd),
+                fontWeight: FontWeight.w500,
+                fontSize: 18.0,
               ),
             ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            titleSpacing: 0.0,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(gradient: _headerGradient),
+            ),
           ),
+          body: Column(
+            children: [
+              // AppBar 下方的副标题
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(10.0, 3.0, 20.0, 15.5),
+                decoration: const BoxDecoration(gradient: _headerGradient),
+                child: const Text(
+                  '为绘本选择一个专属主角，让故事更生动',
+                  style: TextStyle(color: Colors.white, fontSize: 15.0),
+                ),
+              ),
+              // 滚动内容区域
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. 创建新人物按钮 (虚线边框)
+                      _buildCreateNewButton(context),
+                      const SizedBox(height: 24.0),
 
-          // 底部 "确认选择" 按钮
-          _buildConfirmButton(context, accentColor),
-        ],
-      ),
+                      // 2. "我的人物" 标题
+                      const Text(
+                        '我的人物',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // 3. 人物列表
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _characterList.length,
+                        itemBuilder: (context, index) {
+                          final character = _characterList[index];
+                          final isSelected =
+                              _selectedCharacter?.characterId ==
+                              character.characterId;
+                          return _CharacterCard(
+                            character: character,
+                            isSelected: isSelected,
+                            onPressed: () {
+                              setState(() {
+                                _selectedCharacter = character;
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // 底部 "确认选择" 按钮
+              _buildConfirmButton(context, accentColor),
+            ],
+          ),
+        );
+      },
+      error: (e, s) {
+        return Text('error');
+      },
+      loading: () {
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 
@@ -576,11 +565,11 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _selectedCharacterId == null
+            onPressed: _selectedCharacter == null
                 ? null
                 : () {
                     // 确认选择，关闭此页面并返回选中的ID
-                    Navigator.of(context).pop(_selectedCharacterId);
+                    Navigator.of(context).pop(_selectedCharacter);
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
@@ -710,7 +699,7 @@ class _CharacterCard extends StatelessWidget {
               ),
               const SizedBox(width: 8.0),
               _InfoTag(
-                text: '${character.createdAt}岁',
+                text: '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 color: const Color(0xfff7e8f2),
               ),
             ],
@@ -843,17 +832,20 @@ class Page1Type extends StatelessWidget {
 
   // 点击选择人物之后的回调
   void _handleSelectCharacter(BuildContext context) async {
-    final String? selectedId = await Navigator.push<String?>(
-      context,
-      MaterialPageRoute<String?>(
-        builder: (context) => const SelectCharacterPage(),
-      ),
-    );
-    String? selectedName;
-    if (selectedId != null) {
-      selectedName = "写死";
+    final CharacterCollection? selectedCharacter =
+        await Navigator.push<CharacterCollection?>(
+          context,
+          MaterialPageRoute<CharacterCollection?>(
+            builder: (context) => const SelectCharacterPage(),
+          ),
+        );
+    if (selectedCharacter == null) {
+      return;
     }
-    onCharacterSelected(selectedId, selectedName);
+    onCharacterSelected(
+      selectedCharacter.characterId,
+      selectedCharacter.characterName,
+    );
   }
 
   @override

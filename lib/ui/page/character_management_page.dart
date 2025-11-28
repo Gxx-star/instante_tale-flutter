@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 
 import '../../database/models/character.dart';
@@ -19,22 +20,25 @@ class _CharacterManagementPageState
     extends ConsumerState<CharacterManagementPage> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  late bool _showAvatar = true;
 
   // 字母导航条：A-Z + #
-    final List<String> _initials = List.generate(
+  final List<String> _initials = List.generate(
     26,
     (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
   ).toList()..add('#');
 
   // 用于存储每个字母组的第一个列表项的 GlobalKey
   final Map<String, GlobalKey> _initialKeys = {};
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterViewModelProvider.notifier).updateSearchKeyword('');
     });
   }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -66,7 +70,7 @@ class _CharacterManagementPageState
   // 顶部导航栏
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 10),
+      padding: const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
       decoration: const BoxDecoration(color: Color(0xFFF0F0FF)),
       child: Column(
         children: [
@@ -202,11 +206,25 @@ class _CharacterManagementPageState
                 ),
               ),
               // 头像
-              CircleAvatar(
-                radius: 60,
-                backgroundImage: NetworkImage(character.avatarUrl),
-                backgroundColor: const Color(0xFFF0EBFF),
+              StatefulBuilder(
+                builder: (context, setState) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showAvatar = !_showAvatar;
+                      });
+                    },
+                    child: _showAvatar
+                        ? CircleAvatar(
+                            radius: 60,
+                            backgroundImage: NetworkImage(character.avatarUrl),
+                            backgroundColor: const Color(0xFFF0EBFF),
+                          )
+                        : Image.network(character.threeViewUrl, height: 200),
+                  );
+                },
               ),
+              Text('点击切换头像/三视图', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
               // 名字
               Text(
@@ -221,6 +239,12 @@ class _CharacterManagementPageState
               // 描述
               Text(
                 character.desc,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
@@ -327,6 +351,10 @@ class _CharacterManagementPageState
     // 获取排序后的字母键
     final groupedKeys = _charactersAsync.value?.keys.toList() ?? [];
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140),
+        child: _buildAppBar(),
+      ),
       backgroundColor: const Color(0xFFF5F0FF), // 柔和背景色
       body: Stack(
         children: [
@@ -334,7 +362,6 @@ class _CharacterManagementPageState
           CustomScrollView(
             controller: _scrollController,
             slivers: [
-              SliverToBoxAdapter(child: _buildAppBar()), // 顶部栏和搜索框
               _charactersAsync.when(
                 data: (groupedMap) {
                   if (groupedMap.isEmpty && state.searchKeyword == '') {
@@ -405,41 +432,39 @@ class _CharacterManagementPageState
                           }).toList(),
                         ),
                       );
-                    }
-                    else{
+                    } else {
                       return SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                            final character = state.filteredList[index];
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 8,
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final character = state.filteredList[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
+                            leading: CircleAvatar(
+                              radius: 25,
+                              backgroundImage: NetworkImage(
+                                character.avatarUrl,
                               ),
-                              leading: CircleAvatar(
-                                radius: 25,
-                                backgroundImage: NetworkImage(character.avatarUrl),
-                                backgroundColor: const Color(0xFFF0EBFF),
+                              backgroundColor: const Color(0xFFF0EBFF),
+                            ),
+                            title: Text(
+                              character.characterName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF333333),
                               ),
-                              title: Text(
-                                character.characterName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF333333),
-                                ),
-                              ),
-                              subtitle: Text(
-                                character.desc,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.grey[500]),
-                              ),
-                              onTap: () => _showCharacterCard(character),
-                            );
-                          },
-                          childCount: state.filteredList.length,
-                        ),
+                            ),
+                            subtitle: Text(
+                              character.desc,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Colors.grey[500]),
+                            ),
+                            onTap: () => _showCharacterCard(character),
+                          );
+                        }, childCount: state.filteredList.length),
                       );
                     }
                   }

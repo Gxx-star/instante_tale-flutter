@@ -38,6 +38,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
+        decoration: BoxDecoration(color: Color(0xFFFFF0F3)),
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children:
@@ -178,7 +179,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: Text("登录"),
           ),
         ),
-        Text(loginState.message == null ? "请登录" : loginState.message!),
       ],
     );
   }
@@ -237,7 +237,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: Text("登录"),
           ),
         ),
-        Text(loginState.message == null ? "请登录" : loginState.message!),
       ],
     );
   }

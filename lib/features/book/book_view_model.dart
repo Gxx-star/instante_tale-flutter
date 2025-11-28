@@ -37,6 +37,47 @@ class BookViewModel extends StateNotifier<BookState> {
       );
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
+      print(e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: e.toString());
+    }
+  }
+
+  Future<void> createExclusiveBook(
+    List<String> storyTypes,
+    List<String> storyQualities,
+    List<String> charactersId,
+  ) async {
+    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    try {
+      await _bookRepository.createExclusiveBook(
+        storyTypes,
+        storyQualities,
+        charactersId,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
+      );
+    } on RepositoryException catch (e) {
+      state = state.copyWith(isLoading: false, message: e.message);
+      print(e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: e.toString());
+    }
+  }
+  Future<void> deleteBook(
+      String bookId
+      ) async {
+    state = state.copyWith(isLoading: true, message: null);
+    try {
+      await _bookRepository.deleteBook(bookId);
+      state = state.copyWith(
+        isLoading: false,
+        message: "删除成功",
+      );
+    } on RepositoryException catch (e) {
+      state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
@@ -70,6 +111,12 @@ class BookViewModel extends StateNotifier<BookState> {
 
   // 打开绘本
   Future<void> loadBook(Book book) async {
-    state = state.copyWith(isLoading: false, message: null, currentBook: book,currentPage: 0);
+    state = state.copyWith(
+      isLoading: false,
+      message: null,
+      currentBook: book,
+      currentPage: 0,
+    );
+    _bookRepository.saveReadingHistory(book.bookId);
   }
 }

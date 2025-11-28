@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:instant_tale/database/models/book.dart';
 import 'package:instant_tale/database/models/character.dart';
+import 'package:instant_tale/database/models/reading_history.dart';
 import 'package:instant_tale/database/models/user.dart';
+import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -32,7 +34,7 @@ class AppGlobals {
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
     final dir = await getApplicationCacheDirectory();
-    _isar = await Isar.open([BookSchema, UserSchema,CharacterCollectionSchema], directory: dir.path);
+    _isar = await Isar.open([BookSchema, UserSchema,CharacterCollectionSchema,ReadingHistorySchema], directory: dir.path);
   }
 
   Future<void> saveToken(String token) async {
@@ -44,4 +46,20 @@ class AppGlobals {
     globalToken = null;
     await _secureStorage.deleteAll();
   }
+  String formatTimestamp(int timestamp) {
+    DateTime date = DateTime.fromMillisecondsSinceEpoch((timestamp * 1000).toInt());
+    DateFormat formatter = DateFormat('yyyy年MM月dd日 HH:mm:ss');
+    return formatter.format(date);
+  }
+  int calculateAge(int birthTimestamp) {
+    final now = DateTime.now();
+    final birthDate = DateTime.fromMillisecondsSinceEpoch((birthTimestamp * 1000).toInt());
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
 }

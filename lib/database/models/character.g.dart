@@ -48,8 +48,13 @@ const CharacterCollectionSchema = CollectionSchema(
       name: r'desc',
       type: IsarType.string,
     ),
-    r'threeViewUrl': PropertySchema(
+    r'pinyinInitial': PropertySchema(
       id: 6,
+      name: r'pinyinInitial',
+      type: IsarType.string,
+    ),
+    r'threeViewUrl': PropertySchema(
+      id: 7,
       name: r'threeViewUrl',
       type: IsarType.string,
     )
@@ -79,6 +84,7 @@ int _characterCollectionEstimateSize(
   bytesCount += 3 + object.characterId.length * 3;
   bytesCount += 3 + object.characterName.length * 3;
   bytesCount += 3 + object.desc.length * 3;
+  bytesCount += 3 + object.pinyinInitial.length * 3;
   bytesCount += 3 + object.threeViewUrl.length * 3;
   return bytesCount;
 }
@@ -95,7 +101,8 @@ void _characterCollectionSerialize(
   writer.writeString(offsets[3], object.characterName);
   writer.writeLong(offsets[4], object.createdAt);
   writer.writeString(offsets[5], object.desc);
-  writer.writeString(offsets[6], object.threeViewUrl);
+  writer.writeString(offsets[6], object.pinyinInitial);
+  writer.writeString(offsets[7], object.threeViewUrl);
 }
 
 CharacterCollection _characterCollectionDeserialize(
@@ -111,7 +118,7 @@ CharacterCollection _characterCollectionDeserialize(
     characterName: reader.readStringOrNull(offsets[3]) ?? '',
     createdAt: reader.readLongOrNull(offsets[4]) ?? 0,
     desc: reader.readStringOrNull(offsets[5]) ?? '',
-    threeViewUrl: reader.readStringOrNull(offsets[6]) ?? '',
+    threeViewUrl: reader.readStringOrNull(offsets[7]) ?? '',
   );
   object.id = id;
   return object;
@@ -137,6 +144,8 @@ P _characterCollectionDeserializeProp<P>(
     case 5:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readStringOrNull(offset) ?? '') as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1032,6 +1041,142 @@ extension CharacterCollectionQueryFilter on QueryBuilder<CharacterCollection,
   }
 
   QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pinyinInitial',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'pinyinInitial',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'pinyinInitial',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'pinyinInitial',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'pinyinInitial',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'pinyinInitial',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'pinyinInitial',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'pinyinInitial',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pinyinInitial',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
+      pinyinInitialIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'pinyinInitial',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterFilterCondition>
       threeViewUrlEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1261,6 +1406,20 @@ extension CharacterCollectionQuerySortBy
   }
 
   QueryBuilder<CharacterCollection, CharacterCollection, QAfterSortBy>
+      sortByPinyinInitial() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinyinInitial', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterSortBy>
+      sortByPinyinInitialDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinyinInitial', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterSortBy>
       sortByThreeViewUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'threeViewUrl', Sort.asc);
@@ -1376,6 +1535,20 @@ extension CharacterCollectionQuerySortThenBy
   }
 
   QueryBuilder<CharacterCollection, CharacterCollection, QAfterSortBy>
+      thenByPinyinInitial() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinyinInitial', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterSortBy>
+      thenByPinyinInitialDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinyinInitial', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QAfterSortBy>
       thenByThreeViewUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'threeViewUrl', Sort.asc);
@@ -1436,6 +1609,14 @@ extension CharacterCollectionQueryWhereDistinct
   }
 
   QueryBuilder<CharacterCollection, CharacterCollection, QDistinct>
+      distinctByPinyinInitial({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'pinyinInitial',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CharacterCollection, CharacterCollection, QDistinct>
       distinctByThreeViewUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'threeViewUrl', caseSensitive: caseSensitive);
@@ -1488,6 +1669,13 @@ extension CharacterCollectionQueryProperty
   QueryBuilder<CharacterCollection, String, QQueryOperations> descProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'desc');
+    });
+  }
+
+  QueryBuilder<CharacterCollection, String, QQueryOperations>
+      pinyinInitialProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'pinyinInitial');
     });
   }
 

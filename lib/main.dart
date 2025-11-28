@@ -12,6 +12,7 @@ import 'package:instant_tale/ui/page/edit_profile_page.dart';
 import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
+import 'package:instant_tale/ui/page/my_book_page.dart';
 import 'package:instant_tale/ui/page/privacy_security_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
 import 'package:instant_tale/ui/page/storybook_plaza_page.dart';
@@ -50,6 +51,7 @@ class AppRouteNames {
   static const String characterManagementPage = 'character-management-page';
   static const String privacySecurityPage = 'privacy-security-page';
   static const String setPasswordPage = 'set-password-page';
+  static const String myBooksPage = 'my-books-page';
 }
 
 final _router = GoRouter(
@@ -60,6 +62,12 @@ final _router = GoRouter(
         return AppGlobals().isLoggedIn
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
+      },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.myBooksPage}',
+      builder: (context, state) {
+        return MyBooksPage();
       },
     ),
     GoRoute(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:instant_tale/database/models/character.dart';
+import 'package:instant_tale/main.dart';
 
 // 已有人物卡片
 class CharacterCard extends StatelessWidget {
@@ -14,7 +16,7 @@ class CharacterCard extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8.0, top: 4.0, bottom: 4.0),
       child: InkWell(
         onTap: () {
-
+          context.push('/${AppRouteNames.characterManagementPage}');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -57,6 +59,7 @@ class CharacterCard extends StatelessWidget {
                 ),
                 child: Text(
                   character.desc,
+                  maxLines: 2,
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

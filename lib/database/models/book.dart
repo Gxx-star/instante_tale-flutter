@@ -9,6 +9,7 @@ part 'book.g.dart';
 @Name('books')
 class Book {
   Id id = Isar.autoIncrement;
+  @Index()
   String bookId;
   String bookName;
   String coverUrl;
