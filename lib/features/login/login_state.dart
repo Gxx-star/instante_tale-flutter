@@ -13,8 +13,8 @@ class LoginState {
     this.isLoading = false,
     this.message,
     this.loginMethod = "pwd",
-    this.phone = "",
-    this.password = "",
+    this.phone = "15633008625",
+    this.password = "123456789",
     this.smsCode = "",
     this.loginData,
   });

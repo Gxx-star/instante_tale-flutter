@@ -503,11 +503,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.watch_later_outlined,
-                                color: Color(0xFFd94897),
-                                size: 20,
-                              ),
                               const SizedBox(width: 6),
                               Text(
                                 '继续阅读',
@@ -585,11 +580,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                         child: Row(
                           children: [
                             // 粉色增长箭头
-                            Icon(
-                              Icons.trending_up,
-                              color: Color(0xFFd94897),
-                              size: 20,
-                            ),
                             const SizedBox(width: 6),
                             Text(
                               '热门榜单',
@@ -646,11 +636,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                         child: Row(
                           children: [
                             // 新增：广场图标 (使用 'apps' 或 'grid_view')
-                            Icon(
-                              Icons.apps_rounded,
-                              color: Color(0xFFd94897),
-                              size: 20,
-                            ),
                             const SizedBox(width: 6),
                             Text(
                               '绘本广场',
@@ -1152,12 +1137,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       child: Row(
                         children: [
                           // 左侧：Icon + 文本
-                          const Icon(
-                            Icons.book_outlined,
-                            color: Color(0xFFEA80B7),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '我的绘本',
                             style: TextStyle(
@@ -1215,12 +1195,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       // 【修改】水平 padding 调整为 0.0
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.favorite_outline, // 粉色爱心 icon
-                            color: Color(0xFFEA80B7),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '我的收藏',
                             style: TextStyle(
@@ -1273,12 +1248,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       child: Row(
                         children: [
                           // 左侧：Icon + 文本
-                          const Icon(
-                            Icons.person_outline, // 粉色人物 icon
-                            color: Color(0xFFEA80B7),
-                            size: 24, // 调整大小以匹配
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '我的人物',
                             style: TextStyle(
@@ -1360,12 +1330,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.settings, // 粉色的设置 icon
-                            color: Color(0xFFEA80B7),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '账号管理',
                             style: TextStyle(

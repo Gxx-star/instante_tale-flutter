@@ -82,14 +82,18 @@ class BookApi {
 
   Future<ApiResponse<List<Book>>> findBookList(String keyword) async {
     try {
-      final data = {'keyword': keyword};
+      final data = {
+        'keyword': keyword
+      };
       final response = await _dio.get('/book/query', data: data);
       final listJson = response.data['data'] as List<dynamic>;
       final books = listJson.map((e) => Book.fromJson(e)).toList();
       return ApiResponse(
         code: response.data['code'],
         message: response.data['msg'],
-        data: response.data['data'] != null ? books : null,
+        data: response.data['data'] != null
+            ? books
+            : null,
       );
     } on DioException catch (e) {
       throw ExceptionHandler.handle(e);

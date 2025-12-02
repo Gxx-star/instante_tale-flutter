@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide Page;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,15 +8,23 @@ import 'package:instant_tale/database/models/page.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/ui/component/glass_button.dart';
 import 'package:preload_page_view/preload_page_view.dart';
+
+import '../../database/models/book.dart';
+
 class BookReaderPage extends ConsumerStatefulWidget {
   const BookReaderPage({super.key});
 
   @override
   ConsumerState<BookReaderPage> createState() => _BookReaderPageState();
 }
+
 class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   final PreloadPageController _pageController = PreloadPageController();
-
+  final Map<int, GlobalKey> _pageKeys = {};
+  final List<Map<String, dynamic>> _shareTargets = [
+    {'name': '微信', 'icon': 'assets/images/wei_xin.png', 'type': 'wechat'},
+    {'name': 'QQ好友', 'icon': 'assets/images/qq.png', 'type': 'qq'},
+  ];
   @override
   void dispose() {
     _pageController.dispose();
@@ -28,7 +35,6 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(bookViewModelProvider);
     final book = state.currentBook;
-
     if (book == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -58,7 +64,8 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           // 绘本核心内容 (PageView)
           Positioned.fill(
             child: GestureDetector(
-              onTap: () => ref.read(bookViewModelProvider.notifier).toggleControls(),
+              onTap: () =>
+                  ref.read(bookViewModelProvider.notifier).toggleControls(),
               child: PreloadPageView.builder(
                 controller: _pageController,
                 preloadPagesCount: book.content.length,
@@ -80,7 +87,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             top: state.isControlsVisible ? 0 : -100,
             left: 0,
             right: 0,
-            child: _buildTopBar(context, book.bookName),
+            child: _buildTopBar(context, book),
           ),
 
           // 底部文本与控制区 (可隐藏)
@@ -89,54 +96,119 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             bottom: state.isControlsVisible ? 30 : -200,
             left: 20,
             right: 20,
-            child: _buildBottomPanel(currentContent, book.content.length, state.currentPage + 1),
+            child: _buildBottomPanel(
+              currentContent,
+              book.content.length,
+              state.currentPage + 1,
+            ),
           ),
 
           // 角色浮窗按钮 (如果当前页有特定角色交互，可以在这里增加逻辑)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             right: 20,
-            bottom: state.isControlsVisible ? 180 : -100,
+            bottom: state.isControlsVisible ? 115 : -100,
             child: _buildCharacterFab(book.characters),
-          )
+          ),
         ],
       ),
     );
   }
-
   // 构建绘本单页画面
   Widget _buildBookPage(BookPage content) {
-    return Center(
-      child: Hero(
-        tag: content.image_url,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              )
-            ],
-          ),
-          clipBehavior: Clip.hardEdge,
-          // 模拟网络图片，实际使用 CachedNetworkImage
-          child: AspectRatio(
-            aspectRatio: 3 / 4, // 常见的绘本比例
-            child: Container(
-              color: Colors.white,
-              child: Image.network(
-                content.image_url,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, chunk) {
-                  if (chunk == null) return child;
-                  return Center(child: Icon(Icons.image, color: Colors.grey[300], size: 50));
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
-                },
+    if (!_pageKeys.containsKey(content.current_page)) {
+      _pageKeys[content.current_page] = GlobalKey();
+    }
+    return RepaintBoundary(
+      key: _pageKeys[content.current_page],
+      child: Center(
+        child: Hero(
+          tag: content.image_url,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.hardEdge,
+            // 模拟网络图片，实际使用 CachedNetworkImage
+            child: AspectRatio(
+              aspectRatio: 3 / 4, // 常见的绘本比例
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // 图片
+                  Image.network(
+                    content.image_url,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, chunk) {
+                      if (chunk == null) return child;
+                      return Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.grey[300],
+                          size: 50,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(Icons.broken_image, color: Colors.grey),
+                      );
+                    },
+                  ),
+                  // 文字
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 25,
+                      ),
+                      // 使用黑色渐变，从透明到半透明深色
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.0), // 上部透明
+                            Colors.black.withOpacity(0.7), // 下部半透明深色
+                          ],
+                          stops: const [0.3, 1.0], // 渐变从底部 70% 处开始
+                        ),
+                      ),
+                      child: Text(
+                        content.text, // 假设 BookPage 结构中有 text 字段
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          // 白色文字，与深色蒙层形成对比
+                          height: 1.5,
+                          fontWeight: FontWeight.w500,
+                          shadows: [
+                            // 添加柔和阴影，即使在较亮的图片部分也能清晰可见
+                            const Shadow(
+                              offset: Offset(1.0, 1.0),
+                              blurRadius: 3.0,
+                              color: Color.fromARGB(150, 0, 0, 0),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3, // 限制行数
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -146,7 +218,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   }
 
   // 顶部导航
-  Widget _buildTopBar(BuildContext context, String title) {
+  Widget _buildTopBar(BuildContext context, Book book) {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -159,7 +231,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             const SizedBox(width: 16),
             Expanded(
               child: Text(
-                title,
+                book.bookName,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -167,6 +239,12 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
+            ),
+            GlassButton(
+              icon: Icons.share,
+              onTap: () => {
+                ref.read(bookViewModelProvider.notifier).shareBookPdf(book.content,_pageKeys,book.bookName)
+              },
             ),
           ],
         ),
@@ -185,7 +263,10 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.85),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF7090B0).withOpacity(0.1),
@@ -202,37 +283,34 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF9F9F), // 强调色，类似截图中的VIP/Search按钮
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       "Page $displayIndex / $totalPage",
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const Icon(Icons.volume_up_rounded, color: Color(0xFF9A8BB5)),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                content.text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF4A4A4A),
-                  height: 1.5,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 6,
-                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
               // 进度条
               LinearProgressIndicator(
                 value: displayIndex / totalPage,
                 backgroundColor: const Color(0xFFEFEFEF),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFBFA2FF)),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFFBFA2FF),
+                ),
                 borderRadius: BorderRadius.circular(4),
               ),
             ],
@@ -255,25 +333,25 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
         height: 56,
         width: 56,
         decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF7E59F6).withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              )
-            ]
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF7E59F6).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(3),
         child: Container(
           decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                  colors: [Color(0xFFFFA1C9), Color(0xFFBFA2FF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight
-              )
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFFFFA1C9), Color(0xFFBFA2FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
           child: const Icon(Icons.face, color: Colors.white),
         ),
@@ -282,65 +360,85 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   }
 
   // 角色详情弹窗
-  void _showCharactersSheet(BuildContext context, List<CharacterEmbedded> characters) {
+  void _showCharactersSheet(
+    BuildContext context,
+    List<CharacterEmbedded> characters,
+  ) {
     showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.transparent,
-        builder: (context) {
-          return Container(
-            height: 300,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                Container(height: 5, width: 40, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
-                const Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Text("登场角色", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: 300,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                height: 5,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: characters.length,
-                    itemBuilder: (context, index) {
-                      final char = characters[index];
-                      return Container(
-                        width: 120,
-                        margin: const EdgeInsets.only(right: 16),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundColor: const Color(0xFFF0EBFF),
-                              backgroundImage: NetworkImage(char.avatarUrl),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              char.characterName.trim(),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              char.desc,
-                              maxLines: 2,
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+              ),
+              const Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text(
+                  "登场角色",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
                   ),
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        }
+              ),
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: characters.length,
+                  itemBuilder: (context, index) {
+                    final char = characters[index];
+                    return Container(
+                      width: 120,
+                      margin: const EdgeInsets.only(right: 16),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor: const Color(0xFFF0EBFF),
+                            backgroundImage: NetworkImage(char.avatarUrl),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            char.characterName.trim(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            char.desc,
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
     );
   }
 }
