@@ -36,8 +36,33 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   final int _maxStyles = 3;
   bool _isCollectionBook = false;
   String _storyTheme = '';
-  int? _selectedVoiceIndex;
-
+  int? _selectedModel;
+  final List<Map<String, dynamic>> _modelOptions = [
+    {
+      'title': '极速模型',
+      'subtitle': '生成速度快，但是质量稍逊色',
+      'themeColor': Colors.pinkAccent, // 粉色
+      'model': 'FAST',
+    },
+    {
+      'title': '普通模型',
+      'subtitle': '生成速度较快，质量相对好一点',
+      'themeColor': Colors.orangeAccent, // 橙色
+      'model': 'AUTO',
+    },
+    {
+      'title': '专业模型',
+      'subtitle': '生成速度慢，生成的质量好',
+      'themeColor': Colors.lightGreen, // 绿色
+      'model': 'PRO',
+    },
+    {
+      'title': '默认模型',
+      'subtitle': '生成速度很慢，生成的质量中等，但故事连贯',
+      'themeColor': Colors.lightBlueAccent, // 蓝色
+      'model': 'DEFAULT',
+    },
+  ];
   // 故事风格选项
   final List<Map<String, dynamic>> _styleOptions = [
     {
@@ -135,7 +160,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   // Page4：选择音色之后的回调
   void _handleVoiceSelection(int? index) {
     setState(() {
-      _selectedVoiceIndex = index;
+      _selectedModel = index;
     });
   }
 
@@ -155,7 +180,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
       case 2:
         return _storyTheme.isNotEmpty;
       case 3:
-        return _selectedVoiceIndex != null;
+        return _selectedModel != null;
       default:
         return true;
     }
@@ -253,9 +278,10 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   initialStoryTheme: _storyTheme,
                   onThemeChanged: _handleStoryThemeChanged,
                 ),
-                Page4Voice(
-                  selectedVoiceIndex: _selectedVoiceIndex,
-                  onVoiceChanged: _handleVoiceSelection,
+                Page4Model(
+                  selectedModel: _selectedModel,
+                  onModelChanged: _handleVoiceSelection,
+                  modelList: _modelOptions,
                 ),
               ],
             ),
@@ -316,15 +342,17 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                             final List<String> storyQualities = [_storyTheme];
                             if (_selectedCharacterId != null) {
                               characters.add(_selectedCharacterId!);
-                              _bookViewModel.createExclusiveBook(
+                              _bookViewModel.generateExclusiveBook(
                                 storyTypes,
                                 storyQualities,
                                 characters,
+                                _modelOptions[_selectedModel!]['model'],
                               );
                             } else {
-                              _bookViewModel.createBook(
+                              _bookViewModel.generateBook(
                                 storyTypes,
                                 storyQualities,
+                                _modelOptions[_selectedModel!]['model']
                               );
                             }
                             context.pop();
@@ -699,7 +727,8 @@ class _CharacterCard extends StatelessWidget {
               ),
               const SizedBox(width: 8.0),
               _InfoTag(
-                text: '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
+                text:
+                    '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 color: const Color(0xfff7e8f2),
               ),
             ],
@@ -1614,6 +1643,7 @@ class _Page3ContentState extends State<Page3Content> {
                   focusNode: _focusNode,
                   enabled: !isInputLocked,
                   maxLines: 4,
+                  maxLength: 100,
                   cursorColor: accentColor,
                   decoration: InputDecoration(
                     hintText:
@@ -1921,49 +1951,24 @@ class _ThemeCardState extends State<ThemeCard>
 }
 
 // Page4
-class Page4Voice extends StatefulWidget {
-  final int? selectedVoiceIndex;
-  final Function(int?) onVoiceChanged;
-
-  const Page4Voice({
+class Page4Model extends StatefulWidget {
+  final int? selectedModel;
+  final Function(int?) onModelChanged;
+  final List<Map<String, dynamic>> modelList;
+  const Page4Model({
     super.key,
-    required this.selectedVoiceIndex,
-    required this.onVoiceChanged,
+    required this.selectedModel,
+    required this.onModelChanged,
+    required this.modelList,
   });
 
   @override
-  State<Page4Voice> createState() => _Page4VoiceState();
+  State<Page4Model> createState() => _Page4ModelState();
 }
 
-class _Page4VoiceState extends State<Page4Voice> {
-  // 音色列表
-  final List<Map<String, dynamic>> _voiceOptions = [
-    {
-      'title': '甜美',
-      'subtitle': '温柔甜美的女声',
-      'themeColor': Colors.pinkAccent, // 粉色
-    },
-    {
-      'title': '温暖',
-      'subtitle': '温暖亲切的男声',
-      'themeColor': Colors.orangeAccent, // 橙色
-    },
-    {
-      'title': '活泼',
-      'subtitle': '活泼有趣的童声',
-      'themeColor': Colors.lightGreen, // 绿色
-    },
-    {
-      'title': '轻柔',
-      'subtitle': '轻柔舒缓的女声',
-      'themeColor': Colors.lightBlueAccent, // 蓝色
-    },
-    {
-      'title': '无声',
-      'subtitle': '安静享受绘本世界',
-      'themeColor': Colors.blueGrey, // 灰色
-    },
-  ];
+class _Page4ModelState extends State<Page4Model> {
+  // 模型列表
+
 
   @override
   Widget build(BuildContext context) {
@@ -1973,17 +1978,12 @@ class _Page4VoiceState extends State<Page4Voice> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题区域：麦克风图标 + 文本
+          // 标题区域
           Row(
             children: [
-              const Icon(
-                Icons.mic_none_rounded,
-                color: Colors.pinkAccent,
-                size: 24.0,
-              ),
               const SizedBox(width: 8.0),
               const Text(
-                '选择朗读音色',
+                '选择生成模型',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 18.0,
@@ -1994,18 +1994,18 @@ class _Page4VoiceState extends State<Page4Voice> {
           ),
           const SizedBox(height: 20.0),
 
-          // 音色列表
+          // 模型列表
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _voiceOptions.length,
+            itemCount: widget.modelList.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12.0),
             itemBuilder: (context, index) {
-              final option = _voiceOptions[index];
-              final bool isSelected = widget.selectedVoiceIndex == index;
+              final option = widget.modelList[index];
+              final bool isSelected = widget.selectedModel == index;
               final Color themeColor = option['themeColor'];
 
-              return _buildVoiceCard(
+              return _buildModelCard(
                 index: index,
                 title: option['title'],
                 subtitle: option['subtitle'],
@@ -2022,8 +2022,8 @@ class _Page4VoiceState extends State<Page4Voice> {
     );
   }
 
-  // 音色卡片
-  Widget _buildVoiceCard({
+  // 模型卡片
+  Widget _buildModelCard({
     required int index,
     required String title,
     required String subtitle,
@@ -2033,9 +2033,9 @@ class _Page4VoiceState extends State<Page4Voice> {
     return GestureDetector(
       onTap: () {
         if (isSelected) {
-          widget.onVoiceChanged(null);
+          widget.onModelChanged(null);
         } else {
-          widget.onVoiceChanged(index);
+          widget.onModelChanged(index);
         }
       },
       child: AnimatedContainer(

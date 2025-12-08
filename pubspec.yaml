@@ -34,6 +34,7 @@ dependencies:
   pdf: ^3.0.0
   android_intent_plus: ^3.1.9
   share_plus: ^7.0.2
+  fluwx: ^5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

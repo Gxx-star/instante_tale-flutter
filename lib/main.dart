@@ -16,8 +16,6 @@ import 'package:instant_tale/ui/page/privacy_security_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
 import 'package:instant_tale/ui/page/storybook_plaza_page.dart';
 import 'package:instant_tale/ui/theme.dart';
-import 'features/book/book_provider.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +29,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(routerConfig: _router, theme: AppTheme.light);
+    return MaterialApp.router(
+      routerConfig: _router,
+      theme: AppTheme.light,
+      debugShowCheckedModeBanner: false,
+    );
   }
 }
 

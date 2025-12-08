@@ -47,31 +47,29 @@ class _CharacterManagementPageState
     super.dispose();
   }
 
-  // 滚动到对应字母组
   void _scrollToInitial(String initial) {
-    final key = _initialKeys[initial];
-    if (key != null) {
-      final RenderBox? renderBox =
-          key.currentContext?.findRenderObject() as RenderBox?;
-      if (renderBox != null) {
-        final position = renderBox
-            .localToGlobal(Offset.zero, ancestor: context.findRenderObject())
-            .dy;
-        // 减去 AppBar 和搜索框的高度，确保字母组正好在顶部
-        const headerHeight = kToolbarHeight + 60;
-        _scrollController.animateTo(
-          _scrollController.offset + position - headerHeight,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
+    final asyncValue = ref.read(groupedCharactersProvider);
+    final groupedMap = asyncValue.value;
+    if (groupedMap == null) return;
+    final sortedKeys = groupedMap.keys.toList()..sort();
+    double offset = 0.0;
+    for (var key in sortedKeys) {
+      if (key == initial) break; // 找到目标，停止累加
+      offset += 32;
+      final itemCount = groupedMap[key]?.length ?? 0;
+      offset += itemCount * 88;
     }
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   // 顶部导航栏
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
+      padding: const EdgeInsets.only(top: 15, left: 20, right: 20, bottom: 10),
       decoration: const BoxDecoration(color: Color(0xFFF0F0FF)),
       child: Column(
         children: [
@@ -248,6 +246,7 @@ class _CharacterManagementPageState
               Text(
                 character.desc,
                 textAlign: TextAlign.center,
+                maxLines: 10,
                 style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const SizedBox(height: 8),
@@ -382,19 +381,13 @@ class _CharacterManagementPageState
                         delegate: SliverChildListDelegate(
                           groupedKeys.expand((initial) {
                             final group = groupedMap[initial]!;
-
                             // 头部字母分组
                             final header = Container(
-                              key: _initialKeys.putIfAbsent(
-                                initial,
-                                () => GlobalKey(),
-                              ), // 记录头部 Key
-                              padding: const EdgeInsets.only(
-                                left: 20,
-                                top: 8,
-                                bottom: 4,
-                              ),
-                              color: const Color(0xFFEBE0FF), // 浅紫色背景
+                              height: 32,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.only(left: 20),
+                              color: const Color(0xFFEBE0FF),
+                              // 浅紫色背景
                               child: Text(
                                 initial,
                                 style: const TextStyle(
@@ -407,31 +400,39 @@ class _CharacterManagementPageState
 
                             // 列表项
                             final items = group.map((character) {
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 8,
-                                ),
-                                leading: CircleAvatar(
-                                  radius: 25,
-                                  backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
-                                  backgroundColor: const Color(0xFFF0EBFF),
-                                ),
-                                title: Text(
-                                  character.characterName,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF333333),
+                              return SizedBox(
+                                height: 88,
+                                child: Center(
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 8,
+                                    ),
+                                    leading: CircleAvatar(
+                                      radius: 25,
+                                      backgroundImage:
+                                          CachedNetworkImageProvider(
+                                            character.avatarUrl,
+                                          ),
+                                      backgroundColor: const Color(0xFFF0EBFF),
+                                    ),
+                                    title: Text(
+                                      character.characterName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF333333),
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      character.desc,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(color: Colors.grey[500]),
+                                    ),
+                                    onTap: () => _showCharacterCard(character),
                                   ),
                                 ),
-                                subtitle: Text(
-                                  character.desc,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: Colors.grey[500]),
-                                ),
-                                onTap: () => _showCharacterCard(character),
                               );
                             }).toList();
                             return [header, ...items];

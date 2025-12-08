@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_swiper_null_safety/flutter_swiper_null_safety.dart';
@@ -72,6 +71,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     );
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey[100],
       body: IndexedStack(
         index: _currentIndex,
@@ -338,34 +338,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0C75A),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              Icons.workspace_premium,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'VIP',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
@@ -996,18 +968,13 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 Row(
                                   children: [
                                     StatItem(
-                                      emoji: '👶',
+                                      imgUrl: 'assets/images/bao_bao.jpg',
                                       text: '${characters.value?.length}个\n宝宝',
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 30),
                                     StatItem(
-                                      emoji: '📚',
+                                      imgUrl: 'assets/images/book.jpg',
                                       text: '${books.value?.length}本\n绘本',
-                                    ),
-                                    const SizedBox(width: 12),
-                                    StatItem(
-                                      emoji: '❤️',
-                                      text: '$favoriteCount个\n收藏',
                                     ),
                                   ],
                                 ),
@@ -1415,6 +1382,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

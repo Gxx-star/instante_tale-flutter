@@ -87,6 +87,23 @@ class BookRepository {
       throw RepositoryException(e.message);
     }
   }
+  Future<void> generateBook(
+      List<String> storyTypes,
+      List<String> storyQualities,
+      String model
+      ) async {
+    try {
+      final response = await _api.generateBook(storyTypes, storyQualities,model);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '创建失败');
+      }
+      await isar.writeTxn(() async {
+        await isar.books.put(response.data!);
+      });
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
 
   Future<void> deleteBook(String bookId) async {
     try {
@@ -112,6 +129,30 @@ class BookRepository {
         storyTypes,
         storyQualities,
         charactersId,
+      );
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '创建失败');
+      }
+      await isar.writeTxn(() async {
+        await isar.books.put(response.data!);
+      });
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<void> generateExclusiveBook(
+    List<String> storyTypes,
+    List<String> storyQualities,
+    List<String> charactersId,
+    String model,
+  ) async {
+    try {
+      final response = await _api.generateExclusiveBook(
+        storyTypes,
+        storyQualities,
+        charactersId,
+        model,
       );
       if (response.code != 200 || response.data == null) {
         throw RepositoryException(response.message ?? '创建失败');

@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:instant_tale/features/login/login_provider.dart';
 
 class RegisterPage extends ConsumerWidget {
+  const RegisterPage({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loginViewModel = ref.watch(loginViewModelProvider.notifier);
-    final loginState = ref.read(loginViewModelProvider);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

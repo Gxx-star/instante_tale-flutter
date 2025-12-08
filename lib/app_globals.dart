@@ -21,6 +21,7 @@ class AppGlobals {
   Isar? _isar;
 
   bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
+
   //bool  get isLoggedIn => true;
   Isar get isar {
     if (_isar == null) {
@@ -29,12 +30,18 @@ class AppGlobals {
     return _isar!;
   }
 
-  Future<void> init() async {  // 初始化全局状态
+  Future<void> init() async {
+    // 初始化全局状态
     _secureStorage.delete(key: 'token');
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
     final dir = await getApplicationCacheDirectory();
-    _isar = await Isar.open([BookSchema, UserSchema,CharacterCollectionSchema,ReadingHistorySchema], directory: dir.path);
+    _isar = await Isar.open([
+      BookSchema,
+      UserSchema,
+      CharacterCollectionSchema,
+      ReadingHistorySchema,
+    ], directory: dir.path);
   }
 
   Future<void> saveToken(String token) async {
@@ -46,14 +53,20 @@ class AppGlobals {
     globalToken = null;
     await _secureStorage.deleteAll();
   }
+
   String formatTimestamp(int timestamp) {
-    DateTime date = DateTime.fromMillisecondsSinceEpoch((timestamp * 1000).toInt());
-    DateFormat formatter = DateFormat('yyyy年MM月dd日 HH:mm:ss');
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(
+      (timestamp * 1000).toInt(),
+    );
+    DateFormat formatter = DateFormat('yyyy-MM-dd');
     return formatter.format(date);
   }
+
   int calculateAge(int birthTimestamp) {
     final now = DateTime.now();
-    final birthDate = DateTime.fromMillisecondsSinceEpoch((birthTimestamp * 1000).toInt());
+    final birthDate = DateTime.fromMillisecondsSinceEpoch(
+      (birthTimestamp * 1000).toInt(),
+    );
     int age = now.year - birthDate.year;
     if (now.month < birthDate.month ||
         (now.month == birthDate.month && now.day < birthDate.day)) {
@@ -61,5 +74,4 @@ class AppGlobals {
     }
     return age;
   }
-
 }

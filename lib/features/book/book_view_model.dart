@@ -1,21 +1,13 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
-
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:android_intent_plus/flag.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-
 import '../../database/models/book.dart';
 import '../../database/models/page.dart';
-import '../../network/http.dart';
 import '../login/login_repository.dart';
 import 'book_repository.dart';
 import 'book_state.dart';
@@ -71,13 +63,11 @@ class BookViewModel extends StateNotifier<BookState> {
   ) async {
     state = state.copyWith(isLoading: true, message: "正在准备分享中...请稍后");
     final pdf = pw.Document();
-    bool captureFailed = false;
 
     // 截图并添加到 PDF
     for (int i = 0; i < pages.length; i++) {
       final key = keys[i + 1];
       if (key == null) {
-        captureFailed = true;
         continue;
       }
       try {
@@ -91,7 +81,7 @@ class BookViewModel extends StateNotifier<BookState> {
           ),
         );
       } catch (e) {
-        captureFailed = true;
+        state = state.copyWith(isLoading: false, message: "截图失败");
       }
     }
 
@@ -107,7 +97,7 @@ class BookViewModel extends StateNotifier<BookState> {
         text: '我分享了一本精美的绘本：$bookName',
         subject: '绘本PDF分享',
       );
-      state = state.copyWith(isLoading: false,message: "分享结束");
+      state = state.copyWith(isLoading: false, message: "分享结束");
     } catch (e) {
       state = state.copyWith(isLoading: false, message: "分享失败");
     } finally {
@@ -130,7 +120,25 @@ class BookViewModel extends StateNotifier<BookState> {
       );
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
-      print(e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: e.toString());
+    }
+  }
+
+  Future<void> generateBook(
+    List<String> storyTypes,
+    List<String> storyQualities,
+    String model,
+  ) async {
+    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    try {
+      await _bookRepository.generateBook(storyTypes, storyQualities, model);
+      state = state.copyWith(
+        isLoading: false,
+        message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
+      );
+    } on RepositoryException catch (e) {
+      state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
@@ -155,6 +163,31 @@ class BookViewModel extends StateNotifier<BookState> {
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
       print(e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: e.toString());
+    }
+  }
+
+  Future<void> generateExclusiveBook(
+    List<String> storyTypes,
+    List<String> storyQualities,
+    List<String> charactersId,
+    String model,
+  ) async {
+    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    try {
+      await _bookRepository.generateExclusiveBook(
+        storyTypes,
+        storyQualities,
+        charactersId,
+        model,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
+      );
+    } on RepositoryException catch (e) {
+      state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
