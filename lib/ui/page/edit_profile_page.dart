@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
+import 'package:instant_tale/features/user/user_state.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
+import '../../database/models/user.dart';
 import '../../features/user/user_viewmodel.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -26,6 +29,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     _phoneController = TextEditingController();
     _locationController = TextEditingController();
     _bioController = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final initialUser = ref.read(userViewModelProvider).user;
+      if (initialUser != null) {
+        _nameController.text = initialUser.name;
+        _phoneController.text = initialUser.phone;
+        _locationController.text = initialUser.location ?? '';
+        _bioController.text = initialUser.personalProfile ?? '';
+      }
+    });
   }
 
   @override
@@ -64,18 +76,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<String?>(userViewModelProvider.select((state)=>state.message), (previous, next) {
-      if (next != null) {
-        MySnackBar.show(context, next);
-      }
-    });
     final _userState = ref.watch(userViewModelProvider);
-    final _user = _userState.user!;
+    final _user = _userState.user!; // 这才是实时更新的 User 对象
     final _userViewModel = ref.watch(userViewModelProvider.notifier);
-    _nameController.text = _user.name;
-    _phoneController.text = _user.phone;
-    _locationController.text = _user.location ?? '';
-    _bioController.text = _user.personalProfile ?? '';
+    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: userViewModelProvider);
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(

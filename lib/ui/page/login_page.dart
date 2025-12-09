@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,13 +26,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final loginState = ref.watch(loginViewModelProvider);
     final loginViewModel = ref.read(loginViewModelProvider.notifier);
     final userViewModel = ref.watch(userViewModelProvider.notifier);
-    ref.listen<String?>(
-      loginViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: loginViewModelProvider,
     );
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -86,7 +85,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           : Offset(1.2, 0),
                       duration: Duration(milliseconds: 300),
                       curve: Curves.easeOut,
-                      child: _buildSmsForm(context, loginViewModel, loginState),
+                      child: _buildSmsForm(
+                        context,
+                        loginViewModel,
+                        loginState,
+                        ref,
+                      ),
                     ),
                   ],
                 ),
@@ -187,7 +191,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     BuildContext context,
     LoginViewModel loginViewModel,
     LoginState loginState,
+    WidgetRef ref,
   ) {
+    final smsTimerProvider = StateProvider.autoDispose<int>((ref) {
+      return 0;
+    });
+    final secondsRemaining = ref.watch(smsTimerServiceProvider);
+    final timerService = ref.read(smsTimerServiceProvider.notifier);
+    final bool isTimerActive = secondsRemaining > 0;
     return Column(
       children: [
         TextField(
@@ -214,11 +225,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             Padding(
               padding: EdgeInsets.only(left: 20),
               child: ElevatedButton(
-                onPressed: () {
-                  // 发送验证码
-                  loginViewModel.sendMsg();
-                },
-                child: Text("获取验证码"),
+                onPressed: isTimerActive
+                    ? null
+                    : () {
+                        loginViewModel.sendMsg().then((success){
+                          if (success) {
+                            timerService.startTimer();
+                          }
+                        });
+                      },
+                child: Text(
+                  isTimerActive
+                      ? '重新发送($secondsRemaining)'
+                      : '获取验证码',
+                ),
               ),
             ),
           ],
@@ -274,3 +294,41 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 }
+
+// 管理计时器
+class TimerService extends StateNotifier<int> {
+  TimerService(this.ref) : super(0); // 初始状态为 0 秒
+
+  final Ref ref;
+  Timer? _timer;
+  static const int _maxSeconds = 60;
+
+  bool get isRunning => state > 0;
+
+  void startTimer() {
+    if (isRunning) return;
+    _timer?.cancel();
+    state = _maxSeconds;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (state > 0) {
+        state = state - 1; // 递减秒数
+      } else {
+        timer.cancel();
+        _timer = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
+// 关联到 StateNotifierProvider
+final smsTimerServiceProvider =
+    StateNotifierProvider.autoDispose<TimerService, int>((ref) {
+      final service = TimerService(ref);
+      return service;
+    });

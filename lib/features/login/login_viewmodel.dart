@@ -61,15 +61,18 @@ class LoginViewModel extends StateNotifier<LoginState> {
     }
   }
 
-  Future<void> sendMsg() async {
+  Future<bool> sendMsg() async {
     state = state.copyWith(isLoading: true, message: null);
     try {
       await _loginRepository.sendMsg(phone: state.phone);
       state = state.copyWith(isLoading: false, message: '发送成功');
+      return true;
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
+      return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
+      return false;
     }
   }
 }

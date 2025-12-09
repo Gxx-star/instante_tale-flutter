@@ -300,7 +300,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                       ),
                     ),
                   ),
-                  const Icon(Icons.volume_up_rounded, color: Color(0xFF9A8BB5)),
+                  // const Icon(Icons.volume_up_rounded, color: Color(0xFF9A8BB5)),
                 ],
               ),
               const SizedBox(height: 8),

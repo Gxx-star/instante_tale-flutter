@@ -1,12 +1,15 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:instant_tale/database/models/book.dart';
 import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/reading_history.dart';
 import 'package:instant_tale/database/models/user.dart';
+import 'package:instant_tale/ui/component/my_snackbar.dart';
 import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart';
 
 /// 全局单例，用于保存全局状态和工具实例
 class AppGlobals {
@@ -73,5 +76,17 @@ class AppGlobals {
       age--;
     }
     return age;
+  }
+
+  void listenAndShowSnackBar({
+    required WidgetRef ref,
+    required BuildContext context,
+    required StateNotifierProvider provider,
+  }) {
+      ref.listen(provider.select((state)=>state.message), (pre,nex){
+        if(nex!=null){
+          MySnackBar.show(context, nex);
+        }
+      });
   }
 }

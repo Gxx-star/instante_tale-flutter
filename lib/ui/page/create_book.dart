@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_view_model.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
+import 'package:instant_tale/main.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
 import '../../database/models/character.dart';
 import '../../features/book/book_provider.dart';
@@ -63,6 +64,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
       'model': 'DEFAULT',
     },
   ];
+
   // 故事风格选项
   final List<Map<String, dynamic>> _styleOptions = [
     {
@@ -198,14 +200,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
     _characterState = ref.watch(characterViewModelProvider);
     _bookViewModel = ref.watch(bookViewModelProvider.notifier);
     _bookState = ref.watch(bookViewModelProvider);
-    ref.listen<String?>(
-      bookViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
-    );
+    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookViewModelProvider);
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
     const _headerGradient = LinearGradient(
@@ -352,7 +347,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                               _bookViewModel.generateBook(
                                 storyTypes,
                                 storyQualities,
-                                _modelOptions[_selectedModel!]['model']
+                                _modelOptions[_selectedModel!]['model'],
                               );
                             }
                             context.pop();
@@ -401,6 +396,14 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(characterViewModelProvider.select((state) => (state.message)), (
+      pre,
+      nex,
+    ) {
+      if (nex != null) {
+        MySnackBar.show(context, nex);
+      }
+    });
     final _charactersListAsync = ref.watch(characterListProvider);
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
@@ -460,7 +463,7 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1. 创建新人物按钮 (虚线边框)
-                      _buildCreateNewButton(context),
+                      _buildCreateNewButton(context, ref),
                       const SizedBox(height: 24.0),
 
                       // 2. "我的人物" 标题
@@ -515,13 +518,13 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
   }
 
   // "创建新人物" 按钮 - *** IMPLEMENTATION START ***
-  Widget _buildCreateNewButton(BuildContext context) {
+  Widget _buildCreateNewButton(BuildContext context, WidgetRef ref) {
     const Color pinkAccent = Colors.pinkAccent;
     const double borderRadius = 12.0;
 
     return InkWell(
       onTap: () {
-        // Handle navigation to character creation page
+        context.push('/${AppRouteNames.createCharacter}');
       },
       child: CustomPaint(
         painter: DashedBorderPainter(
@@ -1955,6 +1958,7 @@ class Page4Model extends StatefulWidget {
   final int? selectedModel;
   final Function(int?) onModelChanged;
   final List<Map<String, dynamic>> modelList;
+
   const Page4Model({
     super.key,
     required this.selectedModel,
@@ -1968,7 +1972,6 @@ class Page4Model extends StatefulWidget {
 
 class _Page4ModelState extends State<Page4Model> {
   // 模型列表
-
 
   @override
   Widget build(BuildContext context) {
