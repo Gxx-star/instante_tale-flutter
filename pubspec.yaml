@@ -36,6 +36,7 @@ dependencies:
   android_intent_plus: ^3.1.9
   share_plus: ^7.0.2
   fluwx: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -46,3 +47,6 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+flutter_launcher_icons:
+  image_path: "assets/icons/app_icon.png"
+  android: true
