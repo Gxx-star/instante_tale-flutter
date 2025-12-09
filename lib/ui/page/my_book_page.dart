@@ -133,122 +133,135 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
     final books = ref.watch(booksProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0FF), // 柔和背景色
-      body: books.when(
-        data: (booksList) {
-          return Column(
-            children: [
-              // 顶部 AppBar (样式沿用)
-              Container(
-                padding: const EdgeInsets.only(
-                  top: 10,
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
-                ),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF0F0FF), // 浅紫色背景
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
+      body: SafeArea(
+        bottom: true,
+        top: false,
+        left: false,
+        right: false,
+        child: books.when(
+          data: (booksList) {
+            return Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.only(
+                    top: 10 + MediaQuery.of(context).padding.top,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFBFA2FF),
-                      blurRadius: 10,
-                      spreadRadius: -5,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF0F0FF), // 浅紫色背景
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    GlassButton(
-                      icon: Icons.arrow_back_ios_new_rounded,
-                      onTap: () => Navigator.pop(context),
-                    ),
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          '我的绘本',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF5A4C75),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFBFA2FF),
+                        blurRadius: 10,
+                        spreadRadius: -5,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      GlassButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            '我的绘本',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF5A4C75),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    // 右侧占位保持居中或添加功能按钮
-                    const SizedBox(width: 40),
-                  ],
-                ),
-              ),
-
-              // 绘本列表
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(15),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // 一行两个
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 0.7, // 绘本封面通常较高
+                      // 右侧占位保持居中或添加功能按钮
+                      const SizedBox(width: 40),
+                    ],
                   ),
-                  itemCount: booksList.length, // 使用模拟数据源
-                  itemBuilder: (context, index) {
-                    final book = booksList[index];
-                    return MyBookCard(
-                      book: book,
-                      onTap: () {
-                        final userId = ref.watch(userViewModelProvider).user?.userId;
-                        if (userId == null) {
-                          context.go('/${AppRouteNames.login}');
-                          return;
-                        }
-                        ref.read(bookViewModelProvider.notifier).loadBook(book,userId);
-                        context.push('/${AppRouteNames.bookReader}');
-                      },
-                      onLongPress: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('删除绘本'),
-                              content: const Text('确定要删除该绘本吗？'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('取消'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    ref
-                                        .read(bookViewModelProvider.notifier)
-                                        .clearReadingHistoryByBookId(book.bookId);
-                                    ref
-                                        .read(bookViewModelProvider.notifier)
-                                        .deleteBook(book.bookId);
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('确认'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
                 ),
-              ),
-            ],
-          );
-        },
-        error: (e, s) {
-          return Center(child: Text('加载失败: $e'));
-        },
-        loading: () {
-          return const Center(child: CircularProgressIndicator());
-        },
+
+                // 绘本列表
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(15),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2, // 一行两个
+                          crossAxisSpacing: 15,
+                          mainAxisSpacing: 15,
+                          childAspectRatio: 0.7, // 绘本封面通常较高
+                        ),
+                    itemCount: booksList.length, // 使用模拟数据源
+                    itemBuilder: (context, index) {
+                      final book = booksList[index];
+                      return MyBookCard(
+                        book: book,
+                        onTap: () {
+                          final userId = ref
+                              .watch(userViewModelProvider)
+                              .user
+                              ?.userId;
+                          if (userId == null) {
+                            context.go('/${AppRouteNames.login}');
+                            return;
+                          }
+                          ref
+                              .read(bookViewModelProvider.notifier)
+                              .loadBook(book, userId);
+                          context.push('/${AppRouteNames.bookReader}');
+                        },
+                        onLongPress: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('删除绘本'),
+                                content: const Text('确定要删除该绘本吗？'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('取消'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      ref
+                                          .read(bookViewModelProvider.notifier)
+                                          .clearReadingHistoryByBookId(
+                                            book.bookId,
+                                          );
+                                      ref
+                                          .read(bookViewModelProvider.notifier)
+                                          .deleteBook(book.bookId);
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('确认'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+          error: (e, s) {
+            return Center(child: Text('加载失败: $e'));
+          },
+          loading: () {
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
     );
   }

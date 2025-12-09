@@ -53,21 +53,15 @@ class _MainPageState extends ConsumerState<MainPage> {
   Widget build(BuildContext context) {
     final _characterViewModel = ref.watch(characterViewModelProvider.notifier);
     final _currentIndex = ref.watch(_currentIndexProvider);
-    ref.listen<String?>(
-      bookViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookViewModelProvider,
     );
-    ref.listen<String?>(
-      characterViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: characterViewModelProvider,
     );
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -78,7 +72,10 @@ class _MainPageState extends ConsumerState<MainPage> {
         children: [HomePage(), MyPage()],
       ),
       bottomNavigationBar: Container(
-        height: 80,
+        padding: EdgeInsets.only(
+          bottom: 10 + MediaQuery.of(context).padding.bottom,
+        ),
+        height: 80 + MediaQuery.of(context).padding.bottom,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.only(
@@ -372,7 +369,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                         return Stack(
                           children: [
                             Image(
-                              image: CachedNetworkImageProvider(swiperImages[index]),
+                              image: CachedNetworkImageProvider(
+                                swiperImages[index],
+                              ),
                               height: double.infinity,
                               width: double.infinity,
                               fit: BoxFit.cover,
@@ -515,14 +514,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   title: item.book.bookName,
                                   imageUrl: item.book.coverUrl,
                                   callback: () {
-                                    final userId = ref.watch(userViewModelProvider).user?.userId;
+                                    final userId = ref
+                                        .watch(userViewModelProvider)
+                                        .user
+                                        ?.userId;
                                     if (userId == null) {
                                       context.go('/${AppRouteNames.login}');
                                       return;
                                     }
                                     ref
                                         .read(bookViewModelProvider.notifier)
-                                        .loadBook(item.book,userId);
+                                        .loadBook(item.book, userId);
                                     context.push(
                                       '/${AppRouteNames.bookReader}',
                                     );
@@ -1145,8 +1147,11 @@ class _MyPageState extends ConsumerState<MyPage> {
                       // 使用 BookCard 组件
                       children: books.when(
                         data: (books) {
-                          var bookWidgets = books.take(3).map<Widget>((book)=>BookCard(book: book)).toList();
-                          while(bookWidgets.length < 3){
+                          var bookWidgets = books
+                              .take(3)
+                              .map<Widget>((book) => BookCard(book: book))
+                              .toList();
+                          while (bookWidgets.length < 3) {
                             bookWidgets.add(Spacer());
                           }
                           return bookWidgets;
@@ -1348,14 +1353,14 @@ class _MyPageState extends ConsumerState<MyPage> {
                     color: Colors.transparent, // 确保水波纹效果可见
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12.0),
-                      onTap: () async{
+                      onTap: () async {
                         await AppGlobals().clearTokens();
-                        await AppGlobals().isar.writeTxn(()async{
+                        await AppGlobals().isar.writeTxn(() async {
                           await AppGlobals().isar.users.clear();
                         });
                         ref.read(loginViewModelProvider.notifier).logout();
                         ref.read(userViewModelProvider.notifier).logout();
-                        if(mounted){
+                        if (mounted) {
                           context.go('/${AppRouteNames.login}');
                         }
                       },

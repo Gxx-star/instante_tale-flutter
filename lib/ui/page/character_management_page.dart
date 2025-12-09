@@ -70,7 +70,12 @@ class _CharacterManagementPageState
   // 顶部导航栏
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.only(top: 15, left: 20, right: 20, bottom: 10),
+      padding: EdgeInsets.only(
+        top: 10 + MediaQuery.of(context).padding.top,
+        left: 10,
+        right: 10,
+        bottom: 10,
+      ),
       decoration: const BoxDecoration(color: Color(0xFFF0F0FF)),
       child: Column(
         children: [
