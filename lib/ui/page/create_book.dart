@@ -415,7 +415,7 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
       ],
     );
     return _charactersListAsync.when(
-      data: (_characterList) {
+      data: (characterList) {
         return Scaffold(
           backgroundColor: primaryColor,
           appBar: AppBar(
@@ -478,9 +478,9 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _characterList.length,
+                        itemCount: characterList.length,
                         itemBuilder: (context, index) {
-                          final character = _characterList[index];
+                          final character = characterList[index];
                           final isSelected =
                               _selectedCharacter?.characterId ==
                               character.characterId;
