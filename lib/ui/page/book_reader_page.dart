@@ -188,7 +188,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                       child: Text(
                         content.text, // 假设 BookPage 结构中有 text 字段
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 16,
                           color: Colors.white,
                           // 白色文字，与深色蒙层形成对比
                           height: 1.5,

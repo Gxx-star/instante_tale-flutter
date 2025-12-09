@@ -223,6 +223,9 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                                   onPressed: () {
                                     ref
                                         .read(bookViewModelProvider.notifier)
+                                        .clearReadingHistoryByBookId(book.bookId);
+                                    ref
+                                        .read(bookViewModelProvider.notifier)
                                         .deleteBook(book.bookId);
                                     Navigator.pop(context);
                                   },

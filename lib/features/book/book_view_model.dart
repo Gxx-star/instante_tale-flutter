@@ -243,8 +243,9 @@ class BookViewModel extends StateNotifier<BookState> {
   }
 
   Future<void> clearReadingHistory() async {
-    state = state.copyWith(isLoading: false, message: null);
     await _bookRepository.clearReadingHistory();
-    print('清空记录');
+  }
+  Future<void> clearReadingHistoryByBookId(String bookId) async {
+    await _bookRepository.clearReadingHistoryByBookId(bookId);
   }
 }

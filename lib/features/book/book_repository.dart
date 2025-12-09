@@ -65,6 +65,12 @@ class BookRepository {
     });
   }
 
+  Future<void> clearReadingHistoryByBookId(String bookId) async {
+    await isar.writeTxn(() async {
+      await isar.readingHistorys.where().bookIdEqualTo(bookId).deleteAll();
+    });
+  }
+
   Future<void> clearReadingHistory() async {
     await isar.writeTxn(() async {
       await isar.readingHistorys.where().deleteAll();
@@ -87,13 +93,18 @@ class BookRepository {
       throw RepositoryException(e.message);
     }
   }
+
   Future<void> generateBook(
-      List<String> storyTypes,
-      List<String> storyQualities,
-      String model
-      ) async {
+    List<String> storyTypes,
+    List<String> storyQualities,
+    String model,
+  ) async {
     try {
-      final response = await _api.generateBook(storyTypes, storyQualities,model);
+      final response = await _api.generateBook(
+        storyTypes,
+        storyQualities,
+        model,
+      );
       if (response.code != 200 || response.data == null) {
         throw RepositoryException(response.message ?? '创建失败');
       }

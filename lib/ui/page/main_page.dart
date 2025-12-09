@@ -366,10 +366,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                       itemBuilder: (context, index) {
                         return Stack(
                           children: [
-                            Image.network(
+                            Image(
+                              image: CachedNetworkImageProvider(swiperImages[index]),
                               height: double.infinity,
                               width: double.infinity,
-                              swiperImages[index],
                               fit: BoxFit.cover,
                             ),
                           ],

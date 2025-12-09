@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 
 import '../../database/models/character.dart';
@@ -329,6 +330,7 @@ class _CharacterManagementPageState
                 ref
                     .read(characterViewModelProvider.notifier)
                     .deleteCharacter(character.characterId);
+                ref.read(bookViewModelProvider.notifier).fetchBookList();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF9F9F),
