@@ -24,8 +24,6 @@ class AppGlobals {
   Isar? _isar;
 
   bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
-
-  //bool  get isLoggedIn => true;
   Isar get isar {
     if (_isar == null) {
       throw Exception("Isar尚未初始化，请先调用init()");
@@ -34,11 +32,9 @@ class AppGlobals {
   }
 
   Future<void> init() async {
-    // 初始化全局状态
-    _secureStorage.delete(key: 'token');
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
-    final dir = await getApplicationCacheDirectory();
+    final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open([
       BookSchema,
       UserSchema,

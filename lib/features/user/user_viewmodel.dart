@@ -13,64 +13,61 @@ class UserViewModel extends StateNotifier<UserState> {
   final UserRepository _userRepository;
   final _isar = AppGlobals().isar;
   late final StreamSubscription _sub;
+
   UserViewModel(this._userRepository) : super(UserState()) {
     _init();
   }
+
   void logout() async {
-    state = state.copyWith(
-      message: null,
-      user: null
-    );
+    state = state.copyWith(message: null, user: null);
   }
-  void _init() {
-    _sub = _isar.users.watchLazy().listen((_)async{
+
+  void _init() async{
+    final initUser = await _isar.users.where().idEqualTo(1).findFirst();
+    state = state.copyWith(user: initUser);
+    _sub = _isar.users.watchLazy().listen((_) async {
       state = state.copyWith(
-        user: await _isar.users.where().idEqualTo(1).findFirst()
+        user: await _isar.users.where().idEqualTo(1).findFirst(),
       );
     });
   }
+
   Future<void> updateUserAvatar(File file) async {
     state = state.copyWith(isLoading: true, message: null);
     try {
       await _userRepository.updateAvatar(file);
-      state = state.copyWith(
-        isLoading: false,
-        message: '更换头像成功'
-      );
+      state = state.copyWith(isLoading: false, message: '更换头像成功');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
   }
-  Future<void> setPassword(String authCode,String newPassword) async {
+
+  Future<void> setPassword(String authCode, String newPassword) async {
     state = state.copyWith(isLoading: true, message: null);
     try {
       await _userRepository.setPassword(authCode, newPassword);
-      state = state.copyWith(
-        isLoading: false,
-        message: '修改密码成功'
-      );
+      state = state.copyWith(isLoading: false, message: '修改密码成功');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
   }
+
   Future<void> updateUserInfo(User user) async {
     state = state.copyWith(isLoading: true, message: null);
     try {
       await _userRepository.updateUserInfo(user);
-      state = state.copyWith(
-          isLoading: false,
-          message: '修改信息成功'
-      );
+      state = state.copyWith(isLoading: false, message: '修改信息成功');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
   }
+
   @override
   Future<void> dispose() async {
     _sub.cancel();

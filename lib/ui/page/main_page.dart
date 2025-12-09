@@ -283,6 +283,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     int readCount = 24; // 阅读数
     int durationHours = 12; // 阅读时长
     int collectionCount = 18; // 收藏数
+    if (_user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()), // 加载动画
+      );
+    }
     return Stack(
       children: [
         // 背景板
