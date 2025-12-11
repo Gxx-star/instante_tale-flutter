@@ -1,8 +1,11 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 
 import '../../database/models/character.dart';
@@ -19,22 +22,25 @@ class _CharacterManagementPageState
     extends ConsumerState<CharacterManagementPage> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  late bool _showAvatar = true;
 
   // 字母导航条：A-Z + #
-    final List<String> _initials = List.generate(
+  final List<String> _initials = List.generate(
     26,
     (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
   ).toList()..add('#');
 
   // 用于存储每个字母组的第一个列表项的 GlobalKey
   final Map<String, GlobalKey> _initialKeys = {};
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterViewModelProvider.notifier).updateSearchKeyword('');
     });
   }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -42,31 +48,34 @@ class _CharacterManagementPageState
     super.dispose();
   }
 
-  // 滚动到对应字母组
   void _scrollToInitial(String initial) {
-    final key = _initialKeys[initial];
-    if (key != null) {
-      final RenderBox? renderBox =
-          key.currentContext?.findRenderObject() as RenderBox?;
-      if (renderBox != null) {
-        final position = renderBox
-            .localToGlobal(Offset.zero, ancestor: context.findRenderObject())
-            .dy;
-        // 减去 AppBar 和搜索框的高度，确保字母组正好在顶部
-        const headerHeight = kToolbarHeight + 60;
-        _scrollController.animateTo(
-          _scrollController.offset + position - headerHeight,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
+    final asyncValue = ref.read(groupedCharactersProvider);
+    final groupedMap = asyncValue.value;
+    if (groupedMap == null) return;
+    final sortedKeys = groupedMap.keys.toList()..sort();
+    double offset = 0.0;
+    for (var key in sortedKeys) {
+      if (key == initial) break; // 找到目标，停止累加
+      offset += 32;
+      final itemCount = groupedMap[key]?.length ?? 0;
+      offset += itemCount * 88;
     }
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   // 顶部导航栏
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 10),
+      padding: EdgeInsets.only(
+        top: 10 + MediaQuery.of(context).padding.top,
+        left: 10,
+        right: 10,
+        bottom: 10,
+      ),
       decoration: const BoxDecoration(color: Color(0xFFF0F0FF)),
       child: Column(
         children: [
@@ -202,11 +211,32 @@ class _CharacterManagementPageState
                 ),
               ),
               // 头像
-              CircleAvatar(
-                radius: 60,
-                backgroundImage: NetworkImage(character.avatarUrl),
-                backgroundColor: const Color(0xFFF0EBFF),
+              StatefulBuilder(
+                builder: (context, setState) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showAvatar = !_showAvatar;
+                      });
+                    },
+                    child: _showAvatar
+                        ? CircleAvatar(
+                            radius: 60,
+                            backgroundImage: CachedNetworkImageProvider(
+                              character.avatarUrl,
+                            ),
+                            backgroundColor: const Color(0xFFF0EBFF),
+                          )
+                        : Image(
+                            image: CachedNetworkImageProvider(
+                              character.threeViewUrl,
+                            ),
+                            height: 200,
+                          ),
+                  );
+                },
               ),
+              Text('点击切换头像/三视图', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
               // 名字
               Text(
@@ -221,6 +251,13 @@ class _CharacterManagementPageState
               // 描述
               Text(
                 character.desc,
+                textAlign: TextAlign.center,
+                maxLines: 10,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
@@ -298,6 +335,7 @@ class _CharacterManagementPageState
                 ref
                     .read(characterViewModelProvider.notifier)
                     .deleteCharacter(character.characterId);
+                ref.read(bookViewModelProvider.notifier).fetchBookList();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF9F9F),
@@ -327,6 +365,10 @@ class _CharacterManagementPageState
     // 获取排序后的字母键
     final groupedKeys = _charactersAsync.value?.keys.toList() ?? [];
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140),
+        child: _buildAppBar(),
+      ),
       backgroundColor: const Color(0xFFF5F0FF), // 柔和背景色
       body: Stack(
         children: [
@@ -334,7 +376,6 @@ class _CharacterManagementPageState
           CustomScrollView(
             controller: _scrollController,
             slivers: [
-              SliverToBoxAdapter(child: _buildAppBar()), // 顶部栏和搜索框
               _charactersAsync.when(
                 data: (groupedMap) {
                   if (groupedMap.isEmpty && state.searchKeyword == '') {
@@ -347,19 +388,13 @@ class _CharacterManagementPageState
                         delegate: SliverChildListDelegate(
                           groupedKeys.expand((initial) {
                             final group = groupedMap[initial]!;
-
                             // 头部字母分组
                             final header = Container(
-                              key: _initialKeys.putIfAbsent(
-                                initial,
-                                () => GlobalKey(),
-                              ), // 记录头部 Key
-                              padding: const EdgeInsets.only(
-                                left: 20,
-                                top: 8,
-                                bottom: 4,
-                              ),
-                              color: const Color(0xFFEBE0FF), // 浅紫色背景
+                              height: 32,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.only(left: 20),
+                              color: const Color(0xFFEBE0FF),
+                              // 浅紫色背景
                               child: Text(
                                 initial,
                                 style: const TextStyle(
@@ -372,74 +407,78 @@ class _CharacterManagementPageState
 
                             // 列表项
                             final items = group.map((character) {
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 8,
-                                ),
-                                leading: CircleAvatar(
-                                  radius: 25,
-                                  backgroundImage: NetworkImage(
-                                    character.avatarUrl,
+                              return SizedBox(
+                                height: 88,
+                                child: Center(
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 8,
+                                    ),
+                                    leading: CircleAvatar(
+                                      radius: 25,
+                                      backgroundImage:
+                                          CachedNetworkImageProvider(
+                                            character.avatarUrl,
+                                          ),
+                                      backgroundColor: const Color(0xFFF0EBFF),
+                                    ),
+                                    title: Text(
+                                      character.characterName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF333333),
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      character.desc,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(color: Colors.grey[500]),
+                                    ),
+                                    onTap: () => _showCharacterCard(character),
                                   ),
-                                  backgroundColor: const Color(0xFFF0EBFF),
                                 ),
-                                title: Text(
-                                  character.characterName,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF333333),
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  character.desc,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: Colors.grey[500]),
-                                ),
-                                onTap: () => _showCharacterCard(character),
                               );
                             }).toList();
                             return [header, ...items];
                           }).toList(),
                         ),
                       );
-                    }
-                    else{
+                    } else {
                       return SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                            final character = state.filteredList[index];
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 8,
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final character = state.filteredList[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
+                            leading: CircleAvatar(
+                              radius: 25,
+                              backgroundImage: NetworkImage(
+                                character.avatarUrl,
                               ),
-                              leading: CircleAvatar(
-                                radius: 25,
-                                backgroundImage: NetworkImage(character.avatarUrl),
-                                backgroundColor: const Color(0xFFF0EBFF),
+                              backgroundColor: const Color(0xFFF0EBFF),
+                            ),
+                            title: Text(
+                              character.characterName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF333333),
                               ),
-                              title: Text(
-                                character.characterName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF333333),
-                                ),
-                              ),
-                              subtitle: Text(
-                                character.desc,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.grey[500]),
-                              ),
-                              onTap: () => _showCharacterCard(character),
-                            );
-                          },
-                          childCount: state.filteredList.length,
-                        ),
+                            ),
+                            subtitle: Text(
+                              character.desc,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Colors.grey[500]),
+                            ),
+                            onTap: () => _showCharacterCard(character),
+                          );
+                        }, childCount: state.filteredList.length),
                       );
                     }
                   }

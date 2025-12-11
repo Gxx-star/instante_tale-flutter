@@ -1,14 +1,18 @@
 import 'dart:async';
-import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_swiper_null_safety/flutter_swiper_null_safety.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/database/models/user.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
+import 'package:instant_tale/features/login/login_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
 import 'package:instant_tale/ui/component/stat_item.dart';
+import '../../database/models/book.dart';
+import '../../database/models/character.dart';
 import '../../features/character/character_provider.dart';
 import '../../main.dart';
 import '../component/add_character_card.dart';
@@ -16,7 +20,6 @@ import '../component/book_card.dart';
 import '../component/character_card.dart';
 import '../component/circular_button.dart';
 import '../component/my_snackbar.dart';
-import '../component/progress_indicator_bar.dart';
 import '../component/promo_button.dart';
 import '../component/ranking_item_card.dart';
 import '../component/reading_item_card.dart';
@@ -50,31 +53,29 @@ class _MainPageState extends ConsumerState<MainPage> {
   Widget build(BuildContext context) {
     final _characterViewModel = ref.watch(characterViewModelProvider.notifier);
     final _currentIndex = ref.watch(_currentIndexProvider);
-    ref.listen<String?>(
-      bookViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookViewModelProvider,
     );
-    ref.listen<String?>(
-      characterViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: characterViewModelProvider,
     );
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey[100],
       body: IndexedStack(
         index: _currentIndex,
         children: [HomePage(), MyPage()],
       ),
       bottomNavigationBar: Container(
-        height: 80,
+        padding: EdgeInsets.only(
+          bottom: 10 + MediaQuery.of(context).padding.bottom,
+        ),
+        height: 80 + MediaQuery.of(context).padding.bottom,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.only(
@@ -93,25 +94,36 @@ class _MainPageState extends ConsumerState<MainPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            GestureDetector(
-              onTap: () {
-                ref.read(_currentIndexProvider.notifier).state = 0;
-              },
-              child: BottomNavigationItem(
-                icon: Icons.home,
-                label: '首页',
-                isActive: _currentIndex == 0,
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  ref.read(_currentIndexProvider.notifier).state = 0;
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  child: BottomNavigationItem(
+                    icon: Icons.home,
+                    label: '首页',
+                    isActive: _currentIndex == 0,
+                  ),
+                ),
               ),
             ),
-            // 位于中心的浮动按钮
-            GestureDetector(
-              onTap: () {
-                ref.read(_currentIndexProvider.notifier).state = 1;
-              },
-              child: BottomNavigationItem(
-                icon: Icons.person_outline,
-                label: '我的',
-                isActive: _currentIndex == 1,
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  ref.read(_currentIndexProvider.notifier).state = 1;
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  child: BottomNavigationItem(
+                    icon: Icons.person_outline,
+                    label: '我的',
+                    isActive: _currentIndex == 1,
+                  ),
+                ),
               ),
             ),
           ],
@@ -152,42 +164,54 @@ class _MainPageState extends ConsumerState<MainPage> {
   }
 }
 
-class HomePage extends ConsumerWidget {
-  final _scrollController = ScrollController();
-  double _scrollPosition = 0.0;
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  final _scrollController = ScrollController();
+  double _scrollPosition = 0.0;
+  final swiperImages = [
+    'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-c523e00b552859928cef368b7b77e566.jpg',
+    'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-14f0801056b5516cb69a762f62b60ae0.png',
+    'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-09d03e52070451ce993880bff5484b08.jpg',
+    'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-429fed69e4a55c08841eaac1ed81dfe0.jpg',
+    'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-5c29d9ed9583598ba4ecabb63569231c.jpg',
+    'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-3fbf8ae1450353c2ad9db108c587d00a.jpg',
+  ];
+
+  Future<void> _preloadSwiperImages(List<String> swiperImages) async {
+    if (swiperImages.isNotEmpty) {
+      // 如果有多个预加载项futures可以并发预加载
+      final futures = <Future<void>>[];
+      for (var swiperImage in swiperImages) {
+        futures.add(
+          precacheImage(CachedNetworkImageProvider(swiperImage), context),
+        );
+      }
+      await Future.wait(futures); // 等待所有图片加载完成
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadSwiperImages(swiperImages);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final _userState = ref.watch(userViewModelProvider);
     final _user = _userState.user;
     final _userViewModel = ref.watch(userViewModelProvider.notifier);
+    final _bookViewModel = ref.watch(bookViewModelProvider.notifier);
     // 阅读记录
-    final List<Map<String, dynamic>> _readingList = [
-      {
-        'title': '好朋友的冒险',
-        'imageUrl':
-            'https://tse3.mm.bing.net/th/id/OIP.IrxJ0bSPmY0aW7-mfCrXhgHaKE?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
-        'progress': 0.7,
-      },
-      {
-        'title': '晚安故事集',
-        'imageUrl':
-            'https://tse1.explicit.bing.net/th/id/OIP.ZR-CgWMl9Iay6w3bToF7WgHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
-        'progress': 0.45,
-      },
-      {
-        'title': '勇敢小英雄',
-        'imageUrl':
-            'https://tse1.mm.bing.net/th/id/OIP.1CYDxdrMeTOd3J7SyTE2EAHaHZ?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
-        'progress': 0.9,
-      },
-      {
-        'title': '星际探索者',
-        'imageUrl':
-            'https://tse1.mm.bing.net/th/id/OIP.cT3fO0r-vTVGfWQ7zqiojgHaHi?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
-        'progress': 0.2,
-      },
-    ];
+    final _readingList = ref.watch(readingHistoryProvider);
     // 榜单
     final List<Map<String, dynamic>> _rankingList = [
       {
@@ -195,7 +219,7 @@ class HomePage extends ConsumerWidget {
         'title': '森林里的秘密',
         'description': '自然故事家',
         'imageUrl':
-            'https://tse1.mm.bing.net/th/id/OIP.m_45x3j99nK5j1wX8nF45AHaHa?rs=1&pid=ImgDetMain',
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-30057b9671fa544bab038cb83c3215ec.jpg',
         'likes': 9, // 0.9k
         'reads': 12.5, // 12.5k
       },
@@ -204,7 +228,7 @@ class HomePage extends ConsumerWidget {
         'title': '魔法世界探险',
         'description': '魔法创作者',
         'imageUrl':
-            'https://tse2.mm.bing.net/th/id/OIP.zQvY5R3Z_2kF-y9Vl27y5gHaHa?rs=1&pid=ImgDetMain',
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-c0312588d70f5a238877ef88b3e6bbb9.jpg',
         'likes': 19, // 1.9k
         'reads': 23.5, // 23.5k
       },
@@ -212,7 +236,8 @@ class HomePage extends ConsumerWidget {
         'rank': 3,
         'title': '海洋生物图鉴',
         'description': '小小科学家',
-        'imageUrl': '',
+        'imageUrl':
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-a723f22b34355ddca9ba2fb08d720ef4.jpg',
         'likes': 5, // 0.5k
         'reads': 8.2, // 8.2k
       },
@@ -223,7 +248,7 @@ class HomePage extends ConsumerWidget {
         'title': '彩色的梦想',
         'author': '梦想家',
         'imageUrl':
-            'https://tse3.mm.bing.net/th/id/OIP.EIJplBRKzZiXAnpLCWn6VwHaHI?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-99bf8f20d53f5995bd41150fa8fdb17b.jpg',
         'tagText': '热门',
         'tagColor': Color(0xFFE91E63),
       },
@@ -231,7 +256,7 @@ class HomePage extends ConsumerWidget {
         'title': '奇妙之旅',
         'author': '旅行者',
         'imageUrl':
-            'https://tse2.mm.bing.net/th/id/OIP.kd_I0Ipb4W1dhnnle6OfrgHaHE?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-cef72bbabead5df8beb38a5bc4306b57.jpg',
         'tagText': '推荐',
         'tagColor': Color(0xFF673AB7),
       },
@@ -239,7 +264,7 @@ class HomePage extends ConsumerWidget {
         'title': '动物王国',
         'author': '自然之友',
         'imageUrl':
-            'https://tse3.mm.bing.net/th/id/OIP.hKS5gt9rCzCou0rpZVPvhgHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-935a7e64393a5719837d03ad2d0aca4b.jpg',
         'tagText': '新品',
         'tagColor': Color(0xFF4CAF50),
       },
@@ -247,7 +272,7 @@ class HomePage extends ConsumerWidget {
         'title': '星空物语',
         'author': '星空讲述者',
         'imageUrl':
-            'https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3',
+            'https://book-1369048677.cos.ap-beijing.myqcloud.com/img-70c6ff6d13f65be1af553703c9d0348c.jpg',
         'tagText': '精选',
         'tagColor': Color(0xFF2196F3), // 精选 (蓝色)
       },
@@ -255,26 +280,21 @@ class HomePage extends ConsumerWidget {
     int readCount = 24; // 阅读数
     int durationHours = 12; // 阅读时长
     int collectionCount = 18; // 收藏数
+    if (_user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()), // 加载动画
+      );
+    }
     return Stack(
       children: [
-        // 1. 【Gradient Background Layer】
+        // 背景板
         Container(
           width: double.infinity,
-          height: 440.0,
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(40.0),
-              bottomRight: Radius.circular(40.0),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFecaed5), Color(0xFFe6d5fb)],
-            ),
-          ),
+          height: double.infinity,
+          decoration: const BoxDecoration(color: Color(0xFFFFF0F3)),
         ),
 
-        // 2. 【Scrollable Content Layer】
+        // 主页面
         SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -322,34 +342,6 @@ class HomePage extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0C75A),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              Icons.workspace_premium,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'VIP',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -372,51 +364,24 @@ class HomePage extends ConsumerWidget {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Image.network(
-                            'https://postimg.cc/9wpTG4Wf',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 15,
-                          left: 15,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFd94897),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text(
-                                  '限时优惠',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                    child: Swiper(
+                      itemBuilder: (context, index) {
+                        return Stack(
+                          children: [
+                            Image(
+                              image: CachedNetworkImageProvider(
+                                swiperImages[index],
                               ),
-                              const SizedBox(height: 5),
-                              const Text(
-                                '专属绘本定制',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                              height: double.infinity,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ],
+                        );
+                      },
+                      itemCount: swiperImages.length,
+                      autoplay: true,
+                      control: SwiperControl(color: Colors.white),
                     ),
                   ),
                 ),
@@ -426,24 +391,27 @@ class HomePage extends ConsumerWidget {
                   child: Row(
                     children: [
                       StatCard(
-                        emoji: '📚',
+                        imgUrl: 'assets/images/jin_mao.png',
                         title: '已读',
-                        value: '$readCount本',
-                        color: Color(0xFFFF4081),
+                        value: '${_readingList.value?.length}本',
+                        color: Colors.green,
+                        backgroundColor: Color(0xFFCFF0BF),
                       ),
                       const SizedBox(width: 12),
                       StatCard(
-                        emoji: '⏱️',
+                        imgUrl: 'assets/images/ke_ji.png',
                         title: '时长',
                         value: '${durationHours}h',
-                        color: Color(0xFF673AB7),
+                        color: Colors.yellow.shade900,
+                        backgroundColor: Color(0xFFFBE3A4),
                       ),
                       const SizedBox(width: 12),
                       StatCard(
-                        emoji: '🎯',
+                        imgUrl: 'assets/images/cang_shu.png',
                         title: '收藏',
                         value: '$collectionCount本',
-                        color: Color(0xFFFF4081),
+                        color: Colors.orange.shade900,
+                        backgroundColor: Color(0xFFFBD9CE),
                       ),
                     ],
                   ),
@@ -456,30 +424,37 @@ class HomePage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       CircularButton(
-                        icon: Icons.star,
+                        imgUrl: 'assets/images/mei_shu.png',
                         label: '创建绘本',
-                        color: const Color(0xFFdb519d),
+                        color: Colors.white,
+                        // color: Color(0xFFF472B6),
                         onTap: () {
                           context.push('/${AppRouteNames.createBook}');
                         },
                       ),
                       CircularButton(
-                        icon: Icons.local_fire_department,
-                        label: '热门广场',
-                        color: const Color(0xFFbf91fe),
+                        imgUrl: 'assets/images/dian_shi.png',
+                        label: '绘本广场',
+                        color: Colors.white,
+                        // color: Color(0xFFA78BFA),
                         onTap: () {
                           context.push('/${AppRouteNames.bookSquare}');
                         },
                       ),
-                      const CircularButton(
-                        icon: Icons.menu_book,
+                      CircularButton(
+                        imgUrl: 'assets/images/pin_tu.png',
                         label: '我的作品',
-                        color: Color(0xFFdb519d),
+                        color: Colors.white,
+                        // color: Color(0xFF38BDF8),
+                        onTap: () {
+                          context.push('/${AppRouteNames.myBooksPage}');
+                        },
                       ),
                       const CircularButton(
-                        icon: Icons.schedule,
+                        imgUrl: 'assets/images/wan_ju_ya.png',
                         label: '浏览历史',
-                        color: Color(0xFFbf91fe),
+                        color: Colors.white,
+                        // color: Color(0xFFFBBF24),
                       ),
                     ],
                   ),
@@ -491,91 +466,84 @@ class HomePage extends ConsumerWidget {
                 const SizedBox(height: 20),
 
                 // 阅读记录模块
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 标题行：时钟 Icon, 文本, 更多按钮
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.watch_later_outlined,
-                            color: Color(0xFFd94897),
-                            size: 20,
+                _readingList.when(
+                  data: (readingList) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 标题行：时钟 Icon, 文本, 更多按钮
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '继续阅读',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 6),
+                              Text(
+                                '继续阅读',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                        ),
+                        // 可滑动的卡片列表
+                        SizedBox(
+                          height: 200, // 设定高度以便 ListView 正确显示
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            scrollDirection: Axis.horizontal,
+                            itemCount: readingList.length,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
                             ),
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('查看更多继续阅读')),
+                            itemBuilder: (context, index) {
+                              final item = readingList[index];
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  right: index == readingList.length - 1
+                                      ? 0
+                                      : 12.0,
+                                ),
+                                child: ReadingItemCard(
+                                  title: item.book.bookName,
+                                  imageUrl: item.book.coverUrl,
+                                  callback: () {
+                                    final userId = ref
+                                        .watch(userViewModelProvider)
+                                        .user
+                                        ?.userId;
+                                    if (userId == null) {
+                                      context.go('/${AppRouteNames.login}');
+                                      return;
+                                    }
+                                    ref
+                                        .read(bookViewModelProvider.notifier)
+                                        .loadBook(item.book, userId);
+                                    context.push(
+                                      '/${AppRouteNames.bookReader}',
+                                    );
+                                  },
+                                ),
                               );
                             },
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(50, 20),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              foregroundColor: Colors.grey[500],
-                            ),
-                            child: const Text(
-                              '更多 >',
-                              style: TextStyle(fontSize: 14),
-                            ),
                           ),
-                        ],
-                      ),
-                    ),
-
-                    // 可滑动的卡片列表
-                    SizedBox(
-                      height: 200, // 设定高度以便 ListView 正确显示
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _readingList.length,
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        itemBuilder: (context, index) {
-                          final item = _readingList[index];
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              right: index == _readingList.length - 1
-                                  ? 0
-                                  : 12.0,
-                            ),
-                            child: ReadingItemCard(
-                              title: item['title'] as String,
-                              imageUrl: item['imageUrl'] as String,
-                              progress: item['progress'] as double,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // 滑动进度条
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: ProgressIndicatorBar(
-                        progress: _scrollPosition,
-                        activeColor: Color(0xFFd94897),
-                        inactiveColor: Colors.grey[300]!,
-                      ),
-                    ),
-                  ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  },
+                  error: (e, s) {
+                    return Text('error,$e');
+                  },
+                  loading: () {
+                    return Center(child: CircularProgressIndicator());
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -591,11 +559,6 @@ class HomePage extends ConsumerWidget {
                         child: Row(
                           children: [
                             // 粉色增长箭头
-                            Icon(
-                              Icons.trending_up,
-                              color: Color(0xFFd94897),
-                              size: 20,
-                            ),
                             const SizedBox(width: 6),
                             Text(
                               '热门榜单',
@@ -652,11 +615,6 @@ class HomePage extends ConsumerWidget {
                         child: Row(
                           children: [
                             // 新增：广场图标 (使用 'apps' 或 'grid_view')
-                            Icon(
-                              Icons.apps_rounded,
-                              color: Color(0xFFd94897),
-                              size: 20,
-                            ),
                             const SizedBox(width: 6),
                             Text(
                               '绘本广场',
@@ -690,7 +648,6 @@ class HomePage extends ConsumerWidget {
                         // 关键属性：防止 GridView 在 SingleChildScrollView 内部滚动
                         physics: const NeverScrollableScrollPhysics(),
                         shrinkWrap: true,
-
                         itemCount: _squareList.length,
                         // 4个项目
                         gridDelegate:
@@ -732,6 +689,62 @@ class MyPage extends ConsumerStatefulWidget {
 }
 
 class _MyPageState extends ConsumerState<MyPage> {
+  Future<void> _preloadCharacters(List<CharacterCollection> characters) async {
+    if (characters.isNotEmpty) {
+      final futures = <Future<void>>[];
+      for (var character in characters) {
+        if (character.avatarUrl.isNotEmpty) {
+          futures.add(
+            precacheImage(
+              CachedNetworkImageProvider(character.avatarUrl),
+              context,
+            ),
+          );
+        }
+        if (character.threeViewUrl.isNotEmpty) {
+          futures.add(
+            precacheImage(
+              CachedNetworkImageProvider(character.threeViewUrl),
+              context,
+            ),
+          );
+        }
+      }
+      await Future.wait(futures);
+    }
+  }
+
+  Future<void> _preloadBooks(List<Book> books) async {
+    if (books.isNotEmpty) {
+      final futures = <Future<void>>[];
+      for (var book in books) {
+        if (book.coverUrl.isNotEmpty) {
+          futures.add(
+            precacheImage(CachedNetworkImageProvider(book.coverUrl), context),
+          );
+        }
+      }
+      await Future.wait(futures);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listenManual(characterListProvider, (previous, next) {
+        if (next is AsyncData && next.value != null) {
+          _preloadCharacters(next.value!); // 数据就绪后执行预加载
+        }
+      });
+      ref.listenManual(booksProvider, (previous, next) {
+        if (next is AsyncData && next.value != null) {
+          _preloadBooks(next.value!); // 数据就绪后执行预加载
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final _characterViewModel = ref.watch(characterViewModelProvider.notifier);
@@ -814,28 +827,16 @@ class _MyPageState extends ConsumerState<MyPage> {
     final showUsernameVipBadge = true;
     final isVipMember = true;
     final vipExpiryDate = "2099-99-99";
-    final babyCount = 2;
-    final bookCount = 12;
     final favoriteCount = 5;
-    final topThreeBooks = ref.watch(booksProvider);
+    final books = ref.watch(booksProvider);
     final topThreeFavorites = [];
-    final sortedCharacters = ref.watch(characterListProvider);
+    final characters = ref.watch(characterListProvider);
     return Stack(
       children: [
         Container(
           width: double.infinity,
-          height: 380.0,
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(40.0),
-              bottomRight: Radius.circular(40.0),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xffeacfe5), Color(0xfff1d1e8)],
-            ),
-          ),
+          height: double.infinity,
+          decoration: const BoxDecoration(color: Color(0xFFFFF0F3)),
         ),
         SafeArea(
           child: SingleChildScrollView(
@@ -974,18 +975,13 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 Row(
                                   children: [
                                     StatItem(
-                                      emoji: '👶',
-                                      text: '$babyCount个\n宝宝',
+                                      imgUrl: 'assets/images/bao_bao.jpg',
+                                      text: '${characters.value?.length}个\n宝宝',
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 30),
                                     StatItem(
-                                      emoji: '📚',
-                                      text: '$bookCount本\n绘本',
-                                    ),
-                                    const SizedBox(width: 12),
-                                    StatItem(
-                                      emoji: '❤️',
-                                      text: '$favoriteCount个\n收藏',
+                                      imgUrl: 'assets/images/book.jpg',
+                                      text: '${books.value?.length}本\n绘本',
                                     ),
                                   ],
                                 ),
@@ -1115,12 +1111,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       child: Row(
                         children: [
                           // 左侧：Icon + 文本
-                          const Icon(
-                            Icons.book_outlined,
-                            color: Color(0xFFEA80B7),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '我的绘本',
                             style: TextStyle(
@@ -1132,7 +1123,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                           const Spacer(),
                           // 右侧：查看全部 > 按钮
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push('/${AppRouteNames.myBooksPage}');
+                            },
                             style: TextButton.styleFrom(
                               alignment: Alignment.centerRight,
                               foregroundColor: Colors.grey[700],
@@ -1152,11 +1145,16 @@ class _MyPageState extends ConsumerState<MyPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       // 使用 BookCard 组件
-                      children: topThreeBooks.when(
+                      children: books.when(
                         data: (books) {
-                          return books
-                              .map((book) => BookCard(book: book))
+                          var bookWidgets = books
+                              .take(3)
+                              .map<Widget>((book) => BookCard(book: book))
                               .toList();
+                          while (bookWidgets.length < 3) {
+                            bookWidgets.add(Spacer());
+                          }
+                          return bookWidgets;
                         },
                         error: (error, stack) => [Text('Error:$error')],
                         loading: () => [CircularProgressIndicator()],
@@ -1170,16 +1168,11 @@ class _MyPageState extends ConsumerState<MyPage> {
                   children: [
                     // 头部标题和查看全部按钮
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       // 【修改】水平 padding 调整为 0.0
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.favorite_outline, // 粉色爱心 icon
-                            color: Color(0xFFEA80B7),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '我的收藏',
                             style: TextStyle(
@@ -1227,17 +1220,12 @@ class _MyPageState extends ConsumerState<MyPage> {
                   children: [
                     // 头部标题和查看管理按钮 (Padding 4.0, 使得左侧边缘距 SingleChildScrollView 的 16.0 边界为 20.0)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       // 【修改】水平 padding 调整为 0.0
                       child: Row(
                         children: [
                           // 左侧：Icon + 文本
-                          const Icon(
-                            Icons.person_outline, // 粉色人物 icon
-                            color: Color(0xFFEA80B7),
-                            size: 24, // 调整大小以匹配
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '我的人物',
                             style: TextStyle(
@@ -1250,7 +1238,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                           // 右侧：查看管理 > 按钮
                           TextButton(
                             onPressed: () {
-                              context.push('/${AppRouteNames.characterManagementPage}');
+                              context.push(
+                                '/${AppRouteNames.characterManagementPage}',
+                              );
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
@@ -1271,7 +1261,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                     // 可水平滑动的 List
                     SizedBox(
                       height: 190, // 设定一个合适的高度 (卡片 160 + padding/滑动条 30)
-                      child: sortedCharacters.when(
+                      child: characters.when(
                         data: (data) {
                           return Column(
                             children: [
@@ -1317,12 +1307,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.settings, // 粉色的设置 icon
-                            color: Color(0xFFEA80B7),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Text(
                             '账号管理',
                             style: TextStyle(
@@ -1368,8 +1353,16 @@ class _MyPageState extends ConsumerState<MyPage> {
                     color: Colors.transparent, // 确保水波纹效果可见
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12.0),
-                      onTap: () {
-                        print('Logout button tapped');
+                      onTap: () async {
+                        await AppGlobals().clearTokens();
+                        await AppGlobals().isar.writeTxn(() async {
+                          await AppGlobals().isar.users.clear();
+                        });
+                        ref.read(loginViewModelProvider.notifier).logout();
+                        ref.read(userViewModelProvider.notifier).logout();
+                        if (mounted) {
+                          context.go('/${AppRouteNames.login}');
+                        }
                       },
                       child: Center(
                         child: Row(
@@ -1399,6 +1392,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

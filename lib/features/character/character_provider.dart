@@ -22,8 +22,9 @@ final groupedCharactersProvider = Provider<AsyncValue<Map<String, List<Character
   final asyncList = ref.watch(characterListProvider);
 
   return asyncList.whenData((list) {
+    final list1 = [...list];
     // 按拼音排序
-    list.sort((a, b) {
+    list1.sort((a, b) {
       final aPinyin = PinyinHelper.getPinyin(a.characterName);
       final bPinyin = PinyinHelper.getPinyin(b.characterName);
       return aPinyin.compareTo(bPinyin);
@@ -31,7 +32,7 @@ final groupedCharactersProvider = Provider<AsyncValue<Map<String, List<Character
 
     // 分组
     final Map<String, List<CharacterCollection>> grouped = {};
-    for (var char in list) {
+    for (var char in list1) {
       final initial = char.pinyinInitial;
       grouped.putIfAbsent(initial, () => []).add(char);
     }

@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
 
@@ -73,11 +74,7 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
   Widget build(BuildContext context) {
     final characterViewModel = ref.watch(characterViewModelProvider.notifier);
     final characterState = ref.watch(characterViewModelProvider);
-    ref.listen(characterViewModelProvider.select((state)=>state.message), (previous,next){
-      if(next != null) {
-        MySnackBar.show(context, next);
-      }
-    });
+    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: characterViewModelProvider);
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
 

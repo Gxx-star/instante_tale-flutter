@@ -119,8 +119,8 @@ class RankingItemCard extends StatelessWidget {
       children: [
         // 2.1. 圆角图片
         Container(
-          width: 80,
-          height: 100,
+          width: 100,
+          height: 120,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             image: DecorationImage(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
-import 'package:instant_tale/database/models/book.dart';
 import 'package:instant_tale/network/http.dart';
 import 'package:instant_tale/ui/page/book_reader_page.dart';
 import 'package:instant_tale/ui/page/character_management_page.dart';
@@ -12,12 +11,11 @@ import 'package:instant_tale/ui/page/edit_profile_page.dart';
 import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
+import 'package:instant_tale/ui/page/my_book_page.dart';
 import 'package:instant_tale/ui/page/privacy_security_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
 import 'package:instant_tale/ui/page/storybook_plaza_page.dart';
 import 'package:instant_tale/ui/theme.dart';
-
-import 'features/book/book_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +29,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(routerConfig: _router, theme: AppTheme.light);
+    return MaterialApp.router(
+      routerConfig: _router,
+      theme: AppTheme.light,
+      debugShowCheckedModeBanner: false,
+    );
   }
 }
 
@@ -50,6 +52,7 @@ class AppRouteNames {
   static const String characterManagementPage = 'character-management-page';
   static const String privacySecurityPage = 'privacy-security-page';
   static const String setPasswordPage = 'set-password-page';
+  static const String myBooksPage = 'my-books-page';
 }
 
 final _router = GoRouter(
@@ -60,6 +63,12 @@ final _router = GoRouter(
         return AppGlobals().isLoggedIn
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
+      },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.myBooksPage}',
+      builder: (context, state) {
+        return MyBooksPage();
       },
     ),
     GoRoute(

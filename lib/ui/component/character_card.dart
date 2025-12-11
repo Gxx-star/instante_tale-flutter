@@ -1,5 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:instant_tale/database/models/character.dart';
+import 'package:instant_tale/main.dart';
 
 // 已有人物卡片
 class CharacterCard extends StatelessWidget {
@@ -14,7 +17,7 @@ class CharacterCard extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8.0, top: 4.0, bottom: 4.0),
       child: InkWell(
         onTap: () {
-
+          context.push('/${AppRouteNames.characterManagementPage}');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -32,7 +35,7 @@ class CharacterCard extends StatelessWidget {
               // 圆形人物图片
               CircleAvatar(
                 radius: 32, // 直径 64，与 AddCharacterCard 保持一致
-                backgroundImage: NetworkImage(character.avatarUrl),
+                backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
                 backgroundColor: Colors.grey[200],
               ),
               const SizedBox(height: 12),
@@ -57,6 +60,7 @@ class CharacterCard extends StatelessWidget {
                 ),
                 child: Text(
                   character.desc,
+                  maxLines: 2,
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

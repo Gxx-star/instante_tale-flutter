@@ -9,12 +9,14 @@ part 'book.g.dart';
 @Name('books')
 class Book {
   Id id = Isar.autoIncrement;
+  @Index()
   String bookId;
   String bookName;
   String coverUrl;
   int createdAt;
   List<BookPage> content;
-  List<CharacterEmbedded>characters;
+  List<CharacterEmbedded> characters;
+
   Book({
     required this.bookId,
     required this.bookName,
@@ -35,9 +37,9 @@ class Book {
       bookId: json['book_id'],
       bookName: json['book_name'],
       coverUrl: json['cover_url'],
-      createdAt: (json['created_at'] as double).toInt() ,
+      createdAt: (json['created_at'] as double).toInt(),
       content: content,
-      characters: characters
+      characters: characters,
     );
   }
 }

@@ -4,10 +4,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_view_model.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
+import 'package:instant_tale/main.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
-
 import '../../database/models/character.dart';
 import '../../features/book/book_provider.dart';
 import '../../features/book/book_state.dart';
@@ -30,13 +31,39 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   int _currentPage = 0;
   final PageController _pageController = PageController();
   int _selectedBookType = 0;
-  bool _hasCharacterSelected = false;
+  String? _selectedCharacterId = null;
   String? _selectedCharacterName;
   final Set<String> _selectedStyles = {};
   final int _maxStyles = 3;
   bool _isCollectionBook = false;
   String _storyTheme = '';
-  int? _selectedVoiceIndex;
+  int? _selectedModel;
+  final List<Map<String, dynamic>> _modelOptions = [
+    {
+      'title': '极速模型',
+      'subtitle': '生成速度快，但是质量稍逊色',
+      'themeColor': Colors.pinkAccent, // 粉色
+      'model': 'FAST',
+    },
+    {
+      'title': '普通模型',
+      'subtitle': '生成速度较快，质量相对好一点',
+      'themeColor': Colors.orangeAccent, // 橙色
+      'model': 'AUTO',
+    },
+    {
+      'title': '专业模型',
+      'subtitle': '生成速度慢，生成的质量好',
+      'themeColor': Colors.lightGreen, // 绿色
+      'model': 'PRO',
+    },
+    {
+      'title': '默认模型',
+      'subtitle': '生成速度很慢，生成的质量中等，但故事连贯',
+      'themeColor': Colors.lightBlueAccent, // 蓝色
+      'model': 'DEFAULT',
+    },
+  ];
 
   // 故事风格选项
   final List<Map<String, dynamic>> _styleOptions = [
@@ -96,7 +123,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
     setState(() {
       _selectedBookType = type;
       if (type == 1) {
-        _hasCharacterSelected = false;
+        _selectedCharacterId = null;
         _selectedCharacterName = null;
       }
     });
@@ -105,7 +132,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   // Page1: 选择角色之后的回调
   void _handleCharacterSelection(String? id, String? name) {
     setState(() {
-      _hasCharacterSelected = id != null;
+      _selectedCharacterId = id;
       _selectedCharacterName = name;
     });
   }
@@ -135,7 +162,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   // Page4：选择音色之后的回调
   void _handleVoiceSelection(int? index) {
     setState(() {
-      _selectedVoiceIndex = index;
+      _selectedModel = index;
     });
   }
 
@@ -147,7 +174,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
           return true;
         }
         if (_selectedBookType == 2) {
-          return _hasCharacterSelected;
+          return _selectedCharacterId != null;
         }
         return false;
       case 1:
@@ -155,7 +182,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
       case 2:
         return _storyTheme.isNotEmpty;
       case 3:
-        return _selectedVoiceIndex != null;
+        return _selectedModel != null;
       default:
         return true;
     }
@@ -173,14 +200,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
     _characterState = ref.watch(characterViewModelProvider);
     _bookViewModel = ref.watch(bookViewModelProvider.notifier);
     _bookState = ref.watch(bookViewModelProvider);
-    ref.listen<String?>(
-      bookViewModelProvider.select((state) => state.message),
-      (previous, next) {
-        if (next != null) {
-          MySnackBar.show(context, next);
-        }
-      },
-    );
+    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookViewModelProvider);
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
     const _headerGradient = LinearGradient(
@@ -234,7 +254,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   selectedBookType: _selectedBookType,
                   onSelectionChanged: _handleBookTypeSelection,
                   onCharacterSelected: _handleCharacterSelection,
-                  hasCharacterSelected: _hasCharacterSelected,
+                  hasCharacterSelected: _selectedCharacterId != null,
                   selectedCharacterName: _selectedCharacterName,
                 ),
                 Page2Style(
@@ -253,9 +273,10 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   initialStoryTheme: _storyTheme,
                   onThemeChanged: _handleStoryThemeChanged,
                 ),
-                Page4Voice(
-                  selectedVoiceIndex: _selectedVoiceIndex,
-                  onVoiceChanged: _handleVoiceSelection,
+                Page4Model(
+                  selectedModel: _selectedModel,
+                  onModelChanged: _handleVoiceSelection,
+                  modelList: _modelOptions,
                 ),
               ],
             ),
@@ -310,13 +331,25 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                           if (_currentPage < _totalPages - 1) {
                             _navigateToPage(_currentPage + 1);
                           } else {
+                            List<String> characters = [];
                             final List<String> storyTypes = _selectedStyles
                                 .toList();
                             final List<String> storyQualities = [_storyTheme];
-                            _bookViewModel.createBook(
-                              storyTypes,
-                              storyQualities,
-                            );
+                            if (_selectedCharacterId != null) {
+                              characters.add(_selectedCharacterId!);
+                              _bookViewModel.generateExclusiveBook(
+                                storyTypes,
+                                storyQualities,
+                                characters,
+                                _modelOptions[_selectedModel!]['model'],
+                              );
+                            } else {
+                              _bookViewModel.generateBook(
+                                storyTypes,
+                                storyQualities,
+                                _modelOptions[_selectedModel!]['model'],
+                              );
+                            }
                             context.pop();
                           }
                         }
@@ -349,52 +382,29 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   }
 }
 
-// 角色列表
-final List<CharacterCollection> _characterList = [
-  CharacterCollection(
-    characterId: "1",
-    characterName: "哈基米",
-    desc: "耄耋",
-    avatarUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    threeViewUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    authorId: "1",
-    createdAt: 123456789,
-  ),
-  CharacterCollection(
-    characterId: "2",
-    characterName: "耄耋女",
-    desc: "女孩",
-    avatarUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    threeViewUrl:
-        "https://tse3.mm.bing.net/th/id/OIP.WBgt6EuwqzjIHBZWpj2DyAHaHa?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-    authorId: "2",
-    createdAt: 123456789,
-  ),
-];
-
 // “选择专属人物”页面
-class SelectCharacterPage extends StatefulWidget {
+class SelectCharacterPage extends ConsumerStatefulWidget {
   const SelectCharacterPage({super.key});
 
   @override
-  State<SelectCharacterPage> createState() => _SelectCharacterPageState();
+  ConsumerState<SelectCharacterPage> createState() =>
+      _SelectCharacterPageState();
 }
 
-class _SelectCharacterPageState extends State<SelectCharacterPage> {
-  String? _selectedCharacterId; // 跟踪当前选中的人物ID
-
-  @override
-  void initState() {
-    super.initState();
-    // 按照 createdAt 从早到晚排序
-    _characterList.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-  }
+class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
+  CharacterCollection? _selectedCharacter; // 跟踪当前选中的人物ID
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(characterViewModelProvider.select((state) => (state.message)), (
+      pre,
+      nex,
+    ) {
+      if (nex != null) {
+        MySnackBar.show(context, nex);
+      }
+    });
+    final _charactersListAsync = ref.watch(characterListProvider);
     const Color primaryColor = Color(0xFFfaf3f8);
     const Color accentColor = Colors.pinkAccent;
 
@@ -407,104 +417,114 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
         Color(0xFFe8d4f6), // Bottom-right softer pink
       ],
     );
-
-    return Scaffold(
-      backgroundColor: primaryColor,
-      appBar: AppBar(
-        toolbarHeight: 40.0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
-          onPressed: () => Navigator.of(context).pop(), // 默认返回 null
-        ),
-        title: const Text(
-          '选择专属人物',
-          style: TextStyle(
-            color: Color(0xfffbfafd),
-            fontWeight: FontWeight.w500,
-            fontSize: 18.0,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        titleSpacing: 0.0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: _headerGradient),
-        ),
-      ),
-      body: Column(
-        children: [
-          // AppBar 下方的副标题
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(10.0, 3.0, 20.0, 15.5),
-            decoration: const BoxDecoration(gradient: _headerGradient),
-            child: const Text(
-              '为绘本选择一个专属主角，让故事更生动',
-              style: TextStyle(color: Colors.white, fontSize: 15.0),
+    return _charactersListAsync.when(
+      data: (characterList) {
+        return Scaffold(
+          backgroundColor: primaryColor,
+          appBar: AppBar(
+            toolbarHeight: 40.0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
+              onPressed: () => Navigator.of(context).pop(), // 默认返回 null
             ),
-          ),
-          // 滚动内容区域
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. 创建新人物按钮 (虚线边框) - *** COMPLETED HERE ***
-                  _buildCreateNewButton(context),
-                  const SizedBox(height: 24.0),
-
-                  // 2. "我的人物" 标题
-                  const Text(
-                    '我的人物',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-
-                  // 3. 人物列表
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _characterList.length,
-                    itemBuilder: (context, index) {
-                      final character = _characterList[index];
-                      final isSelected = _selectedCharacterId == character.id;
-                      return _CharacterCard(
-                        character: character,
-                        isSelected: isSelected,
-                        onPressed: () {
-                          setState(() {
-                            _selectedCharacterId = character.characterId;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ],
+            title: const Text(
+              '选择专属人物',
+              style: TextStyle(
+                color: Color(0xfffbfafd),
+                fontWeight: FontWeight.w500,
+                fontSize: 18.0,
               ),
             ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            titleSpacing: 0.0,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(gradient: _headerGradient),
+            ),
           ),
+          body: Column(
+            children: [
+              // AppBar 下方的副标题
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(10.0, 3.0, 20.0, 15.5),
+                decoration: const BoxDecoration(gradient: _headerGradient),
+                child: const Text(
+                  '为绘本选择一个专属主角，让故事更生动',
+                  style: TextStyle(color: Colors.white, fontSize: 15.0),
+                ),
+              ),
+              // 滚动内容区域
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. 创建新人物按钮 (虚线边框)
+                      _buildCreateNewButton(context, ref),
+                      const SizedBox(height: 24.0),
 
-          // 底部 "确认选择" 按钮
-          _buildConfirmButton(context, accentColor),
-        ],
-      ),
+                      // 2. "我的人物" 标题
+                      const Text(
+                        '我的人物',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // 3. 人物列表
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: characterList.length,
+                        itemBuilder: (context, index) {
+                          final character = characterList[index];
+                          final isSelected =
+                              _selectedCharacter?.characterId ==
+                              character.characterId;
+                          return _CharacterCard(
+                            character: character,
+                            isSelected: isSelected,
+                            onPressed: () {
+                              setState(() {
+                                _selectedCharacter = character;
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // 底部 "确认选择" 按钮
+              _buildConfirmButton(context, accentColor),
+            ],
+          ),
+        );
+      },
+      error: (e, s) {
+        return Text('error');
+      },
+      loading: () {
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 
   // "创建新人物" 按钮 - *** IMPLEMENTATION START ***
-  Widget _buildCreateNewButton(BuildContext context) {
+  Widget _buildCreateNewButton(BuildContext context, WidgetRef ref) {
     const Color pinkAccent = Colors.pinkAccent;
     const double borderRadius = 12.0;
 
     return InkWell(
       onTap: () {
-        // Handle navigation to character creation page
+        context.push('/${AppRouteNames.createCharacter}');
       },
       child: CustomPaint(
         painter: DashedBorderPainter(
@@ -576,11 +596,11 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _selectedCharacterId == null
+            onPressed: _selectedCharacter == null
                 ? null
                 : () {
                     // 确认选择，关闭此页面并返回选中的ID
-                    Navigator.of(context).pop(_selectedCharacterId);
+                    Navigator.of(context).pop(_selectedCharacter);
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
@@ -710,7 +730,8 @@ class _CharacterCard extends StatelessWidget {
               ),
               const SizedBox(width: 8.0),
               _InfoTag(
-                text: '${character.createdAt}岁',
+                text:
+                    '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 color: const Color(0xfff7e8f2),
               ),
             ],
@@ -843,17 +864,20 @@ class Page1Type extends StatelessWidget {
 
   // 点击选择人物之后的回调
   void _handleSelectCharacter(BuildContext context) async {
-    final String? selectedId = await Navigator.push<String?>(
-      context,
-      MaterialPageRoute<String?>(
-        builder: (context) => const SelectCharacterPage(),
-      ),
-    );
-    String? selectedName;
-    if (selectedId != null) {
-      selectedName = "写死";
+    final CharacterCollection? selectedCharacter =
+        await Navigator.push<CharacterCollection?>(
+          context,
+          MaterialPageRoute<CharacterCollection?>(
+            builder: (context) => const SelectCharacterPage(),
+          ),
+        );
+    if (selectedCharacter == null) {
+      return;
     }
-    onCharacterSelected(selectedId, selectedName);
+    onCharacterSelected(
+      selectedCharacter.characterId,
+      selectedCharacter.characterName,
+    );
   }
 
   @override
@@ -1622,6 +1646,7 @@ class _Page3ContentState extends State<Page3Content> {
                   focusNode: _focusNode,
                   enabled: !isInputLocked,
                   maxLines: 4,
+                  maxLength: 100,
                   cursorColor: accentColor,
                   decoration: InputDecoration(
                     hintText:
@@ -1929,49 +1954,24 @@ class _ThemeCardState extends State<ThemeCard>
 }
 
 // Page4
-class Page4Voice extends StatefulWidget {
-  final int? selectedVoiceIndex;
-  final Function(int?) onVoiceChanged;
+class Page4Model extends StatefulWidget {
+  final int? selectedModel;
+  final Function(int?) onModelChanged;
+  final List<Map<String, dynamic>> modelList;
 
-  const Page4Voice({
+  const Page4Model({
     super.key,
-    required this.selectedVoiceIndex,
-    required this.onVoiceChanged,
+    required this.selectedModel,
+    required this.onModelChanged,
+    required this.modelList,
   });
 
   @override
-  State<Page4Voice> createState() => _Page4VoiceState();
+  State<Page4Model> createState() => _Page4ModelState();
 }
 
-class _Page4VoiceState extends State<Page4Voice> {
-  // 音色列表
-  final List<Map<String, dynamic>> _voiceOptions = [
-    {
-      'title': '甜美',
-      'subtitle': '温柔甜美的女声',
-      'themeColor': Colors.pinkAccent, // 粉色
-    },
-    {
-      'title': '温暖',
-      'subtitle': '温暖亲切的男声',
-      'themeColor': Colors.orangeAccent, // 橙色
-    },
-    {
-      'title': '活泼',
-      'subtitle': '活泼有趣的童声',
-      'themeColor': Colors.lightGreen, // 绿色
-    },
-    {
-      'title': '轻柔',
-      'subtitle': '轻柔舒缓的女声',
-      'themeColor': Colors.lightBlueAccent, // 蓝色
-    },
-    {
-      'title': '无声',
-      'subtitle': '安静享受绘本世界',
-      'themeColor': Colors.blueGrey, // 灰色
-    },
-  ];
+class _Page4ModelState extends State<Page4Model> {
+  // 模型列表
 
   @override
   Widget build(BuildContext context) {
@@ -1981,17 +1981,12 @@ class _Page4VoiceState extends State<Page4Voice> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题区域：麦克风图标 + 文本
+          // 标题区域
           Row(
             children: [
-              const Icon(
-                Icons.mic_none_rounded,
-                color: Colors.pinkAccent,
-                size: 24.0,
-              ),
               const SizedBox(width: 8.0),
               const Text(
-                '选择朗读音色',
+                '选择生成模型',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 18.0,
@@ -2002,18 +1997,18 @@ class _Page4VoiceState extends State<Page4Voice> {
           ),
           const SizedBox(height: 20.0),
 
-          // 音色列表
+          // 模型列表
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _voiceOptions.length,
+            itemCount: widget.modelList.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12.0),
             itemBuilder: (context, index) {
-              final option = _voiceOptions[index];
-              final bool isSelected = widget.selectedVoiceIndex == index;
+              final option = widget.modelList[index];
+              final bool isSelected = widget.selectedModel == index;
               final Color themeColor = option['themeColor'];
 
-              return _buildVoiceCard(
+              return _buildModelCard(
                 index: index,
                 title: option['title'],
                 subtitle: option['subtitle'],
@@ -2030,8 +2025,8 @@ class _Page4VoiceState extends State<Page4Voice> {
     );
   }
 
-  // 音色卡片
-  Widget _buildVoiceCard({
+  // 模型卡片
+  Widget _buildModelCard({
     required int index,
     required String title,
     required String subtitle,
@@ -2041,9 +2036,9 @@ class _Page4VoiceState extends State<Page4Voice> {
     return GestureDetector(
       onTap: () {
         if (isSelected) {
-          widget.onVoiceChanged(null);
+          widget.onModelChanged(null);
         } else {
-          widget.onVoiceChanged(index);
+          widget.onModelChanged(index);
         }
       },
       child: AnimatedContainer(

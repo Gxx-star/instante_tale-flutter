@@ -1,12 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
+import 'package:instant_tale/features/user/user_provider.dart';
 import 'package:instant_tale/main.dart';
 
 import '../../database/models/book.dart';
 
-// 绘本卡片
+// 绘本卡片（白底）
 class BookCard extends ConsumerWidget {
   final Book book;
   // 【新增】控制UI显示
@@ -29,7 +31,12 @@ class BookCard extends ConsumerWidget {
         child: InkWell(
           onTap: () {
             // 点击卡片后跳转
-            ref.watch(bookViewModelProvider.notifier).loadBook(book);
+            final userId = ref.watch(userViewModelProvider).user?.userId;
+            if (userId == null) {
+              context.go('/${AppRouteNames.login}');
+              return;
+            }
+            ref.watch(bookViewModelProvider.notifier).loadBook(book,userId);
             context.push('/${AppRouteNames.bookReader}');
           },
           // 【修复】添加 borderRadius，确保点击水波纹和阴影是圆角
@@ -63,8 +70,8 @@ class BookCard extends ConsumerWidget {
                       children: [
                         // 图片
                         Positioned.fill(
-                          child: Image.network(
-                            book.coverUrl,
+                          child: Image(
+                            image:CachedNetworkImageProvider(book.coverUrl),
                             fit: BoxFit.cover,
                             width: double.infinity,
                             loadingBuilder: (context, child, loadingProgress) {

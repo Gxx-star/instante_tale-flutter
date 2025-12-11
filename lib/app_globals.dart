@@ -1,10 +1,15 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:instant_tale/database/models/book.dart';
 import 'package:instant_tale/database/models/character.dart';
+import 'package:instant_tale/database/models/reading_history.dart';
 import 'package:instant_tale/database/models/user.dart';
+import 'package:instant_tale/ui/component/my_snackbar.dart';
+import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart';
 
 /// 全局单例，用于保存全局状态和工具实例
 class AppGlobals {
@@ -19,7 +24,7 @@ class AppGlobals {
   Isar? _isar;
 
   bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
-  //bool  get isLoggedIn => true;
+
   Isar get isar {
     if (_isar == null) {
       throw Exception("Isar尚未初始化，请先调用init()");
@@ -27,12 +32,16 @@ class AppGlobals {
     return _isar!;
   }
 
-  Future<void> init() async {  // 初始化全局状态
-    _secureStorage.delete(key: 'token');
+  Future<void> init() async {
     // 从本地安全存储中恢复 token
     globalToken = await _secureStorage.read(key: 'token');
-    final dir = await getApplicationCacheDirectory();
-    _isar = await Isar.open([BookSchema, UserSchema,CharacterCollectionSchema], directory: dir.path);
+    final dir = await getApplicationDocumentsDirectory();
+    _isar = await Isar.open([
+      BookSchema,
+      UserSchema,
+      CharacterCollectionSchema,
+      ReadingHistorySchema,
+    ], directory: dir.path);
   }
 
   Future<void> saveToken(String token) async {
@@ -43,5 +52,38 @@ class AppGlobals {
   Future<void> clearTokens() async {
     globalToken = null;
     await _secureStorage.deleteAll();
+  }
+
+  String formatTimestamp(int timestamp) {
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(
+      (timestamp * 1000).toInt(),
+    );
+    DateFormat formatter = DateFormat('yyyy-MM-dd');
+    return formatter.format(date);
+  }
+
+  int calculateAge(int birthTimestamp) {
+    final now = DateTime.now();
+    final birthDate = DateTime.fromMillisecondsSinceEpoch(
+      (birthTimestamp * 1000).toInt(),
+    );
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  void listenAndShowSnackBar({
+    required WidgetRef ref,
+    required BuildContext context,
+    required StateNotifierProvider provider,
+  }) {
+    ref.listen(provider.select((state) => state.message), (pre, nex) {
+      if (nex != null) {
+        MySnackBar.show(context, nex);
+      }
+    });
   }
 }

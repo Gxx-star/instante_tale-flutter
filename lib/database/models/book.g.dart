@@ -55,7 +55,21 @@ const BookSchema = CollectionSchema(
   deserialize: _bookDeserialize,
   deserializeProp: _bookDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'bookId': IndexSchema(
+      id: 3567540928881766442,
+      name: r'bookId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'bookId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {
     r'pages': BookPageSchema,
@@ -269,6 +283,49 @@ extension BookQueryWhere on QueryBuilder<Book, Book, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterWhereClause> bookIdEqualTo(String bookId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'bookId',
+        value: [bookId],
+      ));
+    });
+  }
+
+  QueryBuilder<Book, Book, QAfterWhereClause> bookIdNotEqualTo(String bookId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookId',
+              lower: [],
+              upper: [bookId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookId',
+              lower: [bookId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookId',
+              lower: [bookId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookId',
+              lower: [],
+              upper: [bookId],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }

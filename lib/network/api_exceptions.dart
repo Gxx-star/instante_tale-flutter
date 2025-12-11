@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 
 /// 统一异常类
 class ApiException implements Exception {
-  final int? code;        // 业务错误码（后端返回的）
-  final String message;   // 错误提示信息
+  final int? code; // 业务错误码（后端返回的）
+  final String message; // 错误提示信息
   final DioException? origin; // 原始 Dio 异常（可选）
 
   ApiException(this.code, this.message, {this.origin});
@@ -26,7 +26,7 @@ class ExceptionHandler {
         case DioExceptionType.receiveTimeout:
           return ApiException(-1, "响应超时", origin: error);
         case DioExceptionType.badResponse:
-        // 处理服务端响应错误
+          // 处理服务端响应错误
           final statusCode = error.response?.statusCode;
           if (statusCode == 401) {
             return ApiException(401, "登录失效，请重新登录", origin: error);

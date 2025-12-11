@@ -2,17 +2,19 @@
 import 'package:flutter/material.dart';
 
 class StatCard extends StatelessWidget {
-  final String emoji;
+  final String imgUrl;
   final String title;
   final String value;
   final Color color;
+  final Color backgroundColor;
 
   const StatCard({
     super.key,
-    required this.emoji,
+    required this.imgUrl,
     required this.title,
     required this.value,
     required this.color,
+    required this.backgroundColor,
   });
 
   @override
@@ -22,7 +24,7 @@ class StatCard extends StatelessWidget {
         // Retaining the reduced vertical padding for shorter height
         padding: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
@@ -37,18 +39,12 @@ class StatCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Emoji/Icon
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 24),
-            ),
+            Image(image: AssetImage(imgUrl), width: 30, height: 30),
             const SizedBox(height: 4),
             // Title
             Text(
               title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             const SizedBox(height: 4),
             // Value
@@ -57,7 +53,7 @@ class StatCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 color: color, // Use passed color
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold
               ),
             ),
           ],

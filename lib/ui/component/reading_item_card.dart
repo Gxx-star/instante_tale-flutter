@@ -1,15 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 // 用于表示”继续阅读“中的卡片内容
 class ReadingItemCard extends StatelessWidget {
   final String title;
   final String imageUrl;
-  final double progress;
+  final GestureDragCancelCallback callback;
 
   const ReadingItemCard({
     super.key,
     required this.title,
     required this.imageUrl,
-    required this.progress,
+    required this.callback,
   });
 
   static const Color _progressIndicatorColor = Color(0xffe9c019);
@@ -17,9 +18,7 @@ class ReadingItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-
-      },
+      onTap: callback,
       child: Container(
         width: 120, // 固定卡片宽度
         height: 180, // 固定卡片高度
@@ -40,8 +39,8 @@ class ReadingItemCard extends StatelessWidget {
             Positioned.fill(
               child: ColorFiltered(
                 colorFilter: const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                child: Image.network(
-                  imageUrl,
+                child: Image(
+                  image:CachedNetworkImageProvider(imageUrl),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.black,
@@ -69,17 +68,6 @@ class ReadingItemCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 进度条
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
-                      child: LinearProgressIndicator(
-                        value: progress, // 0.0 到 1.0
-                        backgroundColor: Colors.white.withOpacity(0.5),
-                        // 进度条颜色已更改为 0xffe9c019
-                        valueColor: const AlwaysStoppedAnimation<Color>(_progressIndicatorColor),
-                        minHeight: 4,
-                      ),
-                    ),
                     const SizedBox(height: 6),
                     // 标题文本
                     Text(

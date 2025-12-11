@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:lpinyin/lpinyin.dart';
 
 part 'character.g.dart';
+
 mixin CharacterFields {
   String characterId = '';
   String characterName = '';
@@ -11,6 +12,7 @@ mixin CharacterFields {
   String authorId = '';
   int createdAt = 0;
 }
+
 @embedded
 class CharacterEmbedded with CharacterFields {
   CharacterEmbedded({
@@ -65,6 +67,7 @@ class CharacterEmbedded with CharacterFields {
     );
   }
 }
+
 @collection
 @Name('characterCollections')
 class CharacterCollection with CharacterFields {
@@ -103,6 +106,7 @@ class CharacterCollection with CharacterFields {
       createdAt: (json['created_at'] as num?)?.toInt() ?? 0,
     );
   }
+
   String get pinyinInitial {
     if (characterName.isEmpty) return '#';
     final pinyin = PinyinHelper.getPinyin(characterName, separator: '');

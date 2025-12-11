@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:instant_tale/features/character/character_repository.dart';
 import 'package:instant_tale/features/character/character_state.dart';
-import 'package:lpinyin/lpinyin.dart';
-import '../../database/models/character.dart';
 import '../login/login_repository.dart';
 
 class CharacterViewModel extends StateNotifier<CharacterState> {
