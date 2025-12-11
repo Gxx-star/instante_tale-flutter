@@ -14,6 +14,7 @@ class User {
   String phone;
   String? location;
   String? personalProfile;
+
   User({
     required this.userId,
     required this.avatar,
@@ -37,6 +38,7 @@ class User {
       personalProfile: json['introduction'],
     );
   }
+
   User copyWith({
     String? userId,
     String? avatar,
@@ -46,7 +48,7 @@ class User {
     String? phone,
     String? location,
     String? personalProfile,
-  }){
+  }) {
     return User(
       userId: userId ?? this.userId,
       avatar: avatar ?? this.avatar,

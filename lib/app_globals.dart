@@ -24,6 +24,7 @@ class AppGlobals {
   Isar? _isar;
 
   bool get isLoggedIn => globalToken != null && globalToken!.isNotEmpty;
+
   Isar get isar {
     if (_isar == null) {
       throw Exception("Isar尚未初始化，请先调用init()");
@@ -79,10 +80,10 @@ class AppGlobals {
     required BuildContext context,
     required StateNotifierProvider provider,
   }) {
-      ref.listen(provider.select((state)=>state.message), (pre,nex){
-        if(nex!=null){
-          MySnackBar.show(context, nex);
-        }
-      });
+    ref.listen(provider.select((state) => state.message), (pre, nex) {
+      if (nex != null) {
+        MySnackBar.show(context, nex);
+      }
+    });
   }
 }

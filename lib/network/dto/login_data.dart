@@ -1,5 +1,3 @@
-
-
 import 'dart:ffi';
 
 import '../../database/models/user.dart';
