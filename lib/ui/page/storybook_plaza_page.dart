@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // 新增导入
 
 class StorybookPlazaPage extends StatefulWidget {
   const StorybookPlazaPage({super.key});
@@ -57,8 +58,8 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
     {"title": "小小建筑师", "author": "工程师", "views": 4567, "likes": 289},
   ];
   // 定义主题背景渐变色
-  static const LinearGradient themeGradient = LinearGradient(
-    colors: [Color(0xFFfbc2eb), Color(0xFFa6c1ee)], // 浅粉色到浅蓝色
+  static final LinearGradient themeGradient = LinearGradient(
+    colors: [const Color(0xFFfbc2eb), const Color(0xFFa6c1ee)], // 浅粉色到浅蓝色
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -71,13 +72,13 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
     // 确保返回Scaffold作为根Widget
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: themeGradient,
         ),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              title: const Text(
+              title: Text(
                 "内容广场",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -90,7 +91,7 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
               elevation: 0,
               centerTitle: true,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.white), // 返回箭头改为白色
+                icon: Icon(Icons.arrow_back_ios, color: Colors.white, size: 20.w), // 返回箭头改为白色 + 尺寸适配
                 onPressed: () {
                   context.pop();
                 },
@@ -100,20 +101,20 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
             SliverPersistentHeader(
               pinned: true,
               delegate: _CategoryHeaderDelegate(
-                minExtent: 60,
-                maxExtent: 60,
+                minExtent: 60.h, // 高度适配
+                maxExtent: 60.h, // 高度适配
                 child: _buildCategoryBar(primaryColor),
               ),
             ),
             // 内容列表
             SliverPadding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.w), // 内边距适配
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.65,
+                  mainAxisSpacing: 12.h, // 纵向间距适配
+                  crossAxisSpacing: 12.w, // 横向间距适配
+                  childAspectRatio: 0.65, // 比例保持不变
                 ),
                 delegate: SliverChildBuilderDelegate(
                       (context, index) => _buildCard(index),
@@ -132,18 +133,18 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
     return Container(
       // 背景使用柔和的半透明色，让底层渐变透出
       color: Colors.white.withOpacity(0.3),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h), // 内边距适配
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => SizedBox(width: 8.w), // 间距适配
         itemBuilder: (_, index) {
           bool selected = index == currentIndex;
           final category = categories[index];
 
           return ChoiceChip(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20.r), // 圆角适配
             ),
             label: Text(
               category["name"],
@@ -154,7 +155,7 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
             ),
             avatar: Icon(
               category["icon"],
-              size: 16,
+              size: 16.w, // 图标尺寸适配
               color: selected ? Colors.white : Colors.black54, // 图标颜色调整
             ),
             selected: selected,
@@ -180,30 +181,30 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
       // 文件夹样式
       return Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(18.r), // 圆角适配
           color: const Color(0xFFa18cd1),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.w), // 内边距适配
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h), // 内边距适配
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r), // 圆角适配
               ),
               child: Text(
                 '${book["title"]}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 12.sp, // 字体适配
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             const Spacer(),
-            const Icon(Icons.folder_open, size: 40, color: Colors.white),
+            Icon(Icons.folder_open, size: 40.w, color: Colors.white), // 图标尺寸适配
           ],
         ),
       );
@@ -217,32 +218,32 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18.r), // 圆角适配
         boxShadow: [
           BoxShadow(
             color: gradient[0].withOpacity(0.4),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 8.w, // 阴影模糊适配
+            offset: Offset(0, 4.h), // 阴影偏移适配
           ),
         ],
       ),
       child: Stack(
         children: [
           Center(
-            child: Icon(Icons.book_outlined, size: 60, color: Colors.white.withOpacity(0.8)),
+            child: Icon(Icons.book_outlined, size: 60.w, color: Colors.white.withOpacity(0.8)), // 图标尺寸适配
           ),
 
           Positioned(
-            top: 12,
-            right: 12,
+            top: 12.h,
+            right: 12.w,
             child: Container(
-              width: 30,
-              height: 30,
+              width: 30.w, // 宽度适配
+              height: 30.h, // 高度适配
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.favorite_border, size: 18, color: Colors.white),
+              child: Icon(Icons.favorite_border, size: 18.w, color: Colors.white), // 图标尺寸适配
             ),
           ),
 
@@ -251,12 +252,12 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.w), // 内边距适配
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.15),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(18.r), // 圆角适配
+                  bottomRight: Radius.circular(18.r), // 圆角适配
                 ),
               ),
               child: Column(
@@ -265,38 +266,38 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.visibility, size: 14, color: Colors.white),
-                      const SizedBox(width: 4),
+                      Icon(Icons.visibility, size: 14.w, color: Colors.white), // 图标尺寸适配
+                      SizedBox(width: 4.w), // 间距适配
                       Text(
                         '${book["views"]}',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 12.sp), // 字体适配
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.favorite, size: 14, color: Colors.white),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 8.w), // 间距适配
+                      Icon(Icons.favorite, size: 14.w, color: Colors.white), // 图标尺寸适配
+                      SizedBox(width: 4.w), // 间距适配
                       Text(
                         '${book["likes"]}',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 12.sp), // 字体适配
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h), // 间距适配
                   Text(
                     book["title"],
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 16.sp, // 字体适配
                       fontWeight: FontWeight.bold,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h), // 间距适配
                   Text(
                     'by ${book["author"]}',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
-                      fontSize: 12,
+                      fontSize: 12.sp, // 字体适配
                     ),
                   ),
                 ],
@@ -309,7 +310,7 @@ class _StorybookPlazaPageState extends State<StorybookPlazaPage> {
   }
 }
 
-// 保持不变的Delegate
+// 保持不变的Delegate（仅修改尺寸单位）
 class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double minExtent;
   final double maxExtent;

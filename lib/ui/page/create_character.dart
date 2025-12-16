@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
@@ -97,29 +98,29 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
         : disabledForegroundColor;
     final VoidCallback? onPressed = isButtonEnabled
         ? () {
-            characterViewModel.addCharacter(
-              _selectedPhoto!,
-              _nameController.text,
-              _descController.text,
-            );
-            context.pop();
-          }
+      characterViewModel.addCharacter(
+        _selectedPhoto!,
+        _nameController.text,
+        _descController.text,
+      );
+      context.pop();
+    }
         : null;
     return Scaffold(
       backgroundColor: primaryColor,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        toolbarHeight: 40.0,
+        toolbarHeight: 40.0.h,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
+          icon: Icon(Icons.arrow_back, color: const Color(0xfffbfafd), size: 24.w),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           '创建专属人物',
           style: TextStyle(
-            color: Color(0xfffbfafd),
+            color: const Color(0xfffbfafd),
             fontWeight: FontWeight.w500,
-            fontSize: 18.0,
+            fontSize: 18.0.sp,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -134,25 +135,25 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(10.0, 3.0, 20.0, 15.5),
+            padding: EdgeInsets.fromLTRB(10.0.w, 3.0.h, 20.0.w, 15.5.h),
             decoration: const BoxDecoration(gradient: HeaderGradient),
-            child: const Text(
+            child: Text(
               '上传宝宝照片，生成独一无二的绘本主角',
-              style: TextStyle(color: Colors.white, fontSize: 15.0),
+              style: TextStyle(color: Colors.white, fontSize: 15.0.sp),
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
+              padding: EdgeInsets.all(20.0.w),
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
                   _buildUploadCard(),
-                  const SizedBox(height: 25.0),
+                  SizedBox(height: 25.0.h),
                   _buildBasicInfoCard(),
-                  const SizedBox(height: 25.0),
+                  SizedBox(height: 25.0.h),
                   _buildTipsCard(),
-                  const SizedBox(height: 20.0),
+                  SizedBox(height: 20.0.h),
                 ],
               ),
             ),
@@ -160,9 +161,9 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
           // 底部 "创建人物" 按钮
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14.0,
-              vertical: 12.0,
+            padding: EdgeInsets.symmetric(
+              horizontal: 14.0.w,
+              vertical: 12.0.h,
             ),
             child: SafeArea(
               top: false,
@@ -175,9 +176,9 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
                     // 动态背景色
                     foregroundColor: buttonTextColor,
                     // 动态前景色
-                    minimumSize: const Size(double.infinity, 40),
+                    minimumSize: Size(double.infinity, 40.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(8.0.r),
                     ),
                     elevation: 0,
                     disabledBackgroundColor: disabledBackgroundColor,
@@ -187,7 +188,7 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
                     '创建人物',
                     style: TextStyle(
                       color: buttonTextColor,
-                      fontSize: 16.0,
+                      fontSize: 16.0.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -204,16 +205,16 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
   Widget _buildUploadCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+      padding: EdgeInsets.symmetric(vertical: 16.0.h, horizontal: 20.0.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: Colors.grey.withOpacity(0.4), width: 1.4),
+        borderRadius: BorderRadius.circular(16.0.r),
+        border: Border.all(color: Colors.grey.withOpacity(0.4), width: 1.4.w),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 8.w,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
@@ -236,7 +237,7 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
               ],
             ),
           ),
-          const SizedBox(height: 20.0),
+          SizedBox(height: 20.0.h),
 
           GestureDetector(
             onTap: () {
@@ -256,42 +257,42 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
                   bottom: 0,
                   right: 0,
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    width: 32.w,
+                    height: 32.w,
                     decoration: BoxDecoration(
                       color: Colors.pinkAccent,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2.0),
+                      border: Border.all(color: Colors.white, width: 2.0.w),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          blurRadius: 4.w,
+                          offset: Offset(0, 2.h),
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_upward_rounded,
                       color: Colors.white,
-                      size: 22,
+                      size: 22.w,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 15.0),
+          SizedBox(height: 15.0.h),
 
           Column(
             children: [
               Text(
                 '建议上传清晰的正面照片',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13.0),
+                style: TextStyle(color: Colors.grey[600], fontSize: 13.0.sp),
               ),
-              const SizedBox(height: 4.0),
+              SizedBox(height: 4.0.h),
               Text(
                 '支持 JPG、PNG 格式',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13.0),
+                style: TextStyle(color: Colors.grey[600], fontSize: 13.0.sp),
               ),
             ],
           ),
@@ -305,21 +306,21 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
     return CustomPaint(
       painter: DashedCirclePainter(
         color: Colors.pinkAccent.withOpacity(0.5), // 虚线颜色
-        strokeWidth: 3.0,
-        gap: 5.0,
-        dash: 5.0,
+        strokeWidth: 3.0.w,
+        gap: 5.0.w,
+        dash: 5.0.w,
       ),
       child: Container(
-        width: 110,
-        height: 110,
+        width: 110.w,
+        height: 110.w,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           // 浅粉红色背景
           color: Colors.pinkAccent.withOpacity(0.15),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.camera_alt_outlined, // 粉色照相机 Icon
-          size: 45,
+          size: 45.w,
           color: Colors.pinkAccent,
         ),
       ),
@@ -329,21 +330,21 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
   // 头像状态2: 有照片 (浅粉色实线边框)
   Widget _buildHasPhotoState() {
     return Container(
-      width: 110,
-      height: 110,
+      width: 110.w,
+      height: 110.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFFF5F5F5),
         // 浅粉色实线边框
-        border: Border.all(color: Colors.pink.shade100, width: 4.0),
+        border: Border.all(color: Colors.pink.shade100, width: 4.0.w),
       ),
       // 实际开发中这里应显示 Image.file 或 Image.network
       child: ClipOval(
         child: Image.file(
           _selectedPhoto!,
           fit: BoxFit.cover,
-          width: 110,
-          height: 110,
+          width: 110.w,
+          height: 110.w,
         ),
       ),
     );
@@ -353,16 +354,16 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
   Widget _buildBasicInfoCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(20.0.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4),
+        borderRadius: BorderRadius.circular(16.0.r),
+        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4.w),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 8.w,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
@@ -383,23 +384,23 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
               ),
             ],
           ),
-          const SizedBox(height: 30.0),
+          SizedBox(height: 30.0.h),
 
           _buildLabel('姓名 / 昵称'),
-          const SizedBox(height: 9.0),
+          SizedBox(height: 9.0.h),
           _buildInputField(controller: _nameController, hintText: '请输入宝宝的名字'),
-          const SizedBox(height: 16.0),
+          SizedBox(height: 16.0.h),
 
           _buildLabel('描述'),
-          const SizedBox(height: 9.0),
+          SizedBox(height: 9.0.h),
           _buildInputField(
             controller: _descController,
             hintText: '描述一下你对角色的幻想',
           ),
-          const SizedBox(height: 16.0),
+          SizedBox(height: 16.0.h),
 
           _buildLabel('性别'),
-          const SizedBox(height: 9.0),
+          SizedBox(height: 9.0.h),
           Row(
             children: [
               _buildGenderCard(
@@ -408,7 +409,7 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
                 baseColor: Colors.blueAccent,
                 isSelected: _selectedGender == '男孩',
               ),
-              const SizedBox(width: 12.0),
+              SizedBox(width: 12.0.w),
               _buildGenderCard(
                 label: '女孩',
                 emoji: '👧',
@@ -428,11 +429,11 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(20.0.w),
       decoration: BoxDecoration(
         color: tipBackgroundColor,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: tipBorderColor, width: 1.0),
+        borderRadius: BorderRadius.circular(16.0.r),
+        border: Border.all(color: tipBorderColor, width: 1.0.w),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,11 +450,11 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18.0),
+          SizedBox(height: 18.0.h),
           _buildTipRow('照片越清晰，生成的角色效果越好'),
-          const SizedBox(height: 3.0),
+          SizedBox(height: 3.0.h),
           _buildTipRow('建议使用正面照片，避免侧脸或背影'),
-          const SizedBox(height: 3.0),
+          SizedBox(height: 3.0.h),
           _buildTipRow('创建后可在"我的人物"中管理和编辑'),
         ],
       ),
@@ -465,9 +466,9 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          margin: const EdgeInsets.only(right: 8.0, top: 8.7),
-          width: 4.0,
-          height: 4.0,
+          margin: EdgeInsets.only(right: 8.0.w, top: 8.7.h),
+          width: 4.0.w,
+          height: 4.0.w,
           decoration: BoxDecoration(
             color: Colors.grey[600],
             shape: BoxShape.circle,
@@ -478,7 +479,7 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
             text,
             style: TextStyle(
               color: Colors.grey[700],
-              fontSize: 14.0,
+              fontSize: 14.0.sp,
               height: 1.6,
             ),
           ),
@@ -505,7 +506,7 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: EdgeInsets.symmetric(horizontal: 16.0.w),
       child: TextField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
@@ -537,13 +538,13 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          height: 98.0,
+          height: 98.0.h,
           decoration: BoxDecoration(
             color: isSelected ? baseColor.withOpacity(0.1) : Colors.white,
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(12.0.r),
             border: Border.all(
               color: isSelected ? baseColor : Colors.grey.withOpacity(0.3),
-              width: isSelected ? 1.5 : 1.0,
+              width: isSelected ? 1.5.w : 1.0.w,
             ),
           ),
           child: Stack(
@@ -552,13 +553,13 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(emoji, style: const TextStyle(fontSize: 30)),
-                    const SizedBox(height: 4.0),
+                    Text(emoji, style: TextStyle(fontSize: 30.sp)),
+                    SizedBox(height: 4.0.h),
                     Text(
                       label,
                       style: TextStyle(
                         color: isSelected ? baseColor : Colors.black87,
-                        fontSize: 14.0,
+                        fontSize: 14.0.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -567,13 +568,13 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
               ),
               if (isSelected)
                 Positioned(
-                  left: 12,
+                  left: 12.w,
                   top: 0,
                   bottom: 0,
                   child: Center(
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 10.w,
+                      height: 10.w,
                       decoration: BoxDecoration(
                         color: baseColor.withOpacity(0.85),
                         shape: BoxShape.circle,
@@ -583,11 +584,11 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
                 ),
               if (isSelected)
                 Positioned(
-                  right: 10,
+                  right: 10.w,
                   top: 0,
                   bottom: 0,
                   child: Center(
-                    child: Icon(Icons.check, size: 20, color: baseColor),
+                    child: Icon(Icons.check, size: 20.w, color: baseColor),
                   ),
                 ),
             ],

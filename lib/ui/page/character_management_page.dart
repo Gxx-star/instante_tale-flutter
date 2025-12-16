@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
@@ -27,7 +28,7 @@ class _CharacterManagementPageState
   // 字母导航条：A-Z + #
   final List<String> _initials = List.generate(
     26,
-    (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
+        (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
   ).toList()..add('#');
 
   // 用于存储每个字母组的第一个列表项的 GlobalKey
@@ -56,9 +57,9 @@ class _CharacterManagementPageState
     double offset = 0.0;
     for (var key in sortedKeys) {
       if (key == initial) break; // 找到目标，停止累加
-      offset += 32;
+      offset += 32.w;
       final itemCount = groupedMap[key]?.length ?? 0;
-      offset += itemCount * 88;
+      offset += itemCount * 88.w;
     }
     _scrollController.animateTo(
       offset,
@@ -71,10 +72,10 @@ class _CharacterManagementPageState
   Widget _buildAppBar() {
     return Container(
       padding: EdgeInsets.only(
-        top: 10 + MediaQuery.of(context).padding.top,
-        left: 10,
-        right: 10,
-        bottom: 10,
+        top: 10.w + MediaQuery.of(context).padding.top,
+        left: 10.w,
+        right: 10.w,
+        bottom: 10.w,
       ),
       decoration: const BoxDecoration(color: Color(0xFFF0F0FF)),
       child: Column(
@@ -86,12 +87,12 @@ class _CharacterManagementPageState
                 icon: Icons.arrow_back_ios_new_rounded,
                 onTap: () => context.pop(),
               ),
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Text(
                     '角色管理',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF5A4C75),
                     ),
@@ -99,10 +100,10 @@ class _CharacterManagementPageState
                 ),
               ),
               // 右侧占位保持居中
-              const SizedBox(width: 40),
+              SizedBox(width: 40.w),
             ],
           ),
-          const SizedBox(height: 15),
+          SizedBox(height: 15.w),
           // 搜索框
           TextField(
             controller: _searchController,
@@ -115,32 +116,35 @@ class _CharacterManagementPageState
               hintText: '搜索角色名字',
               hintStyle: TextStyle(
                 color: const Color(0xFF5A4C75).withOpacity(0.6),
+                fontSize: 14.sp,
               ),
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 Icons.search_rounded,
-                color: Color(0xFF5A4C75),
+                color: const Color(0xFF5A4C75),
+                size: 20.w,
               ),
               filled: true,
               fillColor: Colors.white.withOpacity(0.85),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+              contentPadding: EdgeInsets.symmetric(vertical: 10.0.w),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(25.0),
+                borderRadius: BorderRadius.circular(25.0.r),
                 borderSide: BorderSide.none,
               ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: Color(0xFF5A4C75)),
-                      onPressed: () {
-                        _searchController.clear();
-                        ref
-                            .read(characterViewModelProvider.notifier)
-                            .updateSearchKeyword('');
-                        FocusScope.of(context).unfocus();
-                      },
-                    )
+                icon: Icon(Icons.clear, color: const Color(0xFF5A4C75), size: 20.w),
+                onPressed: () {
+                  _searchController.clear();
+                  ref
+                      .read(characterViewModelProvider.notifier)
+                      .updateSearchKeyword('');
+                  FocusScope.of(context).unfocus();
+                },
+              )
                   : null,
             ),
             cursorColor: const Color(0xFFBFA2FF),
+            style: TextStyle(fontSize: 14.sp),
           ),
         ],
       ),
@@ -152,24 +156,24 @@ class _CharacterManagementPageState
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Container(
-            width: 40,
-            height: 40,
+            width: 40.w,
+            height: 40.w,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
+                  blurRadius: 5.r,
+                  offset: Offset(0, 3.r),
                 ),
               ],
             ),
-            child: Icon(icon, color: const Color(0xFF5A4C75), size: 20),
+            child: Icon(icon, color: const Color(0xFF5A4C75), size: 20.w),
           ),
         ),
       ),
@@ -184,30 +188,30 @@ class _CharacterManagementPageState
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFBFA2FF),
-                blurRadius: 15,
-                spreadRadius: -5,
+                color: const Color(0xFFBFA2FF),
+                blurRadius: 15.r,
+                spreadRadius: -5.r,
               ),
             ],
           ),
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // 顶部把手
               Container(
-                height: 5,
-                width: 50,
-                margin: const EdgeInsets.only(bottom: 20),
+                height: 5.w,
+                width: 50.w,
+                margin: EdgeInsets.only(bottom: 20.w),
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(5.r),
                 ),
               ),
               // 头像
@@ -221,47 +225,47 @@ class _CharacterManagementPageState
                     },
                     child: _showAvatar
                         ? CircleAvatar(
-                            radius: 60,
-                            backgroundImage: CachedNetworkImageProvider(
-                              character.avatarUrl,
-                            ),
-                            backgroundColor: const Color(0xFFF0EBFF),
-                          )
+                      radius: 60.w,
+                      backgroundImage: CachedNetworkImageProvider(
+                        character.avatarUrl,
+                      ),
+                      backgroundColor: const Color(0xFFF0EBFF),
+                    )
                         : Image(
-                            image: CachedNetworkImageProvider(
-                              character.threeViewUrl,
-                            ),
-                            height: 200,
-                          ),
+                      image: CachedNetworkImageProvider(
+                        character.threeViewUrl,
+                      ),
+                      height: 200.w,
+                    ),
                   );
                 },
               ),
-              Text('点击切换头像/三视图', style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
+              Text('点击切换头像/三视图', style: TextStyle(color: Colors.grey, fontSize: 12.sp)),
+              SizedBox(height: 16.w),
               // 名字
               Text(
                 character.characterName,
-                style: const TextStyle(
-                  fontSize: 24,
+                style: TextStyle(
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF5A4C75),
+                  color: const Color(0xFF5A4C75),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.w),
               // 描述
               Text(
                 character.desc,
                 textAlign: TextAlign.center,
                 maxLines: 10,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.w),
               Text(
                 '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
               ),
-              const SizedBox(height: 30),
+              SizedBox(height: 30.w),
               // 删除按钮
               SizedBox(
                 width: double.infinity,
@@ -270,19 +274,20 @@ class _CharacterManagementPageState
                     Navigator.pop(context); // 关闭卡片
                     _showDeleteConfirmation(context, character);
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_forever_rounded,
                     color: Colors.white,
+                    size: 20.w,
                   ),
-                  label: const Text(
+                  label: Text(
                     '删除角色',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontSize: 16.sp, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF9F9F), // 柔和的红色
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: EdgeInsets.symmetric(vertical: 15.w),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(20.r),
                     ),
                     elevation: 5,
                   ),
@@ -297,35 +302,36 @@ class _CharacterManagementPageState
 
   // 删除确认框
   void _showDeleteConfirmation(
-    BuildContext context,
-    CharacterCollection character,
-  ) {
+      BuildContext context,
+      CharacterCollection character,
+      ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(20.r),
           ),
-          title: const Text(
+          title: Text(
             "确认删除",
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF5A4C75),
+              color: const Color(0xFF5A4C75),
+              fontSize: 18.sp,
             ),
           ),
           content: Text(
             "角色删除之后绘本中将查询不到该角色的信息噢~，确认要删除【${character.characterName}】吗？",
-            style: TextStyle(color: Colors.grey[700]),
+            style: TextStyle(color: Colors.grey[700], fontSize: 14.sp),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // 取消
               },
-              child: const Text(
+              child: Text(
                 '取消',
-                style: TextStyle(color: Color(0xFFBFA2FF), fontSize: 16),
+                style: TextStyle(color: const Color(0xFFBFA2FF), fontSize: 16.sp),
               ),
             ),
             ElevatedButton(
@@ -340,13 +346,13 @@ class _CharacterManagementPageState
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF9F9F),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(15.r),
                 ),
                 elevation: 3,
               ),
-              child: const Text(
+              child: Text(
                 '确认删除',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: Colors.white, fontSize: 16.sp),
               ),
             ),
           ],
@@ -366,7 +372,7 @@ class _CharacterManagementPageState
     final groupedKeys = _charactersAsync.value?.keys.toList() ?? [];
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(140),
+        preferredSize: Size.fromHeight(140.w),
         child: _buildAppBar(),
       ),
       backgroundColor: const Color(0xFFF5F0FF), // 柔和背景色
@@ -380,7 +386,7 @@ class _CharacterManagementPageState
                 data: (groupedMap) {
                   if (groupedMap.isEmpty && state.searchKeyword == '') {
                     return SliverFillRemaining(
-                      child: Center(child: Text("暂无角色信息")),
+                      child: Center(child: Text("暂无角色信息", style: TextStyle(fontSize: 14.sp))),
                     );
                   } else {
                     if (state.searchKeyword == '') {
@@ -390,17 +396,17 @@ class _CharacterManagementPageState
                             final group = groupedMap[initial]!;
                             // 头部字母分组
                             final header = Container(
-                              height: 32,
+                              height: 32.w,
                               alignment: Alignment.centerLeft,
-                              padding: const EdgeInsets.only(left: 20),
+                              padding: EdgeInsets.only(left: 20.w),
                               color: const Color(0xFFEBE0FF),
                               // 浅紫色背景
                               child: Text(
                                 initial,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF5A4C75),
+                                  fontSize: 16.sp,
+                                  color: const Color(0xFF5A4C75),
                                 ),
                               ),
                             );
@@ -408,34 +414,34 @@ class _CharacterManagementPageState
                             // 列表项
                             final items = group.map((character) {
                               return SizedBox(
-                                height: 88,
+                                height: 88.w,
                                 child: Center(
                                   child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 8,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 20.w,
+                                      vertical: 8.w,
                                     ),
                                     leading: CircleAvatar(
-                                      radius: 25,
+                                      radius: 25.w,
                                       backgroundImage:
-                                          CachedNetworkImageProvider(
-                                            character.avatarUrl,
-                                          ),
+                                      CachedNetworkImageProvider(
+                                        character.avatarUrl,
+                                      ),
                                       backgroundColor: const Color(0xFFF0EBFF),
                                     ),
                                     title: Text(
                                       character.characterName,
-                                      style: const TextStyle(
-                                        fontSize: 16,
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF333333),
+                                        color: const Color(0xFF333333),
                                       ),
                                     ),
                                     subtitle: Text(
                                       character.desc,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(color: Colors.grey[500]),
+                                      style: TextStyle(color: Colors.grey[500], fontSize: 12.sp),
                                     ),
                                     onTap: () => _showCharacterCard(character),
                                   ),
@@ -451,12 +457,12 @@ class _CharacterManagementPageState
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final character = state.filteredList[index];
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 8,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.w,
+                              vertical: 8.w,
                             ),
                             leading: CircleAvatar(
-                              radius: 25,
+                              radius: 25.w,
                               backgroundImage: NetworkImage(
                                 character.avatarUrl,
                               ),
@@ -464,17 +470,17 @@ class _CharacterManagementPageState
                             ),
                             title: Text(
                               character.characterName,
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF333333),
+                                color: const Color(0xFF333333),
                               ),
                             ),
                             subtitle: Text(
                               character.desc,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.grey[500]),
+                              style: TextStyle(color: Colors.grey[500], fontSize: 12.sp),
                             ),
                             onTap: () => _showCharacterCard(character),
                           );
@@ -484,7 +490,7 @@ class _CharacterManagementPageState
                   }
                 },
                 error: (err, stack) => SliverFillRemaining(
-                  child: Center(child: Text("加载失败：$err")),
+                  child: Center(child: Text("加载失败：$err", style: TextStyle(fontSize: 14.sp))),
                 ),
                 loading: () => const SliverFillRemaining(
                   child: Center(
@@ -501,7 +507,7 @@ class _CharacterManagementPageState
               (_charactersAsync.value?.isNotEmpty ?? false))
             Positioned(
               right: 0,
-              top: 100, // 避开顶部 AppBar
+              top: 100.w, // 避开顶部 AppBar
               bottom: 0,
               child: _buildSideIndexBar(context, groupedKeys),
             ),
@@ -513,8 +519,8 @@ class _CharacterManagementPageState
   // 侧边导航条 UI
   Widget _buildSideIndexBar(BuildContext context, List<String> activeKeys) {
     return Container(
-      width: 30,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+      width: 30.w,
+      padding: EdgeInsets.symmetric(vertical: 10.w, horizontal: 2.w),
       alignment: Alignment.center,
       child: GestureDetector(
         onVerticalDragUpdate: (details) {
@@ -545,11 +551,11 @@ class _CharacterManagementPageState
               onTap: isActive ? () => _scrollToInitial(initial) : null,
               child: Container(
                 alignment: Alignment.center,
-                height: 20, // 设定每个字母的高度
+                height: 20.w, // 设定每个字母的高度
                 child: Text(
                   initial,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
                     color: isActive
                         ? const Color(0xFFBFA2FF)

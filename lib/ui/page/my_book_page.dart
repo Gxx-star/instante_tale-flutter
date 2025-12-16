@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
@@ -32,17 +33,17 @@ class MyBookCard extends StatelessWidget {
       child: Container(
         // 外部容器使用圆角和柔和阴影
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+              blurRadius: 10.w,
+              offset: Offset(0, 5.h),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15.r),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -70,7 +71,7 @@ class MyBookCard extends StatelessWidget {
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
                     // 渐变阴影效果
                     gradient: LinearGradient(
@@ -91,13 +92,13 @@ class MyBookCard extends StatelessWidget {
                         book.bookName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       // 创建时间
                       Text(
                         '创建时间: ${AppGlobals().formatTimestamp(book.createdAt)}',
@@ -105,7 +106,7 @@ class MyBookCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
+                          fontSize: 12.sp,
                         ),
                       ),
                     ],
@@ -144,22 +145,22 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
               children: [
                 Container(
                   padding: EdgeInsets.only(
-                    top: 10 + MediaQuery.of(context).padding.top,
-                    left: 10,
-                    right: 10,
-                    bottom: 10,
+                    top: 10.h + MediaQuery.of(context).padding.top,
+                    left: 10.w,
+                    right: 10.w,
+                    bottom: 10.h,
                   ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF0F0FF), // 浅紫色背景
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F0FF), // 浅紫色背景
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
+                      bottomLeft: Radius.circular(30.r),
+                      bottomRight: Radius.circular(30.r),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0xFFBFA2FF),
-                        blurRadius: 10,
-                        spreadRadius: -5,
+                        color: const Color(0xFFBFA2FF),
+                        blurRadius: 10.w,
+                        spreadRadius: -5.w,
                       ),
                     ],
                   ),
@@ -169,20 +170,20 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                         icon: Icons.arrow_back_ios_new_rounded,
                         onTap: () => Navigator.pop(context),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
                             '我的绘本',
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: 20.sp,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF5A4C75),
+                              color: const Color(0xFF5A4C75),
                             ),
                           ),
                         ),
                       ),
                       // 右侧占位保持居中或添加功能按钮
-                      const SizedBox(width: 40),
+                      SizedBox(width: 40.w),
                     ],
                   ),
                 ),
@@ -190,14 +191,14 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                 // 绘本列表
                 Expanded(
                   child: GridView.builder(
-                    padding: const EdgeInsets.all(15),
+                    padding: EdgeInsets.all(15.w),
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 一行两个
-                          crossAxisSpacing: 15,
-                          mainAxisSpacing: 15,
-                          childAspectRatio: 0.7, // 绘本封面通常较高
-                        ),
+                    SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // 一行两个
+                      crossAxisSpacing: 15.w,
+                      mainAxisSpacing: 15.h,
+                      childAspectRatio: 0.7, // 绘本封面通常较高
+                    ),
                     itemCount: booksList.length, // 使用模拟数据源
                     itemBuilder: (context, index) {
                       final book = booksList[index];
@@ -234,8 +235,8 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                                       ref
                                           .read(bookViewModelProvider.notifier)
                                           .clearReadingHistoryByBookId(
-                                            book.bookId,
-                                          );
+                                        book.bookId,
+                                      );
                                       ref
                                           .read(bookViewModelProvider.notifier)
                                           .deleteBook(book.bookId);

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/main.dart';
@@ -13,62 +14,78 @@ class CharacterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // 【修改】移除左侧 Padding，使其在 ListView 中能紧贴左侧边缘
-      padding: const EdgeInsets.only(right: 8.0, top: 4.0, bottom: 4.0),
+      // 仅保留水平右侧和垂直间距，单位区分w/h
+      padding: EdgeInsets.only(right: 8.w, top: 4.h, bottom: 4.h),
       child: InkWell(
         onTap: () {
           context.push('/${AppRouteNames.characterManagementPage}');
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         child: Container(
-          width: 110, // 固定宽度
-          height: 160, // 固定高度
+          // 1. 移除固定宽高，改用最小宽度+自适应高度（核心修复卡片截断）
+          constraints: BoxConstraints(
+            minWidth: 110.w, // 最小宽度保证卡片不压缩
+            maxWidth: 120.w, // 最大宽度限制避免过宽
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[300]!, width: 1.0), // 灰色实线边框
+            borderRadius: BorderRadius.circular(16.r),
+            // 2. 修复边框宽度单位（borderWidth不能用r，改用固定dp）
+            border: Border.all(color: Colors.grey[300]!, width: 1.0),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start, // 顶部对齐以匹配 AddCharacterCard
-            children: [
-              const SizedBox(height: 24), // 调整此高度以确保人物头像的垂直中心与星形图标的垂直中心对齐
-              // 圆形人物图片
-              CircleAvatar(
-                radius: 32, // 直径 64，与 AddCharacterCard 保持一致
-                backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
-                backgroundColor: Colors.grey[200],
-              ),
-              const SizedBox(height: 12),
-              // 人物姓名
-              Text(
-                character.characterName,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w600, // 加粗以匹配 CharacterCard 的名字
+          // 3. 用Padding替代固定高度，让内容自适应
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // 高度自适应内容（关键）
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 圆形人物图片（半径适配+容错）
+                CircleAvatar(
+                  radius: 32.w,
+                  backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
+                  backgroundColor: Colors.grey[200],
+                  // 图片加载失败兜底
+                  child: character.avatarUrl.isEmpty
+                      ? Icon(Icons.person, size: 32.w, color: Colors.grey[500])
+                      : null,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              // 描述
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200], // 圆角灰色背景
-                  borderRadius: BorderRadius.circular(10),
+                SizedBox(height: 8.h), // 高度用h（修复之前w混用问题）
+                // 人物姓名（强制溢出省略）
+                Text(
+                  character.characterName,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center, // 居中避免偏左溢出
                 ),
-                child: Text(
-                  character.desc,
-                  maxLines: 2,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                SizedBox(height: 6.h), // 高度用h
+                // 描述（核心修复文本溢出）
+                Container(
+                  constraints: BoxConstraints(maxWidth: 90.w), // 限制最大宽度
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8.r), // 圆角适度缩小
+                  ),
+                  child: Text(
+                    character.desc.isEmpty ? '无描述' : character.desc,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis, // 强制溢出省略
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center, // 居中显示
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

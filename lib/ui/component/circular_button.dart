@@ -1,7 +1,6 @@
 // 圆形按钮
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CircularButton extends StatelessWidget {
   final String imgUrl;
@@ -25,36 +24,16 @@ class CircularButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 66,
-            height: 66,
+            width: 66.w,
+            height: 66.w,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              // gradient: LinearGradient(
-              //   colors: [color.withOpacity(0.9), color.withOpacity(0.6)],
-              //   begin: Alignment.topLeft,
-              //   end: Alignment.bottomRight,
-              // ),
-              // boxShadow: [
-              //   // 外发光 + 柔光
-              //   BoxShadow(
-              //     color: color.withOpacity(0.35),
-              //     blurRadius: 15,
-              //     offset: const Offset(0, 6),
-              //   ),
-              //   // 轻微内阴影提升立体感
-              //   BoxShadow(
-              //     color: Colors.white.withOpacity(0.9),
-              //     blurRadius: 8,
-              //     spreadRadius: -4,
-              //     offset: const Offset(-3, -3),
-              //   ),
-              // ],
+              borderRadius: BorderRadius.circular(20.r),
             ),
             child: Center(
               child: Image(
                 image: AssetImage(imgUrl),
-                width: 40,
-                height: 40,
+                width: 40.w,
+                height: 40.w,
               ),
             ),
           ),
@@ -63,7 +42,7 @@ class CircularButton extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.grey[700],
-              fontSize: 13,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w500,
             ),
           ),

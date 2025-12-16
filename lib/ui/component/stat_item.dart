@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 // 资料卡中的统计项
 class StatItem extends StatelessWidget {
   final String imgUrl;
@@ -14,17 +16,17 @@ class StatItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Image(
-            image: AssetImage(imgUrl),
-          width: 12,
-          height: 12,
+          image: AssetImage(imgUrl),
+          width: 12.w,
+          height: 12.w,
         ),
         SizedBox(
-          width: 4,
+          width: 4.w,
         ),
         Text(
           text,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 11.sp,
             color: Colors.grey[700],
           ),
         ),
