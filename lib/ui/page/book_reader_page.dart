@@ -22,10 +22,6 @@ class BookReaderPage extends ConsumerStatefulWidget {
 class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   final PreloadPageController _pageController = PreloadPageController();
   final Map<int, GlobalKey> _pageKeys = {};
-  final List<Map<String, dynamic>> _shareTargets = [
-    {'name': '微信', 'icon': 'assets/images/wei_xin.png', 'type': 'wechat'},
-    {'name': 'QQ好友', 'icon': 'assets/images/qq.png', 'type': 'qq'},
-  ];
   @override
   void dispose() {
     _pageController.dispose();
@@ -34,7 +30,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(bookViewModelProvider);
+    final state = ref.watch(bookReaderViewModelProvider);
     final book = state.currentBook;
     if (book == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -66,13 +62,13 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           Positioned.fill(
             child: GestureDetector(
               onTap: () =>
-                  ref.read(bookViewModelProvider.notifier).toggleControls(),
+                  ref.read(bookReaderViewModelProvider.notifier).toggleControls(),
               child: PreloadPageView.builder(
                 controller: _pageController,
                 preloadPagesCount: book.content.length,
                 itemCount: book.content.length,
                 onPageChanged: (index) {
-                  ref.read(bookViewModelProvider.notifier).onPageChanged(index);
+                  ref.read(bookReaderViewModelProvider.notifier).onPageChanged(index);
                 },
                 itemBuilder: (context, index) {
                   final item = book.content[index];
@@ -245,7 +241,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             GlassButton(
               icon: Icons.share,
               onTap: () => {
-                ref.read(bookViewModelProvider.notifier).shareBookPdf(book.content,_pageKeys,book.bookName)
+                ref.read(bookReaderViewModelProvider.notifier).shareBookPdf(book.content,_pageKeys,book.bookName)
               },
             ),
           ],

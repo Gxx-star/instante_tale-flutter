@@ -38,7 +38,7 @@ class BookCard extends ConsumerWidget {
               context.go('/${AppRouteNames.login}');
               return;
             }
-            ref.watch(bookViewModelProvider.notifier).loadBook(book, userId);
+            ref.read(bookReaderViewModelProvider.notifier).loadBook(book, userId);
             context.push('/${AppRouteNames.bookReader}');
           },
           // 【修复】添加 borderRadius，确保点击水波纹和阴影是圆角

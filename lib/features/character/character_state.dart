@@ -21,7 +21,7 @@ class CharacterState {
   }) {
     return CharacterState(
       isLoading: isLoading ?? this.isLoading,
-      message: message,
+      message: message ?? this.message,
       searchKeyword: searchKeyword ?? this.searchKeyword,
       filteredList: filteredList ?? this.filteredList
     );

@@ -11,12 +11,7 @@ class ReadingHistory {
   late String userId; // 用户 id
   @Index()
   late String bookId; // 对应 Book 的 id
+  late String bookName;
+  late String bookCover;
   DateTime? lastReadAt; // 最后阅读时间
-}
-
-class ReadingHistoryItem {
-  final Book book;
-  final ReadingHistory readingHistory;
-
-  ReadingHistoryItem(this.book, this.readingHistory);
 }

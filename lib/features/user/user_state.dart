@@ -16,7 +16,7 @@ class UserState{
   }){
     return UserState(
       isLoading: isLoading ?? this.isLoading,
-      message: message,
+      message: message ?? this.message,
       user: user ?? this.user
     );
   }

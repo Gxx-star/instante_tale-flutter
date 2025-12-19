@@ -21,7 +21,7 @@ class BottomNavigationItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: isActive ? activeColor : inactiveColor, size: 28.w),
+        Icon(icon, color: isActive ? activeColor : inactiveColor, size: 28.h),
         Text(
           label,
           style: TextStyle(

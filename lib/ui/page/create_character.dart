@@ -21,7 +21,6 @@ class CreateCharacterPage extends ConsumerStatefulWidget {
 }
 
 class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
-  // 四个输入
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   String? _selectedGender;
@@ -59,8 +58,8 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
   }
 
   Future<void> _pickImage(WidgetRef ref) async {
-    final _imagePicker = ImagePicker();
-    final XFile? pickedImage = await _imagePicker.pickImage(
+    final imagePicker = ImagePicker();
+    final XFile? pickedImage = await imagePicker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
       maxWidth: 1080,

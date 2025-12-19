@@ -1,13 +1,13 @@
-import '../../database/models/book.dart';
+import '../../../database/models/book.dart';
 
-class BookState {
+class BookReaderState {
   final bool isLoading;
   final String? message;
   final bool isControlsVisible;
   final int currentPage;
   final Book? currentBook;
   // 构造函数（推荐用 copyWith 方法，方便状态更新）
-  BookState({
+  BookReaderState({
     this.isLoading = false,
     this.message,
     this.isControlsVisible = true,
@@ -16,14 +16,14 @@ class BookState {
   });
 
   // 状态更新方法
-  BookState copyWith({
+  BookReaderState copyWith({
     bool? isLoading,
     String? message,
     bool? isControlsVisible,
     int? currentPage,
     Book? currentBook,
   }) {
-    return BookState(
+    return BookReaderState(
       isLoading: isLoading ?? this.isLoading,
       message: message ?? this.message,
       isControlsVisible: isControlsVisible ?? this.isControlsVisible,

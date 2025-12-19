@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/config/edit_profile_page_config.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
 import '../../features/user/user_viewmodel.dart';
 
@@ -48,33 +49,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   // --- 静态渐变色配置 ---
-  static const _appBarGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFecaed5), Color(0xFFf0d0e7)],
-  );
-
-  static const _buttonGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [Color(0xFFE87AB5), Color(0xFF8A9EFC)],
-  );
-
-  static const _avatarBorderGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFDE65BD), Color(0xFF8E70F5)],
-  );
-
-  static const _tipIconGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF8FABFF), Color(0xFFC599FF)],
-  );
+  static final _appBarGradient = EditProfilePageConfig.appBarGradient;
+  static final _buttonGradient = EditProfilePageConfig.buttonGradient;
+  static final _avatarBorderGradient = EditProfilePageConfig.avatarBorderGradient;
+  static final _tipIconGradient = EditProfilePageConfig.tipIconGradient;
 
   @override
   Widget build(BuildContext context) {
-    print("重组");
     final userState = ref.read(userViewModelProvider);
     final user = userState.user!; // 这才是实时更新的 User 对象
     final userViewModel = ref.read(userViewModelProvider.notifier);
@@ -86,7 +67,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         extendBodyBehindAppBar: false,
         backgroundColor: const Color(0xFFfaf2f8),
         appBar: AppBar(
-          toolbarHeight: 40.0.h,
+          toolbarHeight: 50.0.h,
           elevation: 0,
           backgroundColor: Colors.transparent,
           centerTitle: false,
@@ -104,7 +85,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
           ),
           flexibleSpace: Container(
-            decoration: const BoxDecoration(gradient: _appBarGradient),
+            decoration: BoxDecoration(gradient: _appBarGradient),
           ),
         ),
         bottomNavigationBar: Container(
@@ -205,7 +186,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                     ),
                                     alignment: Alignment.center,
                                     child: CircleAvatar(
-                                      radius: 50.r,
+                                      radius: 50.w,
                                       backgroundImage: NetworkImage(
                                         user.avatar,
                                       ),
@@ -370,7 +351,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                             width: 50.w,
                             height: 68.h,
                             alignment: Alignment.center,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: _tipIconGradient,
                             ),

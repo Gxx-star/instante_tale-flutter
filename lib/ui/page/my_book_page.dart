@@ -214,7 +214,7 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                             return;
                           }
                           ref
-                              .read(bookViewModelProvider.notifier)
+                              .read(bookReaderViewModelProvider.notifier)
                               .loadBook(book, userId);
                           context.push('/${AppRouteNames.bookReader}');
                         },
@@ -233,12 +233,12 @@ class _MyBooksPageState extends ConsumerState<MyBooksPage> {
                                   TextButton(
                                     onPressed: () {
                                       ref
-                                          .read(bookViewModelProvider.notifier)
+                                          .read(bookReaderViewModelProvider.notifier)
                                           .clearReadingHistoryByBookId(
                                         book.bookId,
                                       );
                                       ref
-                                          .read(bookViewModelProvider.notifier)
+                                          .read(bookReaderViewModelProvider.notifier)
                                           .deleteBook(book.bookId);
                                       Navigator.pop(context);
                                     },

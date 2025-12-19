@@ -72,10 +72,10 @@ class _CharacterManagementPageState
   Widget _buildAppBar() {
     return Container(
       padding: EdgeInsets.only(
-        top: 10.w + MediaQuery.of(context).padding.top,
+        top: 20.h,
         left: 10.w,
         right: 10.w,
-        bottom: 10.w,
+        bottom: 10.h,
       ),
       decoration: const BoxDecoration(color: Color(0xFFF0F0FF)),
       child: Column(
@@ -235,7 +235,7 @@ class _CharacterManagementPageState
                       image: CachedNetworkImageProvider(
                         character.threeViewUrl,
                       ),
-                      height: 200.w,
+                      height: 200.h,
                     ),
                   );
                 },
@@ -246,7 +246,7 @@ class _CharacterManagementPageState
               Text(
                 character.characterName,
                 style: TextStyle(
-                  fontSize: 24.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF5A4C75),
                 ),
@@ -256,14 +256,14 @@ class _CharacterManagementPageState
               Text(
                 character.desc,
                 textAlign: TextAlign.center,
-                maxLines: 10,
-                style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
+                maxLines: 5,
+                style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
               ),
               SizedBox(height: 8.w),
               Text(
                 '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
               ),
               SizedBox(height: 30.w),
               // 删除按钮
@@ -341,7 +341,7 @@ class _CharacterManagementPageState
                 ref
                     .read(characterViewModelProvider.notifier)
                     .deleteCharacter(character.characterId);
-                ref.read(bookViewModelProvider.notifier).fetchBookList();
+                ref.read(bookReaderViewModelProvider.notifier).fetchBookList();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF9F9F),

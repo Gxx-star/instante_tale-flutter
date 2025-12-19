@@ -6,21 +6,21 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../database/models/book.dart';
-import '../../database/models/page.dart';
-import '../login/login_repository.dart';
-import 'book_repository.dart';
-import 'book_state.dart';
+import '../../../database/models/book.dart';
+import '../../../database/models/page.dart';
+import '../../login/login_repository.dart';
+import '../book_repository.dart';
+import 'book_reader_state.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 Future<Uint8List> _savePdfInBackground(pw.Document pdf) {
   return pdf.save();
 }
 
-class BookViewModel extends StateNotifier<BookState> {
+class BookReaderViewModel extends StateNotifier<BookReaderState> {
   final BookRepository _bookRepository;
 
-  BookViewModel(this._bookRepository) : super(BookState()) {
+  BookReaderViewModel(this._bookRepository) : super(BookReaderState()) {
     _init();
   }
 
@@ -162,7 +162,6 @@ class BookViewModel extends StateNotifier<BookState> {
       );
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
-      print(e.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
@@ -239,7 +238,7 @@ class BookViewModel extends StateNotifier<BookState> {
       currentBook: book,
       currentPage: 0,
     );
-    await _bookRepository.saveReadingHistory(book.bookId, userId);
+    await _bookRepository.saveReadingHistory(book, userId);
   }
 
   Future<void> clearReadingHistory() async {

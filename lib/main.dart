@@ -15,7 +15,7 @@ import 'package:instant_tale/ui/page/main_page.dart';
 import 'package:instant_tale/ui/page/my_book_page.dart';
 import 'package:instant_tale/ui/page/privacy_security_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
-import 'package:instant_tale/ui/page/storybook_plaza_page.dart';
+import 'package:instant_tale/ui/page/book_square_page.dart';
 import 'package:instant_tale/ui/theme.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -121,7 +121,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/${AppRouteNames.bookSquare}',
-      builder: (context, state) => StorybookPlazaPage(),
+      builder: (context, state) => BookSquarePage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.editProfilePage}',

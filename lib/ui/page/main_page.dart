@@ -30,7 +30,7 @@ import '../component/square_item_card.dart';
 import '../component/stat_card.dart';
 
 class MainPage extends ConsumerStatefulWidget {
-  const MainPage({Key? key}) : super(key: key);
+  const MainPage({super.key});
 
   @override
   ConsumerState<MainPage> createState() => _MainPageState();
@@ -44,21 +44,21 @@ class _MainPageState extends ConsumerState<MainPage> {
     super.initState();
     // 延迟到页面构建完成之后执行
     Future.microtask(
-          () => ref.read(characterViewModelProvider.notifier).fetchCharacter(),
+      () => ref.read(characterViewModelProvider.notifier).fetchCharacter(),
     );
     Future.microtask(
-          () => ref.read(bookViewModelProvider.notifier).fetchBookList(),
+      () => ref.read(bookReaderViewModelProvider.notifier).fetchBookList(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final _characterViewModel = ref.read(characterViewModelProvider.notifier);
-    final _currentIndex = ref.watch(_currentIndexProvider);
+    final characterViewModel = ref.read(characterViewModelProvider.notifier);
+    final currentIndex = ref.watch(_currentIndexProvider);
     AppGlobals().listenAndShowSnackBar(
       ref: ref,
       context: context,
-      provider: bookViewModelProvider,
+      provider: bookReaderViewModelProvider,
     );
     AppGlobals().listenAndShowSnackBar(
       ref: ref,
@@ -70,7 +70,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey[100],
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: [HomePage(), MyPage()],
       ),
       bottomNavigationBar: Container(
@@ -105,7 +105,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                   child: BottomNavigationItem(
                     icon: Icons.home,
                     label: '首页',
-                    isActive: _currentIndex == 0,
+                    isActive: currentIndex == 0,
                   ),
                 ),
               ),
@@ -121,7 +121,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                   child: BottomNavigationItem(
                     icon: Icons.person_outline,
                     label: '我的',
-                    isActive: _currentIndex == 1,
+                    isActive: currentIndex == 1,
                   ),
                 ),
               ),
@@ -129,29 +129,27 @@ class _MainPageState extends ConsumerState<MainPage> {
           ],
         ),
       ),
-      floatingActionButton: Container(
-        child: RawMaterialButton(
-          fillColor: Colors.pinkAccent,
-          splashColor: Colors.pinkAccent.withOpacity(0.5),
-          focusColor: Colors.pinkAccent.withOpacity(0.3),
-          // 聚焦时变浅（无障碍优化）
-          hoverColor: Colors.pinkAccent.withOpacity(0.4),
-          // 悬停时变浅（桌面端优化）
-          elevation: 6,
-          highlightElevation: 12,
-          constraints: BoxConstraints(
-            minWidth: 60.w,
-            minHeight: 60.h,
-            maxWidth: 60.w,
-            maxHeight: 60.h,
-          ),
-          shape: CircleBorder(),
-          // 保持完美圆形
-          onPressed: () {
-            context.push('/${AppRouteNames.createBook}');
-          },
-          child: Icon(Icons.add, size: 32.w, color: Colors.white),
+      floatingActionButton: RawMaterialButton(
+        fillColor: Colors.pinkAccent,
+        splashColor: Colors.pinkAccent.withOpacity(0.5),
+        focusColor: Colors.pinkAccent.withOpacity(0.3),
+        // 聚焦时变浅（无障碍优化）
+        hoverColor: Colors.pinkAccent.withOpacity(0.4),
+        // 悬停时变浅（桌面端优化）
+        elevation: 6,
+        highlightElevation: 12,
+        constraints: BoxConstraints(
+          minWidth: 60.w,
+          minHeight: 60.h,
+          maxWidth: 60.w,
+          maxHeight: 60.h,
         ),
+        shape: CircleBorder(),
+        // 保持完美圆形
+        onPressed: () {
+          context.push('/${AppRouteNames.createBook}');
+        },
+        child: Icon(Icons.add, size: 32.w, color: Colors.white),
       ),
       floatingActionButtonLocation: CustomFloatingActionButtonLocation(
         FloatingActionButtonLocation.centerDocked,
@@ -164,7 +162,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 }
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -172,7 +170,6 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final _scrollController = ScrollController();
-  double _scrollPosition = 0.0;
   final swiperImages = MainPageConfig.swiperImages;
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -206,21 +203,21 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final _userState = ref.watch(userViewModelProvider);
-    final _user = _userState.user;
-    final _userViewModel = ref.watch(userViewModelProvider.notifier);
-    final _bookViewModel = ref.watch(bookViewModelProvider.notifier);
+    final userState = ref.watch(userViewModelProvider);
+    final user = userState.user;
+    final userViewModel = ref.watch(userViewModelProvider.notifier);
+    final bookViewModel = ref.watch(bookReaderViewModelProvider.notifier);
     // 阅读记录
-    final _readingList = ref.watch(readingHistoryProvider);
+    final readingList = ref.watch(readingHistoryProvider);
     // 榜单
-    final List<Map<String, dynamic>> _rankingList = MainPageConfig.rankingList;
+    final List<Map<String, dynamic>> rankingList = MainPageConfig.rankingList;
     // 绘本广场
-    final List<Map<String, dynamic>> _squareList = MainPageConfig.squareList;
+    final List<Map<String, dynamic>> squareList = MainPageConfig.squareList;
     // 阅读时长
     int durationHours = 12;
     // 收藏数
     int collectionCount = 18;
-    if (_user == null) {
+    if (user == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()), // 加载动画
       );
@@ -235,8 +232,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         // 主页面
         GestureDetector(
-          onTap: (){
-            if(_searchFocusNode.hasFocus){
+          onTap: () {
+            if (_searchFocusNode.hasFocus) {
               _searchFocusNode.unfocus();
             }
           },
@@ -249,13 +246,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 16.w,
-                      vertical: 10.h,
+                      vertical: 15.h,
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 20.r,
-                          backgroundImage: NetworkImage(_user.avatar),
+                          backgroundImage: NetworkImage(user.avatar),
                           backgroundColor: Colors.white,
                         ),
                         SizedBox(width: 12.w),
@@ -339,7 +336,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         StatCard(
                           imgUrl: 'assets/images/jin_mao.png',
                           title: '已读',
-                          value: '${_readingList.value?.length}本',
+                          value: '${readingList.value?.length}本',
                           color: Colors.green,
                           backgroundColor: Color(0xFFCFF0BF),
                         ),
@@ -412,7 +409,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   SizedBox(height: 20.h),
 
                   // 阅读记录模块
-                  _readingList.when(
+                  readingList.when(
                     data: (readingList) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,14 +437,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                           ),
                           // 可滑动的卡片列表
                           SizedBox(
-                            height: 200.h, // 设定高度以便 ListView 正确显示
+                            height: readingList.isEmpty ? 0.h : 200.h,
+                            // 设定高度以便 ListView 正确显示
                             child: ListView.builder(
                               controller: _scrollController,
                               scrollDirection: Axis.horizontal,
                               itemCount: readingList.length,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.0.w,
-                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 16.0.w),
                               itemBuilder: (context, index) {
                                 final item = readingList[index];
                                 return Padding(
@@ -457,20 +453,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                                         : 12.0.w,
                                   ),
                                   child: ReadingItemCard(
-                                    title: item.book.bookName,
-                                    imageUrl: item.book.coverUrl,
-                                    callback: () {
+                                    title: item.bookName,
+                                    imageUrl: item.bookCover,
+                                    callback: () async{
+                                      final book = await ref
+                                          .read(bookSquareViewModelProvider.notifier)
+                                          .findBookById(item.bookId);
+                                      if (book == null) {
+                                        return;
+                                      }
                                       final userId = ref
                                           .watch(userViewModelProvider)
                                           .user
                                           ?.userId;
+                                      if (!context.mounted) return;
                                       if (userId == null) {
                                         context.go('/${AppRouteNames.login}');
                                         return;
                                       }
                                       ref
-                                          .read(bookViewModelProvider.notifier)
-                                          .loadBook(item.book, userId);
+                                          .read(bookReaderViewModelProvider.notifier)
+                                          .loadBook(book, userId);
                                       context.push(
                                         '/${AppRouteNames.bookReader}',
                                       );
@@ -522,7 +525,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size(50.w, 20.h),
                                   tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                                      MaterialTapTargetSize.shrinkWrap,
                                   foregroundColor: Colors.grey[500],
                                 ),
                                 child: Text(
@@ -535,7 +538,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
 
                         // 榜单卡片列表 (竖直排列)
-                        ..._rankingList.map((item) {
+                        ...rankingList.map((item) {
                           return RankingItemCard(
                             rank: item['rank'] as int,
                             title: item['title'] as String,
@@ -574,12 +577,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                               const Spacer(),
                               // 更多按钮
                               TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  context.push(
+                                    '/${AppRouteNames.bookSquare}',
+                                  );
+                                },
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size(50.w, 20.h),
                                   tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                                      MaterialTapTargetSize.shrinkWrap,
                                   foregroundColor: Colors.grey[500],
                                 ),
                                 child: Text(
@@ -596,17 +603,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                           // 关键属性：防止 GridView 在 SingleChildScrollView 内部滚动
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
-                          itemCount: _squareList.length,
+                          itemCount: squareList.length,
                           // 4个项目
                           gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2, // 2列
-                            crossAxisSpacing: 12.w, // 水平间距
-                            mainAxisSpacing: 12.h, // 垂直间距
-                            childAspectRatio: 0.6, // 宽高比 (宽度/高度)，使其纵向更长
-                          ),
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2, // 2列
+                                crossAxisSpacing: 12.w, // 水平间距
+                                mainAxisSpacing: 12.h, // 垂直间距
+                                childAspectRatio: 0.6, // 宽高比 (宽度/高度)，使其纵向更长
+                              ),
                           itemBuilder: (context, index) {
-                            final item = _squareList[index];
+                            final item = squareList[index];
                             return SquareItemCard(
                               title: item['title'] as String,
                               author: item['author'] as String,
@@ -696,14 +703,14 @@ class _MyPageState extends ConsumerState<MyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final _characterViewModel = ref.read(characterViewModelProvider.notifier);
-    final _settingsData = MainPageConfig.settingsData;
-    final _userState = ref.read(userViewModelProvider);
-    final _user = _userState.user;
-    final _userViewModel = ref.read(userViewModelProvider.notifier);
+    final characterViewModel = ref.read(characterViewModelProvider.notifier);
+    final settingsData = MainPageConfig.settingsData;
+    final userState = ref.read(userViewModelProvider);
+    final user = userState.user;
+    final userViewModel = ref.read(userViewModelProvider.notifier);
     ref.listen<String?>(
       userViewModelProvider.select((state) => state.message),
-          (previous, next) {
+      (previous, next) {
         if (next != null) {
           MySnackBar.show(context, next);
         }
@@ -713,7 +720,6 @@ class _MyPageState extends ConsumerState<MyPage> {
     final showUsernameVipBadge = true;
     final isVipMember = true;
     final vipExpiryDate = "2099-99-99";
-    final favoriteCount = 5;
     final books = ref.watch(booksProvider);
     final topThreeFavorites = [];
     final characters = ref.watch(characterListProvider);
@@ -768,15 +774,15 @@ class _MyPageState extends ConsumerState<MyPage> {
                                       ),
                                     ],
                                   ),
-                                  child: _user == null
+                                  child: user == null
                                       ? CircularProgressIndicator()
                                       : CircleAvatar(
-                                    radius: 36.r,
-                                    backgroundImage: NetworkImage(
-                                      _user.avatar,
-                                    ),
-                                    backgroundColor: Colors.grey[200],
-                                  ),
+                                          radius: 36.r,
+                                          backgroundImage: NetworkImage(
+                                            user.avatar,
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                        ),
                                 ),
                                 onTap: () {
                                   context.push(
@@ -819,7 +825,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 Row(
                                   children: [
                                     Text(
-                                      _user?.name ?? "未命名",
+                                      user?.name ?? "未命名",
                                       style: TextStyle(
                                         fontSize: 18.sp,
                                         fontWeight: FontWeight.bold,
@@ -852,7 +858,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                                 ),
                                 // 第 2 行: ID
                                 Text(
-                                  'ID: ${_user?.userId}',
+                                  'ID: ${user?.userId}',
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey[800],
@@ -1021,7 +1027,10 @@ class _MyPageState extends ConsumerState<MyPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('查看全部 >', style: TextStyle(fontSize: 14.sp)),
+                                Text(
+                                  '查看全部 >',
+                                  style: TextStyle(fontSize: 14.sp),
+                                ),
                                 //1Icon(Icons.arrow_forward_ios, size: 14,),
                               ],
                             ),
@@ -1080,7 +1089,10 @@ class _MyPageState extends ConsumerState<MyPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('查看全部 >', style: TextStyle(fontSize: 14.sp)),
+                                Text(
+                                  '查看全部 >',
+                                  style: TextStyle(fontSize: 14.sp),
+                                ),
                                 //Icon(Icons.arrow_forward_ios, size: 14),
                               ],
                             ),
@@ -1148,13 +1160,19 @@ class _MyPageState extends ConsumerState<MyPage> {
 
                     // 可水平滑动的 List
                     SizedBox(
-                      height: 190.h, // 设定一个合适的高度 (卡片 160 + padding/滑动条 30)
+                      height: MediaQuery.of(context).size.shortestSide >= 600
+                          ? 260.h
+                          : 190.h,
                       child: characters.when(
                         data: (data) {
                           return Column(
                             children: [
                               SizedBox(
-                                height: 170.h, // 卡片实际高度
+                                height:
+                                    MediaQuery.of(context).size.shortestSide >=
+                                        600
+                                    ? 240.h
+                                    : 170.h, // 卡片实际高度
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   padding: EdgeInsets.only(left: 0.0.w),
@@ -1209,12 +1227,12 @@ class _MyPageState extends ConsumerState<MyPage> {
                     ),
 
                     // 按钮列表
-                    ..._settingsData.map((item) {
+                    ...settingsData.map((item) {
                       return SettingItem(
                         iconData: item['iconData'] as IconData,
                         iconColor: item['iconColor'] as Color,
                         iconBackgroundColor:
-                        item['iconBackgroundColor'] as Color,
+                            item['iconBackgroundColor'] as Color,
                         title: item['title'] as String,
                         subtitle: item['subtitle'] as String,
                         onTap: () {

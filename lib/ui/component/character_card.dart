@@ -26,6 +26,8 @@ class CharacterCard extends StatelessWidget {
           constraints: BoxConstraints(
             minWidth: 110.w, // 最小宽度保证卡片不压缩
             maxWidth: 120.w, // 最大宽度限制避免过宽
+            minHeight: 200.h,
+            maxHeight: 250.h,
           ),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -37,12 +39,12 @@ class CharacterCard extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // 高度自适应内容（关键）
+              mainAxisSize: MainAxisSize.max, // 高度自适应内容（关键）
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // 圆形人物图片（半径适配+容错）
                 CircleAvatar(
-                  radius: 32.w,
+                  radius: 27.w,
                   backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
                   backgroundColor: Colors.grey[200],
                   // 图片加载失败兜底
@@ -55,7 +57,7 @@ class CharacterCard extends StatelessWidget {
                 Text(
                   character.characterName,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 10.sp,
                     color: Colors.grey[700],
                     fontWeight: FontWeight.w600,
                   ),
@@ -63,7 +65,7 @@ class CharacterCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center, // 居中避免偏左溢出
                 ),
-                SizedBox(height: 6.h), // 高度用h
+                SizedBox(height: 4.h), // 高度用h
                 // 描述（核心修复文本溢出）
                 Container(
                   constraints: BoxConstraints(maxWidth: 90.w), // 限制最大宽度
@@ -77,7 +79,7 @@ class CharacterCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis, // 强制溢出省略
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 8.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
