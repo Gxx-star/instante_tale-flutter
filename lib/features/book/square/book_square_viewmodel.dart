@@ -14,10 +14,18 @@ class BookSquareViewModel extends StateNotifier<BookSquareState> {
   }
 
   void _init() {}
+  Future<void> resetBookList() async {
+    state = state.copyWith(
+      books: [],
+      hasMore: true,
+      message: null,
+      isLoading: false,
+    );
+  }
 
   Future<void> loadBookPage(int page) async {
     if (state.isLoading) return;
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, message: null);
     try {
       final books = await _bookRepository.loadBookPage(page);
       if (books.isEmpty) {
@@ -35,9 +43,9 @@ class BookSquareViewModel extends StateNotifier<BookSquareState> {
     }
   }
 
-  Future<Book?> findBookById(String bookId)async{
+  Future<Book?> findBookById(String bookId) async {
     if (state.isLoading) return null;
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, message: null);
     try {
       final book = await _bookRepository.findBookById(bookId);
       state = state.copyWith(isLoading: false);

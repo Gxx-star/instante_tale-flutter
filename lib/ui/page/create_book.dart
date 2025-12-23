@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -175,6 +176,10 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 0.0.w,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor:Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(gradient: headerGradient),
         ),

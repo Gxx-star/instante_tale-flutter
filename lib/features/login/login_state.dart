@@ -30,7 +30,7 @@ class LoginState {
   }) {
     return LoginState(
       isLoading: isLoading ?? this.isLoading,
-      message: message ?? this.message,
+      message: message,
       loginMethod: loginMethod ?? this.loginMethod,
       phone: phone ?? this.phone,
       password: password ?? this.password,

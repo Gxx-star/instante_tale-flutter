@@ -199,9 +199,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       LoginState loginState,
       WidgetRef ref,
       ) {
-    final smsTimerProvider = StateProvider.autoDispose<int>((ref) {
-      return 0;
-    });
     final secondsRemaining = ref.watch(smsTimerServiceProvider);
     final timerService = ref.read(smsTimerServiceProvider.notifier);
     final bool isTimerActive = secondsRemaining > 0;

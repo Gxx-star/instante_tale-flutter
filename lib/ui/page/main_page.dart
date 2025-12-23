@@ -10,6 +10,7 @@ import 'package:instant_tale/database/models/user.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/features/login/login_provider.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
+import 'package:instant_tale/ui/component/book_card_star.dart';
 import 'package:instant_tale/ui/component/bottom_navigation_item.dart';
 import 'package:instant_tale/ui/component/stat_item.dart';
 import '../../config/main_page_config.dart';
@@ -721,6 +722,7 @@ class _MyPageState extends ConsumerState<MyPage> {
     final isVipMember = true;
     final vipExpiryDate = "2099-99-99";
     final books = ref.watch(booksProvider);
+    final starBooks = ref.watch(starBooksProvider);
     final topThreeFavorites = [];
     final characters = ref.watch(characterListProvider);
     return Stack(
@@ -1104,14 +1106,22 @@ class _MyPageState extends ConsumerState<MyPage> {
                     // 收藏列表 (只展示前三项)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: topThreeFavorites.map((book) {
-                        return BookCard(
-                          book: book,
-                          showPageCount: false, // 不显示页数
-                          showFavoriteIcon: true, // 显示爱心
-                        );
-                      }).toList(),
-                    ),
+                      // 使用 BookCard 组件
+                      children: starBooks.when(
+                        data: (starBooks) {
+                          var bookWidgets = starBooks
+                              .take(3)
+                              .map<Widget>((starBook) => BookCardStar(book: starBook))
+                              .toList();
+                          while (bookWidgets.length < 3) {
+                            bookWidgets.add(Spacer());
+                          }
+                          return bookWidgets;
+                        },
+                        error: (error, stack) => [Text('Error:$error')],
+                        loading: () => [CircularProgressIndicator()],
+                      ),
+                    )
                   ],
                 ),
                 // 我的人物

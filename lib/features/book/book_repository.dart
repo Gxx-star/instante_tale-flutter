@@ -17,7 +17,7 @@ class BookRepository {
   final BookApi _api = ApiService().bookApi;
 
   Stream<List<Book>> watchAllBooks() {
-    return isar.books.where().watch(fireImmediately: true);
+    return isar.books.where().sortByCreatedAtDesc().watch(fireImmediately: true);
   }
 
   Stream<List<ReadingHistory>> watchReadingHistory(String userId) {
@@ -203,6 +203,29 @@ class BookRepository {
   Future<Book> findBookById(String bookId) async {
     try {
       final response = await _api.findBookById(bookId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message);
+      }
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+  Future<bool> starBook(String bookId) async {
+    try {
+      final response = await _api.starBook(bookId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message);
+      }
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<bool> queryStarStatus(String bookId) async {
+    try {
+      final response = await _api.queryStarStatus(bookId);
       if (response.code != 200 || response.data == null) {
         throw RepositoryException(response.message);
       }

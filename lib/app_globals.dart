@@ -81,6 +81,7 @@ class AppGlobals {
   }) {
     ref.listen(provider.select((state) => state.message), (pre, nex) {
       if (nex != null) {
+        print(nex);
         MySnackBar.show(context, nex);
       }
     });

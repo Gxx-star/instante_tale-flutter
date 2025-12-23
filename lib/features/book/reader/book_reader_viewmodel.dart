@@ -3,11 +3,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../database/models/book.dart';
 import '../../../database/models/page.dart';
+import '../../../notification_helper.dart';
 import '../../login/login_repository.dart';
 import '../book_repository.dart';
 import 'book_reader_state.dart';
@@ -19,6 +21,7 @@ Future<Uint8List> _savePdfInBackground(pw.Document pdf) {
 
 class BookReaderViewModel extends StateNotifier<BookReaderState> {
   final BookRepository _bookRepository;
+  final NotificationHelper _notificationHelper = NotificationHelper();
 
   BookReaderViewModel(this._bookRepository) : super(BookReaderState()) {
     _init();
@@ -61,7 +64,8 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
     Map<int, GlobalKey> keys,
     String bookName,
   ) async {
-    state = state.copyWith(isLoading: true, message: "正在准备分享中...请稍后");
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: "正在准备分享中...请稍后");
     final pdf = pw.Document();
 
     // 截图并添加到 PDF
@@ -111,7 +115,8 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
     List<String> storyTypes,
     List<String> storyQualities,
   ) async {
-    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: "绘本正在生成中...完成后会通知~");
     try {
       await _bookRepository.createBook(storyTypes, storyQualities);
       state = state.copyWith(
@@ -130,9 +135,11 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
     List<String> storyQualities,
     String model,
   ) async {
-    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: "绘本正在生成中...完成后会通知~");
     try {
-      await _bookRepository.generateBook(storyTypes, storyQualities, model);
+      // await _bookRepository.generateBook(storyTypes, storyQualities, model);
+      await _notificationHelper.showNotification(title: '通知', body: '绘本生成成功啦');
       state = state.copyWith(
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
@@ -149,7 +156,8 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
     List<String> storyQualities,
     List<String> charactersId,
   ) async {
-    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: "绘本正在生成中...完成后会通知~");
     try {
       await _bookRepository.createExclusiveBook(
         storyTypes,
@@ -173,7 +181,8 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
     List<String> charactersId,
     String model,
   ) async {
-    state = state.copyWith(isLoading: true, message: "绘本正在生成中...完成后会通知~");
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: "绘本正在生成中...完成后会通知~");
     try {
       await _bookRepository.generateExclusiveBook(
         storyTypes,
@@ -239,11 +248,35 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
       currentPage: 0,
     );
     await _bookRepository.saveReadingHistory(book, userId);
+    await queryStarStatus(book.bookId);
+  }
+  Future<void> starBook(String bookId) async {
+    state = state.copyWith(isLoading: true, message: null);
+    try {
+      final isTure = await _bookRepository.starBook(bookId);
+      state = state.copyWith(
+        isLoading: false,
+        isStarred: isTure,
+        message: isTure ? '收藏成功' : '取消收藏成功',
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: '收藏失败');
+    }
+  }
+  Future<void> queryStarStatus(String bookId) async {
+    try {
+      final isTure = await _bookRepository.queryStarStatus(bookId);
+      state = state.copyWith(isStarred: isTure);
+    } catch (e) {
+      print(e);
+      state = state.copyWith(message: '获取收藏信息失败，请检查网络连接');
+    }
   }
 
   Future<void> clearReadingHistory() async {
     await _bookRepository.clearReadingHistory();
   }
+
   Future<void> clearReadingHistoryByBookId(String bookId) async {
     await _bookRepository.clearReadingHistoryByBookId(bookId);
   }

@@ -30,9 +30,13 @@ class _BookSquarePageState extends ConsumerState<BookSquarePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resetData();
       _loadData();
     });
     _scrollController.addListener(_onScroll);
+  }
+  Future<void>_resetData()async{
+    await ref.read(bookSquareViewModelProvider.notifier).resetBookList();
   }
 
   // 加载逻辑
@@ -70,15 +74,19 @@ class _BookSquarePageState extends ConsumerState<BookSquarePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF2F8), // 延续粉色调背景
       appBar: AppBar(
-        title: Center(
-            child: const Text(
-              '内容广场',
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+        leading: GlassButton(
+          icon: Icons.arrow_back_ios_new_rounded,
+          onTap: () => Navigator.pop(context),
+        ),
+        centerTitle:  true,
+        title: Text(
+          '内容广场',
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF5A4C75),
           ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
       ),

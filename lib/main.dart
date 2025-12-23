@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/network/http.dart';
+import 'package:instant_tale/notification_helper.dart';
 import 'package:instant_tale/ui/page/book_reader_page.dart';
 import 'package:instant_tale/ui/page/character_management_page.dart';
 import 'package:instant_tale/ui/page/create_book.dart';
@@ -21,7 +22,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppGlobals().init();
+  await Future.wait([AppGlobals().init(), NotificationHelper().initialize()]);
   Http.init();
   await SentryFlutter.init((options) {
     options.dsn =

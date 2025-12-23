@@ -12,8 +12,6 @@ import '../../database/models/book.dart';
 // 绘本卡片（白底）
 class BookCard extends ConsumerWidget {
   final Book book;
-
-  // 【新增】控制UI显示
   final bool showPageCount;
   final bool showFavoriteIcon;
 
@@ -41,7 +39,6 @@ class BookCard extends ConsumerWidget {
             ref.read(bookReaderViewModelProvider.notifier).loadBook(book, userId);
             context.push('/${AppRouteNames.bookReader}');
           },
-          // 【修复】添加 borderRadius，确保点击水波纹和阴影是圆角
           borderRadius: BorderRadius.circular(16.r),
           child: Container(
             height: 190.w, // 设定纵轴长度
@@ -59,14 +56,11 @@ class BookCard extends ConsumerWidget {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 上半部分 (70%): 图片展示区域
                   Expanded(
                     flex: 7, // 7成
                     child: ClipRRect(
-                      // 【修改】用 Stack 包裹图片以添加爱心图标
                       child: Stack(
                         children: [
-                          // 图片
                           Positioned.fill(
                             child: Image(
                               image: CachedNetworkImageProvider(book.coverUrl),

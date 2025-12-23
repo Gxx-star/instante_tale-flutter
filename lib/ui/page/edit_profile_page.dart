@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -83,6 +84,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               fontWeight: FontWeight.w500,
               fontSize: 18.0.sp,
             ),
+          ),
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarColor:Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
           ),
           flexibleSpace: Container(
             decoration: BoxDecoration(gradient: _appBarGradient),

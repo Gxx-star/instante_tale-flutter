@@ -24,7 +24,7 @@ class BookSquareState {
   }) {
     return BookSquareState(
       isLoading: isLoading ?? this.isLoading,
-      message: message ?? this.message,
+      message: message,
       books: books ?? this.books,
       hasMore: hasMore ?? this.hasMore
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' hide Page;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/page.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
@@ -11,6 +12,7 @@ import 'package:instant_tale/ui/component/glass_button.dart';
 import 'package:preload_page_view/preload_page_view.dart';
 
 import '../../database/models/book.dart';
+import '../../features/book/reader/book_reader_state.dart';
 
 class BookReaderPage extends ConsumerStatefulWidget {
   const BookReaderPage({super.key});
@@ -22,6 +24,7 @@ class BookReaderPage extends ConsumerStatefulWidget {
 class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   final PreloadPageController _pageController = PreloadPageController();
   final Map<int, GlobalKey> _pageKeys = {};
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -30,6 +33,8 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
 
   @override
   Widget build(BuildContext context) {
+    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookReaderViewModelProvider);
+    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookSquareViewModelProvider);
     final state = ref.watch(bookReaderViewModelProvider);
     final book = state.currentBook;
     if (book == null) {
@@ -61,14 +66,17 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           // 绘本核心内容 (PageView)
           Positioned.fill(
             child: GestureDetector(
-              onTap: () =>
-                  ref.read(bookReaderViewModelProvider.notifier).toggleControls(),
+              onTap: () => ref
+                  .read(bookReaderViewModelProvider.notifier)
+                  .toggleControls(),
               child: PreloadPageView.builder(
                 controller: _pageController,
                 preloadPagesCount: book.content.length,
                 itemCount: book.content.length,
                 onPageChanged: (index) {
-                  ref.read(bookReaderViewModelProvider.notifier).onPageChanged(index);
+                  ref
+                      .read(bookReaderViewModelProvider.notifier)
+                      .onPageChanged(index);
                 },
                 itemBuilder: (context, index) {
                   final item = book.content[index];
@@ -84,7 +92,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
             top: state.isControlsVisible ? 0 : -100.w,
             left: 0,
             right: 0,
-            child: _buildTopBar(context, book),
+            child: _buildTopBar(context, book, state),
           ),
 
           // 底部文本与控制区 (可隐藏)
@@ -157,7 +165,11 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey, size: 50.w),
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                          size: 50.w,
+                        ),
                       );
                     },
                   ),
@@ -216,7 +228,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   }
 
   // 顶部导航
-  Widget _buildTopBar(BuildContext context, Book book) {
+  Widget _buildTopBar(BuildContext context, Book book, BookReaderState state) {
     return SafeArea(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.w),
@@ -239,9 +251,23 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
               ),
             ),
             GlassButton(
+              icon: state.isStarred
+                  ? Icons.star_rounded
+                  : Icons.star_outline_rounded,
+              onTap: () {
+                ref
+                    .read(bookReaderViewModelProvider.notifier)
+                    .starBook(book.bookId);
+                ref.refresh(starBooksProvider);
+              },
+            ),
+            SizedBox(width: 12.w), // 按钮间距
+            GlassButton(
               icon: Icons.share,
               onTap: () => {
-                ref.read(bookReaderViewModelProvider.notifier).shareBookPdf(book.content,_pageKeys,book.bookName)
+                ref
+                    .read(bookReaderViewModelProvider.notifier)
+                    .shareBookPdf(book.content, _pageKeys, book.bookName),
               },
             ),
           ],
@@ -359,9 +385,9 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
 
   // 角色详情弹窗
   void _showCharactersSheet(
-      BuildContext context,
-      List<CharacterEmbedded> characters,
-      ) {
+    BuildContext context,
+    List<CharacterEmbedded> characters,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -414,7 +440,10 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                           SizedBox(height: 8.w),
                           Text(
                             char.characterName.trim(),
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.sp,
+                            ),
                           ),
                           Text(
                             char.desc,

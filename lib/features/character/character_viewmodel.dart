@@ -24,7 +24,8 @@ class CharacterViewModel extends StateNotifier<CharacterState> {
     String characterName,
     String desc,
   ) async {
-    state = state.copyWith(isLoading: true, message: '角色正在创建中，完成后会通知~');
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: '角色正在创建中，完成后会通知~');
     try {
       await _characterRepository.addCharacter(
         characterPhoto,
