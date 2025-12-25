@@ -11,7 +11,7 @@ import '../../features/login/login_provider.dart';
 import '../../features/user/user_provider.dart';
 
 class PrivacySecurityPage extends ConsumerWidget {
-  const PrivacySecurityPage({Key? key}) : super(key: key);
+  const PrivacySecurityPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

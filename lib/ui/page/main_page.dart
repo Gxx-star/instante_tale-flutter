@@ -50,11 +50,11 @@ class _MainPageState extends ConsumerState<MainPage> {
     Future.microtask(
       () => ref.read(bookReaderViewModelProvider.notifier).fetchBookList(),
     );
+    Future.microtask(() => ref.refresh(starBooksProvider));
   }
 
   @override
   Widget build(BuildContext context) {
-    final characterViewModel = ref.read(characterViewModelProvider.notifier);
     final currentIndex = ref.watch(_currentIndexProvider);
     AppGlobals().listenAndShowSnackBar(
       ref: ref,
@@ -70,10 +70,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey[100],
-      body: IndexedStack(
-        index: currentIndex,
-        children: [HomePage(), MyPage()],
-      ),
+      body: IndexedStack(index: currentIndex, children: [HomePage(), MyPage()]),
       bottomNavigationBar: Container(
         padding: EdgeInsets.only(bottom: 10.h),
         height: 80.h,
@@ -456,9 +453,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   child: ReadingItemCard(
                                     title: item.bookName,
                                     imageUrl: item.bookCover,
-                                    callback: () async{
+                                    callback: () async {
                                       final book = await ref
-                                          .read(bookSquareViewModelProvider.notifier)
+                                          .read(
+                                            bookSquareViewModelProvider
+                                                .notifier,
+                                          )
                                           .findBookById(item.bookId);
                                       if (book == null) {
                                         return;
@@ -473,7 +473,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                                         return;
                                       }
                                       ref
-                                          .read(bookReaderViewModelProvider.notifier)
+                                          .read(
+                                            bookReaderViewModelProvider
+                                                .notifier,
+                                          )
                                           .loadBook(book, userId);
                                       context.push(
                                         '/${AppRouteNames.bookReader}',
@@ -579,9 +582,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                               // 更多按钮
                               TextButton(
                                 onPressed: () {
-                                  context.push(
-                                    '/${AppRouteNames.bookSquare}',
-                                  );
+                                  context.push('/${AppRouteNames.bookSquare}');
                                 },
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
@@ -1082,7 +1083,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                           ),
                           const Spacer(),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push('/${AppRouteNames.myFavoritesPage}');
+                            },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               alignment: Alignment.centerRight,
@@ -1111,17 +1114,19 @@ class _MyPageState extends ConsumerState<MyPage> {
                         data: (starBooks) {
                           var bookWidgets = starBooks
                               .take(3)
-                              .map<Widget>((starBook) => BookCardStar(book: starBook))
+                              .map<Widget>(
+                                (starBook) => BookCardStar(book: starBook),
+                              )
                               .toList();
                           while (bookWidgets.length < 3) {
                             bookWidgets.add(Spacer());
                           }
                           return bookWidgets;
                         },
-                        error: (error, stack) => [Text('Error:$error')],
+                        error: (error, stack) => [Text('Error: 获取收藏列表失败')],
                         loading: () => [CircularProgressIndicator()],
                       ),
-                    )
+                    ),
                   ],
                 ),
                 // 我的人物

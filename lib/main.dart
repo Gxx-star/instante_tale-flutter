@@ -14,6 +14,7 @@ import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
 import 'package:instant_tale/ui/page/my_book_page.dart';
+import 'package:instant_tale/ui/page/my_favorites_page.dart';
 import 'package:instant_tale/ui/page/privacy_security_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
 import 'package:instant_tale/ui/page/book_square_page.dart';
@@ -27,17 +28,11 @@ void main() async {
   await SentryFlutter.init((options) {
     options.dsn =
         'https://03af318b985646603bd4e28d1c40721b@o4510541825048577.ingest.us.sentry.io/4510541825376256';
-    // Adds request headers and IP for users, for more info visit:
-    // https://docs.sentry.io/platforms/dart/guides/flutter/data-management/data-collected/
     options.sendDefaultPii = true;
     options.enableUserInteractionTracing = false;
     options.enableAutoSessionTracking = false;
     options.maxBreadcrumbs = 50;
-    // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
-    // We recommend adjusting this value in production.
     options.tracesSampleRate = 1.0;
-    // The sampling rate for profiling is relative to tracesSampleRate
-    // Setting to 1.0 will profile 100% of sampled transactions:
     options.profilesSampleRate = 1.0;
   }, appRunner: () => runApp(SentryWidget(child: ProviderScope(child: MyApp()))));
 }
@@ -76,6 +71,7 @@ class AppRouteNames {
   static const String privacySecurityPage = 'privacy-security-page';
   static const String setPasswordPage = 'set-password-page';
   static const String myBooksPage = 'my-books-page';
+  static const String myFavoritesPage = 'my-favorites-page';
 }
 
 final _router = GoRouter(
@@ -86,6 +82,12 @@ final _router = GoRouter(
         return AppGlobals().isLoggedIn
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
+      },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.myFavoritesPage}',
+      builder: (context, state) {
+        return MyFavoritesPage();
       },
     ),
     GoRoute(

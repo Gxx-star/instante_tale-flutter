@@ -16,7 +16,7 @@ class ApiException implements Exception {
 class ExceptionHandler {
   static ApiException handle(dynamic error) {
     if (error is ApiException) return error;
-
+    print("Error!!!!!!!!!!!!!!!!!!!!: $error");
     if (error is DioException) {
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
