@@ -160,6 +160,23 @@ class BookRepository {
       throw RepositoryException(e.message);
     }
   }
+  Future<void> createFastBook(
+      List<String> charactersId,
+      ) async {
+    try {
+      final response = await _api.createFastBook(
+        charactersId,
+      );
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message);
+      }
+      await isar.writeTxn(() async {
+        await isar.books.put(response.data!);
+      });
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
 
   Future<List<Book>> findBookList(String keyword) async {
     try {

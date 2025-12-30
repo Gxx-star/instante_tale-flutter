@@ -120,4 +120,5 @@ class CreateBookConfig {
     },
   ];
   static final maxCharacters = 3;
+  static final fastBookMaxCharacters = 1;
 }

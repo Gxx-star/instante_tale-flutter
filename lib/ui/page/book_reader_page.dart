@@ -9,8 +9,9 @@ import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/page.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/ui/component/glass_button.dart';
+import 'package:instant_tale/util/audio_stream_player.dart';
 import 'package:preload_page_view/preload_page_view.dart';
-
+import 'package:rive/rive.dart' as rive;
 import '../../database/models/book.dart';
 import '../../features/book/reader/book_reader_state.dart';
 
@@ -33,8 +34,16 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookReaderViewModelProvider);
-    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookSquareViewModelProvider);
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookReaderViewModelProvider,
+    );
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookSquareViewModelProvider,
+    );
     final state = ref.watch(bookReaderViewModelProvider);
     final book = state.currentBook;
     if (book == null) {
@@ -324,7 +333,32 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                       ),
                     ),
                   ),
-                  // Icon(Icons.volume_up_rounded, color: const Color(0xFF9A8BB5), size: 20.w),
+                  ValueListenableBuilder<bool>(
+                    valueListenable:
+                        StreamAudioPlayerManager.instance.isPlayingNotifier,
+                    builder: (context, isPlaying, child) {
+                      return GestureDetector(
+                        onTap: () {
+                          if (isPlaying) {
+                            StreamAudioPlayerManager.instance.stopPlay();
+                          } else {
+                            StreamAudioPlayerManager.instance.streamPlayAudio(
+                              content.text,
+                            );
+                          }
+                        },
+                        child: isPlaying
+                            ? SizedBox(
+                                width: 30.w,
+                                height: 30.w,
+                                child: rive.RiveAnimation.asset(
+                                  'assets/riv/anim_audio_wave.riv',
+                                ),
+                              )
+                            : Icon(Icons.volume_up, size: 30.w),
+                      );
+                    },
+                  ),
                 ],
               ),
               SizedBox(height: 8.w),

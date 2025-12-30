@@ -200,6 +200,25 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
       state = state.copyWith(isLoading: false, message: e.toString());
     }
   }
+  Future<void> createFastBook(
+      List<String> charactersId,
+      ) async {
+    state = state.copyWith(isLoading: true, message: null);
+    state = state.copyWith(message: "绘本正在生成中...完成后会通知~");
+    try {
+      await _bookRepository.createFastBook(
+        charactersId,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
+      );
+    } on RepositoryException catch (e) {
+      state = state.copyWith(isLoading: false, message: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, message: e.toString());
+    }
+  }
 
   Future<void> deleteBook(String bookId) async {
     state = state.copyWith(isLoading: true, message: null);

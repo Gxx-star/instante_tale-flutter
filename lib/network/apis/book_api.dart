@@ -128,6 +128,27 @@ class BookApi {
     }
   }
 
+  Future<ApiResponse<Book>> createFastBook(List<String> charactersId) async {
+    try {
+      final data = {'characters_id': charactersId};
+      final response = await _dio.post(
+        '/book/gen_replaced_book',
+        data: data,
+        options: Options(receiveTimeout: Duration(minutes: 7)),
+      );
+
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: response.data['data'] != null
+            ? Book.fromJson(response.data['data'])
+            : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
   Future<ApiResponse<void>> deleteBook(String bookId) async {
     try {
       final data = {'book_id': bookId};
@@ -249,7 +270,10 @@ class BookApi {
   Future<ApiResponse<bool>> queryStarStatus(String bookId) async {
     try {
       final data = {'book_id': bookId};
-      final response = await _dio.get('/book/query_star_status', queryParameters: data);
+      final response = await _dio.get(
+        '/book/query_star_status',
+        queryParameters: data,
+      );
       final isTrue = response.data['data'];
       return ApiResponse(
         code: response.data['code'],

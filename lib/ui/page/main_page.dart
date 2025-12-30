@@ -368,7 +368,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                           imgUrl: 'assets/images/mei_shu.png',
                           label: '创建绘本',
                           color: Colors.white,
-                          // color: Color(0xFFF472B6),
                           onTap: () {
                             context.push('/${AppRouteNames.createBook}');
                           },
@@ -377,7 +376,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                           imgUrl: 'assets/images/dian_shi.png',
                           label: '绘本广场',
                           color: Colors.white,
-                          // color: Color(0xFFA78BFA),
                           onTap: () {
                             context.push('/${AppRouteNames.bookSquare}');
                           },
@@ -386,16 +384,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                           imgUrl: 'assets/images/pin_tu.png',
                           label: '我的作品',
                           color: Colors.white,
-                          // color: Color(0xFF38BDF8),
                           onTap: () {
                             context.push('/${AppRouteNames.myBooksPage}');
                           },
                         ),
-                        const CircularButton(
+                        CircularButton(
                           imgUrl: 'assets/images/wan_ju_ya.png',
-                          label: '浏览历史',
+                          label: '快速绘本',
                           color: Colors.white,
-                          // color: Color(0xFFFBBF24),
+                          onTap:(){
+                            context.push('/${AppRouteNames.fastBookPage}');
+                          }
                         ),
                       ],
                     ),
