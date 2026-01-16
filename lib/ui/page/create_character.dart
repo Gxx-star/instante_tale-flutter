@@ -122,7 +122,6 @@ class _CreateCharacterPageState extends ConsumerState<CreateCharacterPage> {
             fontSize: 18.0.sp,
           ),
         ),
-        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         titleSpacing: 0.0,

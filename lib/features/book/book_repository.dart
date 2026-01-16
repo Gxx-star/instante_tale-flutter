@@ -17,7 +17,9 @@ class BookRepository {
   final BookApi _api = ApiService().bookApi;
 
   Stream<List<Book>> watchAllBooks() {
-    return isar.books.where().sortByCreatedAtDesc().watch(fireImmediately: true);
+    return isar.books.where().sortByCreatedAtDesc().watch(
+      fireImmediately: true,
+    );
   }
 
   Stream<List<ReadingHistory>> watchReadingHistory(String userId) {
@@ -69,7 +71,7 @@ class BookRepository {
     try {
       final response = await _api.createBook(storyTypes, storyQualities);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '创建失败');
       }
       await isar.writeTxn(() async {
         await isar.books.put(response.data!);
@@ -91,7 +93,7 @@ class BookRepository {
         model,
       );
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '创建失败');
       }
       await isar.writeTxn(() async {
         await isar.books.put(response.data!);
@@ -105,7 +107,7 @@ class BookRepository {
     try {
       final response = await _api.deleteBook(bookId);
       if (response.code != 200) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '删除失败');
       }
       await isar.writeTxn(() async {
         await isar.books.where().bookIdEqualTo(bookId).deleteAll();
@@ -127,7 +129,7 @@ class BookRepository {
         charactersId,
       );
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '创建失败');
       }
       await isar.writeTxn(() async {
         await isar.books.put(response.data!);
@@ -151,7 +153,7 @@ class BookRepository {
         model,
       );
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '创建失败');
       }
       await isar.writeTxn(() async {
         await isar.books.put(response.data!);
@@ -160,15 +162,12 @@ class BookRepository {
       throw RepositoryException(e.message);
     }
   }
-  Future<void> createFastBook(
-      List<String> charactersId,
-      ) async {
+
+  Future<void> createFastBook(List<String> charactersId) async {
     try {
-      final response = await _api.createFastBook(
-        charactersId,
-      );
+      final response = await _api.createFastBook(charactersId);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '创建失败');
       }
       await isar.writeTxn(() async {
         await isar.books.put(response.data!);
@@ -182,7 +181,7 @@ class BookRepository {
     try {
       final response = await _api.findBookList(keyword);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '查询失败');
       }
       return response.data!;
     } on ApiException catch (e) {
@@ -194,7 +193,7 @@ class BookRepository {
     try {
       final response = await _api.findBookList('');
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '同步失败');
       }
       await isar.writeTxn(() async {
         await isar.books.clear();
@@ -209,7 +208,7 @@ class BookRepository {
     try {
       final response = await _api.loadBookPage(page);
       if (response.code != 200) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '加载失败');
       }
       return response.data == null ? [] : response.data!;
     } on ApiException catch (e) {
@@ -221,18 +220,19 @@ class BookRepository {
     try {
       final response = await _api.findBookById(bookId);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '查询失败');
       }
       return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
     }
   }
+
   Future<bool> starBook(String bookId) async {
     try {
       final response = await _api.starBook(bookId);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '收藏失败');
       }
       return response.data!;
     } on ApiException catch (e) {
@@ -244,7 +244,7 @@ class BookRepository {
     try {
       final response = await _api.queryStarStatus(bookId);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message);
+        throw RepositoryException(response.message ?? '查询失败');
       }
       return response.data!;
     } on ApiException catch (e) {

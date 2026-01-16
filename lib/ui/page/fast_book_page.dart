@@ -32,14 +32,12 @@ class _FastBookPageState extends ConsumerState<FastBookPage> {
       provider: characterViewModelProvider,
     );
     final charactersListAsync = ref.watch(characterListProvider);
-    final Color primaryColor = CreateBookConfig.primaryColor;
     final Color accentColor = CreateBookConfig.accentColor;
     // 顶部渐变
     final headerGradient = CreateBookConfig.headerGradient;
     return charactersListAsync.when(
       data: (characterList) {
         return Scaffold(
-          backgroundColor: primaryColor,
           appBar: AppBar(
             toolbarHeight: 40.0.h,
             leading: IconButton(
@@ -58,7 +56,6 @@ class _FastBookPageState extends ConsumerState<FastBookPage> {
                 fontSize: 18.0.sp,
               ),
             ),
-            backgroundColor: Colors.transparent,
             elevation: 0,
             centerTitle: false,
             titleSpacing: 0.0.w,

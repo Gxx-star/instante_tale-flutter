@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -123,6 +122,7 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
       );
+      await _notificationHelper.showNotification(title: '绘本生成成功', body: '绘本生成成功，请到我的绘本中查看！');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
@@ -138,8 +138,8 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
     state = state.copyWith(isLoading: true, message: null);
     state = state.copyWith(message: "绘本正在生成中...完成后会通知~");
     try {
-      // await _bookRepository.generateBook(storyTypes, storyQualities, model);
-      await _notificationHelper.showNotification(title: '通知', body: '绘本生成成功啦');
+      await _bookRepository.generateBook(storyTypes, storyQualities, model);
+      await _notificationHelper.showNotification(title: '绘本生成成功', body: '绘本生成成功，请到我的绘本中查看！');
       state = state.copyWith(
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
@@ -168,6 +168,7 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
       );
+      await _notificationHelper.showNotification(title: '绘本生成成功', body: '绘本生成成功，请到我的绘本中查看！');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
@@ -194,6 +195,7 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
       );
+      await _notificationHelper.showNotification(title: '绘本生成成功', body: '绘本生成成功，请到我的绘本中查看！');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
@@ -213,6 +215,7 @@ class BookReaderViewModel extends StateNotifier<BookReaderState> {
         isLoading: false,
         message: "绘本生成成功啦！可以在\"我的绘本\"中查看",
       );
+      await _notificationHelper.showNotification(title: '绘本生成成功', body: '绘本生成成功，请到我的绘本中查看！');
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {

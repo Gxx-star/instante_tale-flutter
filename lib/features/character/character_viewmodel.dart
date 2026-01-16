@@ -3,11 +3,12 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:instant_tale/features/character/character_repository.dart';
 import 'package:instant_tale/features/character/character_state.dart';
+import '../../notification_helper.dart';
 import '../login/login_repository.dart';
 
 class CharacterViewModel extends StateNotifier<CharacterState> {
   final CharacterRepository _characterRepository;
-
+  final NotificationHelper _notificationHelper = NotificationHelper();
   CharacterViewModel(this._characterRepository) : super(CharacterState()) {
     _init();
   }
@@ -33,6 +34,10 @@ class CharacterViewModel extends StateNotifier<CharacterState> {
         desc,
       );
       state = state.copyWith(isLoading: false, message: '角色创建成功！');
+      await _notificationHelper.showNotification(
+        title: '角色创建成功',
+        body: '角色创建成功，请到角色列表中查看！',
+      );
     } on RepositoryException catch (e) {
       state = state.copyWith(isLoading: false, message: e.message);
     } catch (e) {
