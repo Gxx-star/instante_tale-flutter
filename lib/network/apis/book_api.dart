@@ -6,6 +6,7 @@ import 'package:instant_tale/database/models/character.dart';
 import '../../database/models/book.dart';
 import '../api_exceptions.dart';
 import '../api_response.dart';
+import '../dto/book_data.dart';
 import '../dto/login_data.dart';
 
 class BookApi {
@@ -46,7 +47,7 @@ class BookApi {
       final data = {
         'story_type': storyTypes,
         'story_quality': storyQualities,
-        'model': model
+        'model': model,
       };
       final response = await _dio.post(
         '/book/gen_creativity_book',
@@ -127,6 +128,27 @@ class BookApi {
     }
   }
 
+  Future<ApiResponse<Book>> createFastBook(List<String> charactersId) async {
+    try {
+      final data = {'characters_id': charactersId};
+      final response = await _dio.post(
+        '/book/gen_replaced_book',
+        data: data,
+        options: Options(receiveTimeout: Duration(minutes: 7)),
+      );
+
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: response.data['data'] != null
+            ? Book.fromJson(response.data['data'])
+            : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
   Future<ApiResponse<void>> deleteBook(String bookId) async {
     try {
       final data = {'book_id': bookId};
@@ -144,13 +166,119 @@ class BookApi {
   Future<ApiResponse<List<Book>>> findBookList(String keyword) async {
     try {
       final data = {'keyword': keyword};
-      final response = await _dio.get('/book/query', data: data);
+      final response = await _dio.get('/book/query', queryParameters: data);
+      if (response.data['data'] == null) {
+        return ApiResponse(
+          code: response.data['code'],
+          message: response.data['msg'],
+          data: null,
+        );
+      }
       final listJson = response.data['data'] as List<dynamic>;
       final books = listJson.map((e) => Book.fromJson(e)).toList();
       return ApiResponse(
         code: response.data['code'],
         message: response.data['msg'],
         data: response.data['data'] != null ? books : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
+  Future<ApiResponse<List<BookData>>> loadBookPage(int page) async {
+    try {
+      final data = {'page': page};
+      final response = await _dio.get(
+        '/book/get_book_square',
+        queryParameters: data,
+      );
+      if (response.data['data']['books_info'] == null) {
+        return ApiResponse(
+          code: response.data['code'],
+          message: response.data['msg'],
+          data: null,
+        );
+      }
+      final listJson = response.data['data']['books_info'] as List<dynamic>;
+      final books = listJson.map((e) => BookData.fromJson(e)).toList();
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: response.data['data'] != null ? books : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
+  Future<ApiResponse<List<BookData>>> loadStarBooks() async {
+    try {
+      final response = await _dio.get('/book/query_star');
+      if (response.data['data']['books_info'] == null) {
+        return ApiResponse(
+          code: response.data['code'],
+          message: response.data['msg'],
+          data: null,
+        );
+      }
+      final listJson = response.data['data']['books_info'] as List<dynamic>;
+      final books = listJson.map((e) => BookData.fromJson(e)).toList();
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: response.data['data'] != null ? books : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
+  Future<ApiResponse<Book>> findBookById(String bookId) async {
+    try {
+      final data = {'book_id': bookId};
+      final response = await _dio.get(
+        '/book/query_by_id',
+        queryParameters: data,
+      );
+      final book = Book.fromJson(response.data['data']);
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: response.data['data'] != null ? book : null,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
+  Future<ApiResponse<bool>> starBook(String bookId) async {
+    try {
+      final data = {'book_id': bookId};
+      final response = await _dio.post('/book/star', data: data);
+      final isTrue = response.data['data'];
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: isTrue,
+      );
+    } on DioException catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
+  Future<ApiResponse<bool>> queryStarStatus(String bookId) async {
+    try {
+      final data = {'book_id': bookId};
+      final response = await _dio.get(
+        '/book/query_star_status',
+        queryParameters: data,
+      );
+      final isTrue = response.data['data'];
+      return ApiResponse(
+        code: response.data['code'],
+        message: response.data['msg'],
+        data: isTrue,
       );
     } on DioException catch (e) {
       throw ExceptionHandler.handle(e);

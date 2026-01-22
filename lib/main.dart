@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/network/http.dart';
+import 'package:instant_tale/notification_helper.dart';
 import 'package:instant_tale/ui/page/book_reader_page.dart';
 import 'package:instant_tale/ui/page/character_management_page.dart';
 import 'package:instant_tale/ui/page/create_book.dart';
 import 'package:instant_tale/ui/page/create_character.dart';
 import 'package:instant_tale/ui/page/edit_profile_page.dart';
+import 'package:instant_tale/ui/page/fast_book_page.dart';
 import 'package:instant_tale/ui/page/forget_password_page.dart';
 import 'package:instant_tale/ui/page/login_page.dart';
 import 'package:instant_tale/ui/page/main_page.dart';
 import 'package:instant_tale/ui/page/my_book_page.dart';
+import 'package:instant_tale/ui/page/my_favorites_page.dart';
 import 'package:instant_tale/ui/page/privacy_security_page.dart';
 import 'package:instant_tale/ui/page/register_page.dart';
-import 'package:instant_tale/ui/page/storybook_plaza_page.dart';
+import 'package:instant_tale/ui/page/book_square_page.dart';
 import 'package:instant_tale/ui/theme.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppGlobals().init();
+  await Future.wait([AppGlobals().init(), NotificationHelper().initialize()]);
   Http.init();
-  runApp(ProviderScope(child: MyApp()));
+  await SentryFlutter.init((options) {
+    options.dsn =
+        'https://03af318b985646603bd4e28d1c40721b@o4510541825048577.ingest.us.sentry.io/4510541825376256';
+    options.sendDefaultPii = true;
+    options.enableUserInteractionTracing = false;
+    options.enableAutoSessionTracking = false;
+    options.maxBreadcrumbs = 50;
+    options.tracesSampleRate = 1.0;
+    options.profilesSampleRate = 1.0;
+  }, appRunner: () => runApp(SentryWidget(child: ProviderScope(child: MyApp()))));
 }
 
 class MyApp extends StatelessWidget {
@@ -29,10 +43,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: _router,
-      theme: AppTheme.light,
-      debugShowCheckedModeBanner: false,
+    return ScreenUtilInit(
+      designSize: const Size(411, 914),
+      minTextAdapt: true,
+      splitScreenMode: false,
+      builder: (context, child) => MaterialApp.router(
+        routerConfig: _router,
+        theme: AppTheme.light,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }
@@ -53,6 +72,8 @@ class AppRouteNames {
   static const String privacySecurityPage = 'privacy-security-page';
   static const String setPasswordPage = 'set-password-page';
   static const String myBooksPage = 'my-books-page';
+  static const String myFavoritesPage = 'my-favorites-page';
+  static const String fastBookPage = 'fast-book-page';
 }
 
 final _router = GoRouter(
@@ -63,6 +84,16 @@ final _router = GoRouter(
         return AppGlobals().isLoggedIn
             ? '/${AppRouteNames.main}'
             : '/${AppRouteNames.login}';
+      },
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.fastBookPage}',
+      builder: (context, state) => FastBookPage(),
+    ),
+    GoRoute(
+      path: '/${AppRouteNames.myFavoritesPage}',
+      builder: (context, state) {
+        return MyFavoritesPage();
       },
     ),
     GoRoute(
@@ -99,7 +130,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/${AppRouteNames.bookSquare}',
-      builder: (context, state) => StorybookPlazaPage(),
+      builder: (context, state) => BookSquarePage(),
     ),
     GoRoute(
       path: '/${AppRouteNames.editProfilePage}',

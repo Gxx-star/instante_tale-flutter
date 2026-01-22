@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // 用于显示单个热门榜单项目的组件
 class RankingItemCard extends StatelessWidget {
@@ -32,28 +33,27 @@ class RankingItemCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext
-  context) {
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12.w),
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(15.r),
         child: InkWell(
           onTap: () {
 
           },
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15.r),
           // 整个项目使用一个大的、平坦的按钮样式
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(15.r),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
+                  blurRadius: 5.r,
+                  offset: Offset(0, 3.r),
                 ),
               ],
             ),
@@ -63,7 +63,7 @@ class RankingItemCard extends StatelessWidget {
                 // 1. 排名数字 (左上角)
                 _buildRankBadge(),
 
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
 
                 // 2. 图片和内容 (居中垂直排列)
                 _buildContentColumn(),
@@ -74,7 +74,7 @@ class RankingItemCard extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.grey[400],
-                  size: 16,
+                  size: 16.w,
                 ),
               ],
             ),
@@ -96,19 +96,19 @@ class RankingItemCard extends StatelessWidget {
     }
 
     return Container(
-      width: 28,
-      height: 28,
+      width: 28.w,
+      height: 28.w,
       decoration: BoxDecoration(
         color: badgeColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
       ),
       alignment: Alignment.center,
       child: Text(
         rank.toString(),
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 16,
+          fontSize: 16.sp,
         ),
       ),
     );
@@ -119,10 +119,10 @@ class RankingItemCard extends StatelessWidget {
       children: [
         // 2.1. 圆角图片
         Container(
-          width: 100,
-          height: 120,
+          width: 100.w,
+          height: 120.w,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10.r),
             image: DecorationImage(
               image: NetworkImage(imageUrl),
               fit: BoxFit.cover,
@@ -130,7 +130,7 @@ class RankingItemCard extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16.w),
         // 2.2. 文本和统计数据
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,22 +139,22 @@ class RankingItemCard extends StatelessWidget {
             // 标题
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: 16.sp,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.w),
             // 描述
             Text(
               description,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 13.sp,
                 color: Colors.grey[600],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10.w),
             // 统计数据 (爱心和阅读数)
             Row(
               children: [
@@ -162,24 +162,24 @@ class RankingItemCard extends StatelessWidget {
                 Icon(
                   Icons.favorite_border,
                   color: _lightPink,
-                  size: 18,
+                  size: 18.w,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4.w),
                 Text(
                   '${likes}k',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 // 阅读数
                 Icon(
                   Icons.menu_book,
                   color: Colors.lightBlue, // 使用蓝色图标
-                  size: 18,
+                  size: 18.w,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4.w),
                 Text(
                   '${likes}k',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
                 ),
               ],
             ),

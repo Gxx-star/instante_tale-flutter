@@ -65,7 +65,7 @@ class CharacterApi {
   ) async {
     try {
       final data = {'keyword': keyword};
-      final response = await _dio.get('/character/query', data: data);
+      final response = await _dio.get('/character/query', queryParameters: data);
       final listJson = response.data['data']['list'] as List<dynamic>;
       final characters = listJson
           .map((e) => CharacterCollection.fromJson(e))

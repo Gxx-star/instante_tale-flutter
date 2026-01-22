@@ -1,13 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:instant_tale/app_globals.dart';
+import 'package:instant_tale/config/edit_profile_page_config.dart';
 import 'package:instant_tale/features/user/user_provider.dart';
-import 'package:instant_tale/features/user/user_state.dart';
-import 'package:instant_tale/ui/component/my_snackbar.dart';
-import '../../database/models/user.dart';
 import '../../features/user/user_viewmodel.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -50,106 +50,92 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   // --- 静态渐变色配置 ---
-  static const _appBarGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFecaed5), Color(0xFFf0d0e7)],
-  );
-
-  static const _buttonGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [Color(0xFFE87AB5), Color(0xFF8A9EFC)],
-  );
-
-  static const _avatarBorderGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFDE65BD), Color(0xFF8E70F5)],
-  );
-
-  static const _tipIconGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF8FABFF), Color(0xFFC599FF)],
-  );
+  static final _appBarGradient = EditProfilePageConfig.appBarGradient;
+  static final _buttonGradient = EditProfilePageConfig.buttonGradient;
+  static final _avatarBorderGradient = EditProfilePageConfig.avatarBorderGradient;
+  static final _tipIconGradient = EditProfilePageConfig.tipIconGradient;
 
   @override
   Widget build(BuildContext context) {
-    final _userState = ref.watch(userViewModelProvider);
-    final _user = _userState.user!; // 这才是实时更新的 User 对象
-    final _userViewModel = ref.watch(userViewModelProvider.notifier);
+    final userState = ref.read(userViewModelProvider);
+    final user = userState.user!; // 这才是实时更新的 User 对象
+    final userViewModel = ref.read(userViewModelProvider.notifier);
     AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: userViewModelProvider);
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
+        extendBodyBehindAppBar: false,
         backgroundColor: const Color(0xFFfaf2f8),
         appBar: AppBar(
-          toolbarHeight: 40.0,
+          toolbarHeight: 50.0.h,
           elevation: 0,
           backgroundColor: Colors.transparent,
           centerTitle: false,
           titleSpacing: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
+            icon: Icon(Icons.arrow_back, color: const Color(0xfffbfafd), size: 24.w),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text(
+          title: Text(
             '个人资料',
             style: TextStyle(
-              color: Color(0xfffbfafd),
+              color: const Color(0xfffbfafd),
               fontWeight: FontWeight.w500,
-              fontSize: 18.0,
+              fontSize: 18.0.sp,
             ),
           ),
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarColor:Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+          ),
           flexibleSpace: Container(
-            decoration: const BoxDecoration(gradient: _appBarGradient),
+            decoration: BoxDecoration(gradient: _appBarGradient),
           ),
         ),
         bottomNavigationBar: Container(
           color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 16.6),
+          padding: EdgeInsets.symmetric(horizontal: 14.0.w, vertical: 16.6.h),
           child: SafeArea(
             top: false,
             child: Container(
-              height: 40,
+              height: 40.h,
               decoration: BoxDecoration(
                 gradient: _buttonGradient,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF8A9EFC).withOpacity(0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 10.w,
+                    offset: Offset(0, 4.h),
                   ),
                 ],
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8.r),
                   onTap: () {
                     ref
                         .read(userViewModelProvider.notifier)
                         .updateUserInfo(
-                          _user.copyWith(
-                            name: _nameController.text,
-                            location: _locationController.text,
-                            personalProfile: _bioController.text,
-                          ),
-                        );
+                      user.copyWith(
+                        name: _nameController.text,
+                        location: _locationController.text,
+                        personalProfile: _bioController.text,
+                      ),
+                    );
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.save_outlined, color: Colors.white, size: 22),
-                      SizedBox(width: 8),
+                    children: [
+                      Icon(Icons.save_outlined, color: Colors.white, size: 22.w),
+                      SizedBox(width: 8.w),
                       Text(
                         '保存修改',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1,
                         ),
@@ -165,26 +151,26 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
+                padding: EdgeInsets.all(20.0.w),
                 child: Column(
                   children: [
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10.h),
                     // 头像模块
                     GestureDetector(
                       onTap: () {
-                        _pickImage(ref, _userViewModel);
+                        _pickImage(ref, userViewModel);
                       },
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 30.0),
+                        padding: EdgeInsets.symmetric(vertical: 30.0.h),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(15.r),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
+                              blurRadius: 10.w,
+                              offset: Offset(0, 5.h),
                             ),
                           ],
                         ),
@@ -194,20 +180,20 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                               child: Stack(
                                 children: [
                                   Container(
-                                    width: 110,
-                                    height: 110,
+                                    width: 110.w,
+                                    height: 110.w,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: const Color(0xFFD1C4FF),
-                                        width: 2,
+                                        width: 2.w,
                                       ),
                                     ),
                                     alignment: Alignment.center,
                                     child: CircleAvatar(
-                                      radius: 50,
+                                      radius: 50.w,
                                       backgroundImage: NetworkImage(
-                                        _user.avatar,
+                                        user.avatar,
                                       ),
                                       backgroundColor: Colors.grey,
                                     ),
@@ -216,7 +202,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                     bottom: 0,
                                     right: 0,
                                     child: Container(
-                                      padding: const EdgeInsets.all(8),
+                                      padding: EdgeInsets.all(8.w),
                                       decoration: BoxDecoration(
                                         gradient: _avatarBorderGradient,
                                         shape: BoxShape.circle,
@@ -225,27 +211,27 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                             color: Colors.black.withOpacity(
                                               0.1,
                                             ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
+                                            blurRadius: 4.w,
+                                            offset: Offset(0, 2.h),
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.camera_alt,
                                         color: Colors.white,
-                                        size: 20,
+                                        size: 20.w,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 15),
-                            const Text(
+                            SizedBox(height: 15.h),
+                            Text(
                               '点击图标更换头像',
                               style: TextStyle(
                                 color: Colors.grey,
-                                fontSize: 15,
+                                fontSize: 15.sp,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -253,20 +239,20 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    SizedBox(height: 30.h),
                     // 基本信息模块
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionHeader("基本信息"),
-                        const SizedBox(height: 15),
+                        SizedBox(height: 15.h),
                         _buildInfoCard(
                           label: "昵称",
                           controller: _nameController,
                           icon: Icons.person_outline,
                           iconColor: const Color(0xFFE87AB5),
                         ),
-                        const SizedBox(height: 15),
+                        SizedBox(height: 15.h),
                         _buildInfoCard(
                           label: "手机号",
                           controller: _phoneController,
@@ -274,41 +260,41 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           iconColor: const Color(0xFF6CA0DC),
                           isReadOnly: true,
                           suffixWidget: Container(
-                            height: 28,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            height: 28.h,
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
                             decoration: BoxDecoration(
                               color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(14.r),
                             ),
                             alignment: Alignment.center,
-                            child: const Text(
+                            child: Text(
                               '修改',
                               style: TextStyle(
-                                fontSize: 12.5,
+                                fontSize: 12.5.sp,
                                 color: Colors.black54,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        SizedBox(height: 15.h),
                         _buildInfoCard(
                           label: "所在地",
                           controller: _locationController,
                           icon: Icons.location_on_outlined,
                           iconColor: const Color(0xFF9C27B0),
                         ),
-                        const SizedBox(height: 30),
+                        SizedBox(height: 30.h),
                         _buildSectionHeader("个人简介"),
-                        const SizedBox(height: 15),
+                        SizedBox(height: 15.h),
                         Container(
-                          padding: const EdgeInsets.all(17),
+                          padding: EdgeInsets.all(17.w),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(15.r),
                             border: Border.all(
                               color: Colors.grey.withOpacity(0.3),
-                              width: 0.8,
+                              width: 0.8.w,
                             ),
                           ),
                           child: Stack(
@@ -321,8 +307,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 maxLines: 4,
                                 minLines: 2,
                                 keyboardType: TextInputType.multiline,
-                                style: const TextStyle(
-                                  fontSize: 15.4,
+                                style: TextStyle(
+                                  fontSize: 15.4.sp,
                                   color: Colors.black87,
                                   height: 1.5,
                                 ),
@@ -335,12 +321,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 ),
                               ),
                               Positioned(
-                                bottom: 10,
-                                right: 15,
+                                bottom: 10.h,
+                                right: 15.w,
                                 child: Text(
                                   '${_bioController.text.length} / 80',
                                   style: TextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: 12.5.sp,
                                     color: Colors.grey.withOpacity(0.6),
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -351,52 +337,52 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
+                    SizedBox(height: 30.h),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(15),
+                      padding: EdgeInsets.all(15.w),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF6F5FE),
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(15.r),
                         border: Border.all(
                           color: const Color(0xFFD1C4E9).withOpacity(0.5),
-                          width: 1,
+                          width: 1.w,
                         ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            width: 50,
-                            height: 68,
+                            width: 50.w,
+                            height: 68.h,
                             alignment: Alignment.center,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: _tipIconGradient,
                             ),
-                            child: const Text(
+                            child: Text(
                               "💡",
-                              style: TextStyle(fontSize: 22),
+                              style: TextStyle(fontSize: 22.sp),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: 10.w),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   "温馨提示",
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF333333),
+                                    color: const Color(0xFF333333),
                                   ),
                                 ),
-                                SizedBox(height: 5),
+                                SizedBox(height: 5.h),
                                 Text(
                                   "完善个人资料可以让其他用户更好地了解你，也能获得更个性化的绘本推荐哦！",
                                   style: TextStyle(
-                                    fontSize: 12.3,
+                                    fontSize: 12.3.sp,
                                     color: Colors.grey,
                                     height: 1.5,
                                   ),
@@ -407,7 +393,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40.h),
                   ],
                 ),
               ),
@@ -423,22 +409,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     return Row(
       children: [
         Container(
-          width: 3,
-          height: 24,
+          width: 3.w,
+          height: 24.h,
           decoration: BoxDecoration(
             gradient: _buttonGradient,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(6.r),
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8.w),
         ShaderMask(
           shaderCallback: (bounds) => _buttonGradient.createShader(
             Rect.fromLTWH(0, 0, bounds.width, bounds.height),
           ),
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 18.6,
+            style: TextStyle(
+              fontSize: 18.6.sp,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -459,30 +445,30 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }) {
     return Container(
       // 这里保留白色的大卡片背景，因为这是布局层级
-      padding: const EdgeInsets.all(17),
+      padding: EdgeInsets.all(17.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 0.8),
+        borderRadius: BorderRadius.circular(15.r),
+        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 0.8.w),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 20.3, color: iconColor),
-              const SizedBox(width: 8),
+              Icon(icon, size: 20.3.w, color: iconColor),
+              SizedBox(width: 8.w),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: 15.sp,
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 26),
+          SizedBox(height: 26.h),
           // 【重要修改】：删除了之前包裹 TextField 的装饰性 Container
           // 直接放置 TextField，并移除了所有禁用边框的属性
           // 现在它会自动使用 AppTheme 中的背景色(0xFFFEF3F7)和边框样式
@@ -492,7 +478,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 child: TextField(
                   controller: controller,
                   readOnly: isReadOnly,
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                  style: TextStyle(fontSize: 16.sp, color: Colors.black87),
                   // 仅保留必要的布局属性，样式全走 Theme
                   decoration: const InputDecoration(
                     isDense: true,
@@ -502,7 +488,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 ),
               ),
               if (suffixWidget != null) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 suffixWidget,
               ],
             ],

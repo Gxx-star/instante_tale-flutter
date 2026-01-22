@@ -1,17 +1,21 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:instant_tale/app_globals.dart';
-import 'package:instant_tale/features/book/book_view_model.dart';
+import 'package:instant_tale/config/create_book_config.dart';
+import 'package:instant_tale/features/book/reader/book_reader_viewmodel.dart';
 import 'package:instant_tale/features/character/character_provider.dart';
 import 'package:instant_tale/main.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
 import '../../database/models/character.dart';
 import '../../features/book/book_provider.dart';
-import '../../features/book/book_state.dart';
+import '../../features/book/reader/book_reader_state.dart';
 import '../../features/character/character_state.dart';
 import '../../features/character/character_viewmodel.dart';
 
@@ -25,85 +29,23 @@ class CreateBookPage extends ConsumerStatefulWidget {
 class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   late CharacterViewModel _characterViewModel;
   late CharacterState _characterState;
-  late BookViewModel _bookViewModel;
-  late BookState _bookState;
-  final int _totalPages = 4;
+  late BookReaderViewModel _bookViewModel;
+  late BookReaderState _bookState;
+  final int _totalPages = CreateBookConfig.totalPages;
   int _currentPage = 0;
-  final PageController _pageController = PageController();
   int _selectedBookType = 0;
-  String? _selectedCharacterId = null;
-  String? _selectedCharacterName;
+  final PageController _pageController = PageController();
+  List<String> _selectedCharactersId = [];
+  List<String> _selectedCharactersName = [];
   final Set<String> _selectedStyles = {};
-  final int _maxStyles = 3;
+  final int _maxStyles = CreateBookConfig.maxStyles;
   bool _isCollectionBook = false;
   String _storyTheme = '';
   int? _selectedModel;
-  final List<Map<String, dynamic>> _modelOptions = [
-    {
-      'title': '极速模型',
-      'subtitle': '生成速度快，但是质量稍逊色',
-      'themeColor': Colors.pinkAccent, // 粉色
-      'model': 'FAST',
-    },
-    {
-      'title': '普通模型',
-      'subtitle': '生成速度较快，质量相对好一点',
-      'themeColor': Colors.orangeAccent, // 橙色
-      'model': 'AUTO',
-    },
-    {
-      'title': '专业模型',
-      'subtitle': '生成速度慢，生成的质量好',
-      'themeColor': Colors.lightGreen, // 绿色
-      'model': 'PRO',
-    },
-    {
-      'title': '默认模型',
-      'subtitle': '生成速度很慢，生成的质量中等，但故事连贯',
-      'themeColor': Colors.lightBlueAccent, // 蓝色
-      'model': 'DEFAULT',
-    },
-  ];
-
-  // 故事风格选项
-  final List<Map<String, dynamic>> _styleOptions = [
-    {
-      'name': '冒险',
-      'emoji': '🗺️',
-      'tagColor': const Color(0xfff1f6fe),
-      'tagTextColor': const Color(0xff5588ff),
-    },
-    {
-      'name': '奇幻',
-      'emoji': '🦄',
-      'tagColor': const Color(0xffeedfff),
-      'tagTextColor': const Color(0xff9944dd),
-    },
-    {
-      'name': '科普',
-      'emoji': '🔬',
-      'tagColor': const Color(0xfffff4d7),
-      'tagTextColor': const Color(0xffe6a300),
-    },
-    {
-      'name': '友谊',
-      'emoji': '🤝',
-      'tagColor': const Color(0xfffceef6),
-      'tagTextColor': const Color(0xffe95796),
-    },
-    {
-      'name': '勇气',
-      'emoji': '💪',
-      'tagColor': const Color(0xfff7e7da),
-      'tagTextColor': const Color(0xffa87342),
-    },
-    {
-      'name': '自然',
-      'emoji': '🌿',
-      'tagColor': const Color(0xffddf2e4),
-      'tagTextColor': const Color(0xff3fa06b),
-    },
-  ];
+  final List<Map<String, dynamic>> _modelOptions =
+      CreateBookConfig.modelOptions;
+  final List<Map<String, dynamic>> _styleOptions =
+      CreateBookConfig.styleOptions;
 
   // 页面跳转
   void _navigateToPage(int page) {
@@ -123,17 +65,17 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
     setState(() {
       _selectedBookType = type;
       if (type == 1) {
-        _selectedCharacterId = null;
-        _selectedCharacterName = null;
+        _selectedCharactersId.clear();
+        _selectedCharactersName.clear();
       }
     });
   }
 
   // Page1: 选择角色之后的回调
-  void _handleCharacterSelection(String? id, String? name) {
+  void _handleCharacterSelection(List<String> ids, List<String> names) {
     setState(() {
-      _selectedCharacterId = id;
-      _selectedCharacterName = name;
+      _selectedCharactersId = ids;
+      _selectedCharactersName = names;
     });
   }
 
@@ -146,7 +88,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
         if (_selectedStyles.length < _maxStyles) {
           _selectedStyles.add(styleName);
         } else {
-          // 提示
+          MySnackBar.show(context, "最多选择3个哦~");
         }
       }
     });
@@ -174,7 +116,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
           return true;
         }
         if (_selectedBookType == 2) {
-          return _selectedCharacterId != null;
+          return _selectedCharactersId.isNotEmpty;
         }
         return false;
       case 1:
@@ -198,47 +140,55 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
   Widget build(BuildContext context) {
     _characterViewModel = ref.watch(characterViewModelProvider.notifier);
     _characterState = ref.watch(characterViewModelProvider);
-    _bookViewModel = ref.watch(bookViewModelProvider.notifier);
-    _bookState = ref.watch(bookViewModelProvider);
-    AppGlobals().listenAndShowSnackBar(ref: ref, context: context, provider: bookViewModelProvider);
-    const Color primaryColor = Color(0xFFfaf3f8);
-    const Color accentColor = Colors.pinkAccent;
-    const _headerGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFFecaed5), Color(0xFFf0d0e7)],
+    _bookViewModel = ref.watch(bookReaderViewModelProvider.notifier);
+    _bookState = ref.watch(bookReaderViewModelProvider);
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookReaderViewModelProvider,
     );
+    final Color primaryColor = CreateBookConfig.primaryColor;
+    final Color accentColor = CreateBookConfig.accentColor;
+    final headerGradient = CreateBookConfig.headerGradient;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: primaryColor,
       appBar: AppBar(
-        toolbarHeight: 40.0,
+        toolbarHeight: 40.0.h,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
+          icon: Icon(
+            Icons.arrow_back,
+            color: const Color(0xfffbfafd),
+            size: 24.w,
+          ),
           onPressed: () => context.pop(),
         ),
         // 标题
-        title: const Text(
+        title: Text(
           '创建绘本',
           style: TextStyle(
-            color: Color(0xfffbfafd),
+            color: const Color(0xfffbfafd),
             fontWeight: FontWeight.w500,
-            fontSize: 18.0,
+            fontSize: 18.0.sp,
           ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleSpacing: 0.0,
+        titleSpacing: 0.0.w,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor:Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
         flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: _headerGradient),
+          decoration: BoxDecoration(gradient: headerGradient),
         ),
       ),
       body: Column(
         children: [
           // 上方进度条
           Container(
-            decoration: const BoxDecoration(gradient: _headerGradient),
+            decoration: BoxDecoration(gradient: headerGradient),
             child: StepIndicator(
               totalPages: _totalPages,
               currentPage: _currentPage,
@@ -254,8 +204,8 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   selectedBookType: _selectedBookType,
                   onSelectionChanged: _handleBookTypeSelection,
                   onCharacterSelected: _handleCharacterSelection,
-                  hasCharacterSelected: _selectedCharacterId != null,
-                  selectedCharacterName: _selectedCharacterName,
+                  hasCharacterSelected: _selectedCharactersId.isNotEmpty,
+                  selectedCharactersName: _selectedCharactersName,
                 ),
                 Page2Style(
                   selectedStyles: _selectedStyles,
@@ -294,7 +244,7 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+          padding: EdgeInsets.symmetric(horizontal: 14.0.w, vertical: 12.0.h),
           child: Row(
             children: [
               if (_currentPage > 0)
@@ -305,24 +255,24 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xfffafbff),
                       foregroundColor: const Color(0xff0a0a0a),
-                      minimumSize: const Size(double.infinity, 40),
+                      minimumSize: Size(double.infinity, 40.h),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(8.0.r),
                         side: BorderSide(color: Colors.grey[300]!),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       '上一步',
                       style: TextStyle(
-                        color: Color(0xff3e3547),
-                        fontSize: 15.0,
+                        color: const Color(0xff3e3547),
+                        fontSize: 15.0.sp,
                       ),
                     ),
                   ),
                 ),
 
-              if (_currentPage > 0) const SizedBox(width: 10.0),
+              if (_currentPage > 0) SizedBox(width: 10.0.w),
               // “下一步”按钮
               Expanded(
                 child: ElevatedButton(
@@ -331,16 +281,14 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                           if (_currentPage < _totalPages - 1) {
                             _navigateToPage(_currentPage + 1);
                           } else {
-                            List<String> characters = [];
                             final List<String> storyTypes = _selectedStyles
                                 .toList();
                             final List<String> storyQualities = [_storyTheme];
-                            if (_selectedCharacterId != null) {
-                              characters.add(_selectedCharacterId!);
+                            if (_selectedCharactersId.isNotEmpty) {
                               _bookViewModel.generateExclusiveBook(
                                 storyTypes,
                                 storyQualities,
-                                characters,
+                                _selectedCharactersId,
                                 _modelOptions[_selectedModel!]['model'],
                               );
                             } else {
@@ -357,9 +305,9 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 40),
+                    minimumSize: Size(double.infinity, 40.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(8.0.r),
                     ),
                     elevation: 0,
                     disabledBackgroundColor: const Color(0xffeeadd1),
@@ -367,9 +315,9 @@ class _CreateBookPageState extends ConsumerState<CreateBookPage> {
                   ),
                   child: Text(
                     _currentPage == _totalPages - 1 ? '✨ 开始生成' : '下一步',
-                    style: const TextStyle(
-                      color: Color(0xfffceef6),
-                      fontSize: 15.0,
+                    style: TextStyle(
+                      color: const Color(0xfffceef6),
+                      fontSize: 15.0.sp,
                     ),
                   ),
                 ),
@@ -392,55 +340,48 @@ class SelectCharacterPage extends ConsumerStatefulWidget {
 }
 
 class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
-  CharacterCollection? _selectedCharacter; // 跟踪当前选中的人物ID
-
+  final Set<CharacterCollection> _selectedCharacters =
+      <CharacterCollection>{}; // 跟踪当前选中的人物ID
   @override
   Widget build(BuildContext context) {
-    ref.listen(characterViewModelProvider.select((state) => (state.message)), (
-      pre,
-      nex,
-    ) {
-      if (nex != null) {
-        MySnackBar.show(context, nex);
-      }
-    });
-    final _charactersListAsync = ref.watch(characterListProvider);
-    const Color primaryColor = Color(0xFFfaf3f8);
-    const Color accentColor = Colors.pinkAccent;
-
-    // 顶部渐变
-    const _headerGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color(0xFFedb2d8), // Top-left light pink
-        Color(0xFFe8d4f6), // Bottom-right softer pink
-      ],
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: characterViewModelProvider,
     );
+    final _charactersListAsync = ref.watch(characterListProvider);
+    final Color primaryColor = CreateBookConfig.primaryColor;
+    final Color accentColor = CreateBookConfig.accentColor;
+    // 顶部渐变
+    final _headerGradient = CreateBookConfig.headerGradient;
     return _charactersListAsync.when(
       data: (characterList) {
         return Scaffold(
           backgroundColor: primaryColor,
           appBar: AppBar(
-            toolbarHeight: 40.0,
+            toolbarHeight: 40.0.h,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Color(0xfffbfafd)),
+              icon: Icon(
+                Icons.arrow_back,
+                color: const Color(0xfffbfafd),
+                size: 24.w,
+              ),
               onPressed: () => Navigator.of(context).pop(), // 默认返回 null
             ),
-            title: const Text(
+            title: Text(
               '选择专属人物',
               style: TextStyle(
-                color: Color(0xfffbfafd),
+                color: const Color(0xfffbfafd),
                 fontWeight: FontWeight.w500,
-                fontSize: 18.0,
+                fontSize: 18.0.sp,
               ),
             ),
             backgroundColor: Colors.transparent,
             elevation: 0,
             centerTitle: false,
-            titleSpacing: 0.0,
+            titleSpacing: 0.0.w,
             flexibleSpace: Container(
-              decoration: const BoxDecoration(gradient: _headerGradient),
+              decoration: BoxDecoration(gradient: _headerGradient),
             ),
           ),
           body: Column(
@@ -448,34 +389,34 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
               // AppBar 下方的副标题
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(10.0, 3.0, 20.0, 15.5),
-                decoration: const BoxDecoration(gradient: _headerGradient),
-                child: const Text(
-                  '为绘本选择一个专属主角，让故事更生动',
-                  style: TextStyle(color: Colors.white, fontSize: 15.0),
+                padding: EdgeInsets.fromLTRB(10.0.w, 3.0.h, 20.0.w, 15.5.h),
+                decoration: BoxDecoration(gradient: _headerGradient),
+                child: Text(
+                  '为绘本选择专属主角，让故事更生动',
+                  style: TextStyle(color: Colors.white, fontSize: 15.0.sp),
                 ),
               ),
               // 滚动内容区域
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: EdgeInsets.all(20.0.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1. 创建新人物按钮 (虚线边框)
                       _buildCreateNewButton(context, ref),
-                      const SizedBox(height: 24.0),
+                      SizedBox(height: 24.0.h),
 
                       // 2. "我的人物" 标题
-                      const Text(
+                      Text(
                         '我的人物',
                         style: TextStyle(
                           color: Colors.black,
-                          fontSize: 18.0,
+                          fontSize: 18.0.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 16.0),
+                      SizedBox(height: 16.0.h),
 
                       // 3. 人物列表
                       ListView.builder(
@@ -484,15 +425,24 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
                         itemCount: characterList.length,
                         itemBuilder: (context, index) {
                           final character = characterList[index];
-                          final isSelected =
-                              _selectedCharacter?.characterId ==
-                              character.characterId;
+                          final isSelected = _selectedCharacters.contains(
+                            character,
+                          );
                           return _CharacterCard(
                             character: character,
                             isSelected: isSelected,
                             onPressed: () {
                               setState(() {
-                                _selectedCharacter = character;
+                                if (_selectedCharacters.contains(character)) {
+                                  _selectedCharacters.remove(character);
+                                } else {
+                                  if (_selectedCharacters.length <
+                                      CreateBookConfig.maxCharacters) {
+                                    _selectedCharacters.add(character);
+                                  } else {
+                                    MySnackBar.show(context, "最多选择3个角色哦~");
+                                  }
+                                }
                               });
                             },
                           );
@@ -509,7 +459,7 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
         );
       },
       error: (e, s) {
-        return Text('error');
+        return Text('error', style: TextStyle(fontSize: 14.sp));
       },
       loading: () {
         return const Center(child: CircularProgressIndicator());
@@ -517,10 +467,10 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
     );
   }
 
-  // "创建新人物" 按钮 - *** IMPLEMENTATION START ***
+  // "创建新人物" 按钮
   Widget _buildCreateNewButton(BuildContext context, WidgetRef ref) {
     const Color pinkAccent = Colors.pinkAccent;
-    const double borderRadius = 12.0;
+    final double borderRadius = 12.0.r;
 
     return InkWell(
       onTap: () {
@@ -529,14 +479,14 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
       child: CustomPaint(
         painter: DashedBorderPainter(
           color: pinkAccent.withOpacity(0.4),
-          strokeWidth: 1,
-          radius: const Radius.circular(borderRadius),
-          dashWidth: 5,
-          dashSpace: 3,
+          strokeWidth: 1.w,
+          radius: Radius.circular(borderRadius),
+          dashWidth: 5.w,
+          dashSpace: 3.w,
         ),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 26.0),
+          padding: EdgeInsets.symmetric(horizontal: 30.0.w, vertical: 26.0.h),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(borderRadius),
@@ -545,17 +495,17 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
             children: [
               // 左侧：圆形粉色背景的加号
               Container(
-                width: 65,
-                height: 65,
+                width: 65.w,
+                height: 65.w,
                 decoration: BoxDecoration(
                   color: pinkAccent.withOpacity(0.8),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 45),
+                child: Icon(Icons.add, color: Colors.white, size: 45.w),
               ),
-              const SizedBox(width: 16.0),
+              SizedBox(width: 16.0.w),
               // 右侧：两列文字
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -564,17 +514,17 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
                     '创建新人物',
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 18.0,
+                      fontSize: 18.0.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 6.0),
+                  SizedBox(height: 6.0.h),
                   // 第二行文字：上传照片，生成专属绘本主角
                   Text(
                     '上传照片，生成专属绘本主角',
                     style: TextStyle(
                       color: Colors.black54, // 灰色半透明
-                      fontSize: 13.0,
+                      fontSize: 13.0.sp,
                     ),
                   ),
                 ],
@@ -590,35 +540,35 @@ class _SelectCharacterPageState extends ConsumerState<SelectCharacterPage> {
   Widget _buildConfirmButton(BuildContext context, Color accentColor) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+      padding: EdgeInsets.symmetric(horizontal: 14.0.w, vertical: 12.0.h),
       child: SafeArea(
         top: false, // 只关心底部
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _selectedCharacter == null
-                ? null
-                : () {
+            onPressed: _selectedCharacters.isNotEmpty
+                ? () {
                     // 确认选择，关闭此页面并返回选中的ID
-                    Navigator.of(context).pop(_selectedCharacter);
-                  },
+                    Navigator.of(context).pop(_selectedCharacters.toList());
+                  }
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
               foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 40),
+              minimumSize: Size(double.infinity, 40.h),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(8.0.r),
               ),
               elevation: 0,
               // 禁用时的颜色
-              disabledBackgroundColor: Color(0xffeeadd1),
-              disabledForegroundColor: Color(0xfffdf6fa),
+              disabledBackgroundColor: const Color(0xffeeadd1),
+              disabledForegroundColor: const Color(0xfffdf6fa),
             ),
-            child: const Text(
+            child: Text(
               '确认选择',
               style: TextStyle(
-                color: Color(0xfffceef6),
-                fontSize: 16.0,
+                color: const Color(0xfffceef6),
+                fontSize: 16.0.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -648,18 +598,18 @@ class _CharacterCard extends StatelessWidget {
     final Color defaultBorderColor = Colors.grey[300]!;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
+      margin: EdgeInsets.only(bottom: 12.0.h),
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: isSelected ? selectedBgColor : Colors.white,
-          padding: const EdgeInsets.all(14.0),
+          padding: EdgeInsets.all(14.0.w),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14.0),
+            borderRadius: BorderRadius.circular(14.0.r),
           ),
           side: BorderSide(
             color: isSelected ? selectedBorderColor : defaultBorderColor,
-            width: isSelected ? 1.5 : 1.0,
+            width: isSelected ? 1.5.w : 1.0.w,
           ),
           elevation: isSelected ? 3.0 : 0,
           shadowColor: isSelected
@@ -670,7 +620,7 @@ class _CharacterCard extends StatelessWidget {
           children: [
             // 左侧图片和选中标记
             _buildCharacterAvatar(context),
-            const SizedBox(width: 16.0),
+            SizedBox(width: 16.0.w),
             // 右侧信息
             _buildCharacterInfo(context),
           ],
@@ -684,23 +634,23 @@ class _CharacterCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         CircleAvatar(
-          radius: 33,
-          backgroundImage: NetworkImage(character.avatarUrl),
+          radius: 33.w,
+          backgroundImage: CachedNetworkImageProvider(character.avatarUrl),
         ),
         // 选中时的对勾
         if (isSelected)
           Positioned(
-            bottom: -2,
-            right: -2,
+            bottom: -2.w,
+            right: -2.w,
             child: Container(
-              width: 25,
-              height: 25,
+              width: 25.w,
+              height: 25.w,
               decoration: BoxDecoration(
                 color: Colors.pinkAccent,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: Colors.white, width: 2.w),
               ),
-              child: const Icon(Icons.check, color: Colors.white, size: 14),
+              child: Icon(Icons.check, color: Colors.white, size: 14.w),
             ),
           ),
       ],
@@ -714,13 +664,13 @@ class _CharacterCard extends StatelessWidget {
         children: [
           Text(
             character.characterName,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
-              fontSize: 18.0,
+              fontSize: 18.0.sp,
             ),
           ),
-          const SizedBox(height: 6.0),
+          SizedBox(height: 6.0.h),
           // 人物的小标签Tags
           Row(
             children: [
@@ -728,7 +678,7 @@ class _CharacterCard extends StatelessWidget {
                 text: '${character.characterName}',
                 color: const Color(0xfff7e8f2),
               ),
-              const SizedBox(width: 8.0),
+              SizedBox(width: 8.0.w),
               _InfoTag(
                 text:
                     '创建时间：${AppGlobals().formatTimestamp(character.createdAt)}',
@@ -736,7 +686,7 @@ class _CharacterCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8.0),
+          SizedBox(height: 8.0.h),
         ],
       ),
     );
@@ -753,16 +703,16 @@ class _InfoTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+      padding: EdgeInsets.symmetric(horizontal: 8.0.w, vertical: 3.0.h),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(6.0),
+        borderRadius: BorderRadius.circular(6.0.r),
       ),
       child: Text(
         text,
         style: TextStyle(
           color: Colors.black.withOpacity(0.7),
-          fontSize: 12.0,
+          fontSize: 12.0.sp,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -774,9 +724,9 @@ class _InfoTag extends StatelessWidget {
 class Page1Type extends StatelessWidget {
   final int selectedBookType;
   final Function(int) onSelectionChanged;
-  final Function(String? id, String? name) onCharacterSelected;
+  final Function(List<String> id, List<String> name) onCharacterSelected;
   final bool hasCharacterSelected;
-  final String? selectedCharacterName;
+  final List<String> selectedCharactersName;
 
   const Page1Type({
     super.key,
@@ -784,46 +734,53 @@ class Page1Type extends StatelessWidget {
     required this.onSelectionChanged,
     required this.onCharacterSelected,
     required this.hasCharacterSelected,
-    this.selectedCharacterName,
+    required this.selectedCharactersName,
   });
+
+  String buildCharacterNamesTextSimplified(
+    List<String> selectedCharactersName,
+  ) {
+    if (selectedCharactersName.isEmpty) return "未选择角色";
+    // join方法拼接所有元素（用逗号分隔），本质和循环等价，代码更短
+    return selectedCharactersName.join("，");
+  }
 
   // 选择专属人物后的绿色提示框
   Widget _buildSelectedCharacterInfoBox(BuildContext context) {
     const Color successColor = Color(0xff4CAF50);
     const Color successBgColor = Color(0xffE8F5E9);
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
         color: successBgColor,
-        border: Border.all(color: successColor.withOpacity(0.5), width: 1.0),
-        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(color: successColor.withOpacity(0.5), width: 1.0.w),
+        borderRadius: BorderRadius.circular(10.0.r),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Icon(Icons.check, color: successColor, size: 22.0),
-              const SizedBox(width: 10.0),
+              Icon(Icons.check, color: successColor, size: 22.0.w),
+              SizedBox(width: 10.0.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '已选择专属人物',
                     style: TextStyle(
                       color: Colors.black87,
-                      fontSize: 14.0,
+                      fontSize: 14.0.sp,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2.0),
+                  SizedBox(height: 2.0.h),
                   Text(
-                    selectedCharacterName ?? '未知人物',
+                    buildCharacterNamesTextSimplified(selectedCharactersName),
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.6),
-                      fontSize: 12.0,
+                      fontSize: 12.0.sp,
                     ),
                   ),
                 ],
@@ -831,9 +788,8 @@ class Page1Type extends StatelessWidget {
             ],
           ),
 
-          // Right side: Change Character button
           SizedBox(
-            height: 32.0, // Set button height
+            height: 32.0.h, // Set button height
             child: TextButton(
               onPressed: () {
                 // Trigger character re-selection logic
@@ -844,16 +800,19 @@ class Page1Type extends StatelessWidget {
                 // White background
                 foregroundColor: Colors.grey[700],
                 // Text color
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                padding: EdgeInsets.symmetric(horizontal: 12.0.w),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6.0), // Rounded corners
-                  side: BorderSide(color: Colors.grey[300]!), // Light border
+                  borderRadius: BorderRadius.circular(6.0.r), // Rounded corners
+                  side: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1.w,
+                  ), // Light border
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                '更换人物', // Change Character
-                style: TextStyle(fontSize: 13.0),
+              child: Text(
+                '重新选择人物', // Change Character
+                style: TextStyle(fontSize: 13.0.sp),
               ),
             ),
           ),
@@ -864,10 +823,10 @@ class Page1Type extends StatelessWidget {
 
   // 点击选择人物之后的回调
   void _handleSelectCharacter(BuildContext context) async {
-    final CharacterCollection? selectedCharacter =
-        await Navigator.push<CharacterCollection?>(
+    final List<CharacterCollection>? selectedCharacter =
+        await Navigator.push<List<CharacterCollection>>(
           context,
-          MaterialPageRoute<CharacterCollection?>(
+          MaterialPageRoute<List<CharacterCollection>>(
             builder: (context) => const SelectCharacterPage(),
           ),
         );
@@ -875,8 +834,8 @@ class Page1Type extends StatelessWidget {
       return;
     }
     onCharacterSelected(
-      selectedCharacter.characterId,
-      selectedCharacter.characterName,
+      selectedCharacter.map((character) => character.characterId).toList(),
+      selectedCharacter.map((character) => character.characterName).toList(),
     );
   }
 
@@ -889,30 +848,30 @@ class Page1Type extends StatelessWidget {
 
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 22.0),
+        padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 22.0.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 选择绘本类型
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.palette_outlined,
                   color: Colors.pinkAccent,
-                  size: 24.0,
+                  size: 24.0.w,
                 ),
-                const SizedBox(width: 8.0),
-                const Text(
+                SizedBox(width: 8.0.w),
+                Text(
                   '选择绘本类型',
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 18.0,
+                    fontSize: 18.0.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18.0),
+            SizedBox(height: 18.0.h),
 
             // 普通绘本
             _TypeSelectionButton(
@@ -924,9 +883,8 @@ class Page1Type extends StatelessWidget {
               onPressed: () => onSelectionChanged(1),
               onSelectCharacter: () {},
               hasCharacterSelected: false,
-              selectedCharacterName: null,
             ),
-            const SizedBox(height: 10.0),
+            SizedBox(height: 10.0.h),
             // 专属绘本
             _TypeSelectionButton(
               emoji: '✨',
@@ -935,35 +893,34 @@ class Page1Type extends StatelessWidget {
               type: 2,
               selectedBookType: selectedBookType,
               hasCharacterSelected: hasCharacterSelected,
-              selectedCharacterName: selectedCharacterName,
               onPressed: () => onSelectionChanged(2),
               onSelectCharacter: () => _handleSelectCharacter(context),
             ),
-            const SizedBox(height: 14.0),
+            SizedBox(height: 14.0.h),
             if (selectedBookType == 2)
               if (hasSelectedExclusiveCharacter)
                 _buildSelectedCharacterInfoBox(context)
               else
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12.0),
+                  padding: EdgeInsets.all(12.0.w),
                   decoration: BoxDecoration(
                     color: infoBoxBgColor,
                     border: Border.all(
                       color: infoBoxBorderColor.withOpacity(0.5),
-                      width: 1.0,
+                      width: 1.0.w,
                     ),
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(10.0.r),
                   ),
-                  child: const Row(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
                           '💡 选择专属绘本后，需要选择或创建一个人物角色',
                           style: TextStyle(
-                            color: Color(0xff313eb1),
-                            fontSize: 12.0,
+                            color: const Color(0xff313eb1),
+                            fontSize: 12.0.sp,
                           ),
                         ),
                       ),
@@ -987,7 +944,6 @@ class _TypeSelectionButton extends StatelessWidget {
   final VoidCallback onPressed;
   final VoidCallback onSelectCharacter;
   final bool hasCharacterSelected;
-  final String? selectedCharacterName;
 
   const _TypeSelectionButton({
     required this.emoji,
@@ -998,7 +954,6 @@ class _TypeSelectionButton extends StatelessWidget {
     required this.onPressed,
     required this.onSelectCharacter,
     required this.hasCharacterSelected,
-    this.selectedCharacterName,
   });
 
   bool get isSelected => type == selectedBookType;
@@ -1019,11 +974,11 @@ class _TypeSelectionButton extends StatelessWidget {
           backgroundColor: isExpanded ? expandedBgColor : Colors.white,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(12.0.r),
           ),
           side: BorderSide(
             color: isSelected ? selectedBorderColor : defaultBorderColor,
-            width: isSelected ? 1.5 : 1.0,
+            width: isSelected ? 1.5.w : 1.0.w,
           ),
           elevation: isSelected ? 3.0 : 0,
           shadowColor: isSelected
@@ -1035,11 +990,11 @@ class _TypeSelectionButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20.0, 18.0, 20.0, 20.0),
+              padding: EdgeInsets.fromLTRB(20.0.w, 18.0.h, 20.0.w, 20.0.h),
               child: Row(
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 40.0)),
-                  const SizedBox(width: 16.0),
+                  Text(emoji, style: TextStyle(fontSize: 40.0.sp)),
+                  SizedBox(width: 16.0.w),
                   // Right two lines of text
                   Expanded(
                     child: Column(
@@ -1047,18 +1002,18 @@ class _TypeSelectionButton extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
-                            fontSize: 18.0,
+                            fontSize: 18.0.sp,
                           ),
                         ),
-                        const SizedBox(height: 4.0),
+                        SizedBox(height: 4.0.h),
                         Text(
                           subtitle,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.6),
-                            fontSize: 14.0,
+                            fontSize: 14.0.sp,
                           ),
                         ),
                       ],
@@ -1070,7 +1025,7 @@ class _TypeSelectionButton extends StatelessWidget {
                           ? Icons.check_circle
                           : Icons.check,
                       color: accentColor,
-                      size: 24.0,
+                      size: 24.0.w,
                     ),
                 ],
               ),
@@ -1078,43 +1033,43 @@ class _TypeSelectionButton extends StatelessWidget {
             if (isExpanded) ...[
               Divider(
                 color: accentColor.withOpacity(0.3),
-                height: 1.0,
-                thickness: 1.0,
-                indent: 20.0,
-                endIndent: 20.0,
+                height: 1.0.h,
+                thickness: 1.0.w,
+                indent: 20.0.w,
+                endIndent: 20.0.w,
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 18.0, 20.0, 18.0),
+                padding: EdgeInsets.fromLTRB(20.0.w, 18.0.h, 20.0.w, 18.0.h),
                 child: Container(
                   width: double.infinity,
-                  height: 44.0,
+                  height: 44.0.h,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [accentColor.withOpacity(0.9), accentColor],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderRadius: BorderRadius.circular(8.0.r),
                     boxShadow: [
                       BoxShadow(
                         color: accentColor.withOpacity(0.4),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+                        blurRadius: 6.r,
+                        offset: Offset(0, 3.h),
                       ),
                     ],
                   ),
                   child: TextButton.icon(
                     onPressed: onSelectCharacter,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.person_outline,
                       color: Colors.white,
-                      size: 20,
+                      size: 20.w,
                     ),
-                    label: const Text(
+                    label: Text(
                       '选择专属人物',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16.0,
+                        fontSize: 16.0.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1123,7 +1078,7 @@ class _TypeSelectionButton extends StatelessWidget {
                       backgroundColor: Colors.transparent,
                       foregroundColor: Colors.white.withOpacity(0.2),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(8.0.r),
                       ),
                     ),
                   ),
@@ -1160,39 +1115,39 @@ class Page2Style extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 22.0),
+        padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 22.0.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 顶部的 "选择故事风格" 文本
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.category_outlined,
                   color: Colors.pinkAccent,
-                  size: 24.0,
+                  size: 24.0.w,
                 ),
-                const SizedBox(width: 8.0),
-                const Text(
+                SizedBox(width: 8.0.w),
+                Text(
                   '选择故事风格',
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 18.0,
+                    fontSize: 18.0.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18.0),
+            SizedBox(height: 18.0.h),
 
             // 六个风格选择按钮 (3x2 GridView)
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2, // 两列
-                crossAxisSpacing: 10.0, // 按钮之间的水平间距
-                mainAxisSpacing: 10.0, // 按钮之间的垂直间距
+                crossAxisSpacing: 10.0.w, // 按钮之间的水平间距
+                mainAxisSpacing: 10.0.h, // 按钮之间的垂直间距
                 childAspectRatio: 1.34,
               ),
               itemCount: styleOptions.length,
@@ -1211,12 +1166,12 @@ class Page2Style extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 0.0),
+            SizedBox(height: 0.0.h),
             // _BookCollectionCheckbox(
             //   value: isCollectionBook,
             //   onChanged: onCollectionToggle,
             // ),
-            // const SizedBox(height: 12.0),
+            // SizedBox(height: 12.0.h),
           ],
         ),
       ),
@@ -1252,13 +1207,13 @@ class _StyleSelectionButton extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? selectedBgColor : Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+        padding: EdgeInsets.symmetric(vertical: 12.0.h, horizontal: 12.0.w),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(12.0.r),
         ),
         side: BorderSide(
           color: isSelected ? selectedBorderColor : defaultBorderColor,
-          width: isSelected ? 1.5 : 1.0,
+          width: isSelected ? 1.5.w : 1.0.w,
         ),
         elevation: isSelected ? 3.0 : 0,
         shadowColor: isSelected
@@ -1268,22 +1223,19 @@ class _StyleSelectionButton extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 34.0)),
-          const SizedBox(height: 6.0),
+          Text(emoji, style: TextStyle(fontSize: 34.0.sp)),
+          SizedBox(height: 6.0.h),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10.0,
-              vertical: 4.0,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 10.0.w, vertical: 4.0.h),
             decoration: BoxDecoration(
               color: tagColor,
-              borderRadius: BorderRadius.circular(12.0),
+              borderRadius: BorderRadius.circular(12.0.r),
             ),
             child: Text(
               styleName,
               style: TextStyle(
                 color: tagTextColor,
-                fontSize: 14.0,
+                fontSize: 14.0.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1310,58 +1262,58 @@ class _BookCollectionCheckbox extends StatelessWidget {
 
     return InkWell(
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(12.0.r),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(15.0),
+        padding: EdgeInsets.all(15.0.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(color: defaultBorderColor, width: 1.0),
+          borderRadius: BorderRadius.circular(12.0.r),
+          border: Border.all(color: defaultBorderColor, width: 1.0.w),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              blurRadius: 4.r,
+              offset: Offset(0, 2.h),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              width: 24.0,
-              height: 24.0,
+              width: 24.0.w,
+              height: 24.0.w,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6.0),
+                borderRadius: BorderRadius.circular(6.0.r),
                 border: Border.all(
                   color: value ? checkedBgColor : Colors.grey[400]!,
-                  width: 1.0,
+                  width: 1.0.w,
                 ),
                 color: value ? checkedBgColor : uncheckedBgColor,
               ),
               child: value
-                  ? const Icon(Icons.check, size: 18.0, color: checkedIconColor)
+                  ? Icon(Icons.check, size: 18.0.w, color: checkedIconColor)
                   : null,
             ),
-            const SizedBox(width: 16.0),
+            SizedBox(width: 16.0.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '创建绘本集',
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16.0,
+                      fontSize: 16.0.sp,
                     ),
                   ),
-                  const SizedBox(height: 4.0),
+                  SizedBox(height: 4.0.h),
                   Text(
                     '将多个故事组合成一个系列',
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.6),
-                      fontSize: 14.0,
+                      fontSize: 14.0.sp,
                     ),
                   ),
                 ],
@@ -1395,48 +1347,8 @@ class _Page3ContentState extends State<Page3Content> {
   int? _selectedThemeIndex;
 
   // 主题集
-  final List<Map<String, dynamic>> _themeOptions = [
-    {
-      'title': '太空探险',
-      'icon': Icons.rocket_launch,
-      'colors': [Color(0xFF8E2DE2), Color(0xFF4A00E0)], // 紫色渐变
-    },
-    {
-      'title': '森林冒险',
-      'icon': Icons.forest,
-      'colors': [Color(0xFF56ab2f), Color(0xFFa8e063)], // 绿色渐变
-    },
-    {
-      'title': '海底世界',
-      'icon': Icons.scuba_diving, // 模拟鱼/海底
-      'colors': [Color(0xFF2193b0), Color(0xFF6dd5ed)], // 蓝色渐变
-    },
-    {
-      'title': '魔法学校',
-      'icon': Icons.auto_fix_high, // 魔法棒
-      'colors': [Color(0xFFec008c), Color(0xFFfc6767)], // 粉红渐变
-    },
-    {
-      'title': '恐龙时代',
-      'icon': Icons.pets, // 脚印 (模拟恐龙)
-      'colors': [Color(0xFFe65c00), Color(0xFFF9D423)], // 橙黄渐变
-    },
-    {
-      'title': '城市英雄',
-      'icon': Icons.location_city,
-      'colors': [Color(0xFF6190E8), Color(0xFFA7BFE8)], // 灰蓝渐变
-    },
-    {
-      'title': '农场生活',
-      'icon': Icons.agriculture,
-      'colors': [Color(0xFFB24592), Color(0xFFF15F79)], // 橙红/紫混合
-    },
-    {
-      'title': '动物朋友',
-      'icon': Icons.cruelty_free, // 爪印/动物
-      'colors': [Color(0xFFc31432), Color(0xFF240b36)], // 深紫红
-    },
-  ];
+  final List<Map<String, dynamic>> _themeOptions =
+      CreateBookConfig.themeOptions;
 
   @override
   void initState() {
@@ -1489,17 +1401,17 @@ class _Page3ContentState extends State<Page3Content> {
   Widget _buildDividerWithText(Color dividerColor) {
     final textStyle = TextStyle(
       color: Colors.grey[600],
-      fontSize: 14.0,
+      fontSize: 14.0.sp,
       fontWeight: FontWeight.w400,
     );
 
     Widget line(Alignment begin, Alignment end, bool isLeft) {
       return Expanded(
         child: Container(
-          height: 1.3,
+          height: 1.3.h,
           margin: EdgeInsets.symmetric(
-            horizontal: isLeft ? 0 : 7.0,
-            vertical: 0.0,
+            horizontal: isLeft ? 0 : 7.0.w,
+            vertical: 0.0.h,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -1518,7 +1430,7 @@ class _Page3ContentState extends State<Page3Content> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      padding: EdgeInsets.symmetric(vertical: 24.0.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1539,7 +1451,7 @@ class _Page3ContentState extends State<Page3Content> {
     final bool areButtonsDisabled = _controller.text.isNotEmpty;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 22.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 22.0.h),
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1547,41 +1459,37 @@ class _Page3ContentState extends State<Page3Content> {
           // 标题区域
           Row(
             children: [
-              const Icon(
-                Icons.lightbulb_outline,
-                color: accentColor,
-                size: 24.0,
-              ),
-              const SizedBox(width: 8.0),
-              const Text(
+              Icon(Icons.lightbulb_outline, color: accentColor, size: 24.0.w),
+              SizedBox(width: 8.0.w),
+              Text(
                 '设置故事主题',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 18.0,
+                  fontSize: 18.0.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 17.0),
+          SizedBox(height: 17.0.h),
 
           // 内容区域
           Container(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0.w),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12.0),
+              borderRadius: BorderRadius.circular(12.0.r),
               border: Border.all(
                 color: isInputLocked
                     ? Colors.grey.withOpacity(0.2)
                     : accentColor.withOpacity(0.3),
-                width: 1.0,
+                width: 1.0.w,
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
+                  blurRadius: 5.r,
+                  offset: Offset(0, 2.h),
                 ),
               ],
             ),
@@ -1593,27 +1501,27 @@ class _Page3ContentState extends State<Page3Content> {
                     Icon(
                       Icons.edit_note,
                       color: isInputLocked ? Colors.grey : accentColor,
-                      size: 26.0,
+                      size: 26.0.w,
                     ),
-                    const SizedBox(width: 8.0),
+                    SizedBox(width: 8.0.w),
                     Text(
                       '自定义主题',
                       style: TextStyle(
                         color: isInputLocked ? Colors.grey : Colors.black,
-                        fontSize: 17.0,
+                        fontSize: 17.0.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (isInputLocked) ...[
                       const Spacer(),
-                      const Text(
+                      Text(
                         '(已选择主题模版)',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: TextStyle(color: Colors.grey, fontSize: 12.sp),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 18.0),
+                SizedBox(height: 18.0.h),
                 // 提示
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1621,9 +1529,9 @@ class _Page3ContentState extends State<Page3Content> {
                     Icon(
                       Icons.lightbulb,
                       color: isInputLocked ? Colors.grey[300] : Colors.amber,
-                      size: 15.5,
+                      size: 15.5.w,
                     ),
-                    const SizedBox(width: 6.0),
+                    SizedBox(width: 6.0.w),
                     Expanded(
                       child: Text(
                         '描述你想要的故事主题，让AI为你创作独特的绘本故事',
@@ -1631,14 +1539,14 @@ class _Page3ContentState extends State<Page3Content> {
                           color: isInputLocked
                               ? Colors.grey[400]
                               : Colors.black.withOpacity(0.7),
-                          fontSize: 14.0,
+                          fontSize: 14.0.sp,
                           height: 1.5,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24.0),
+                SizedBox(height: 24.0.h),
 
                 // 输入框
                 TextField(
@@ -1654,44 +1562,42 @@ class _Page3ContentState extends State<Page3Content> {
                     hintMaxLines: 3,
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
-                      fontSize: 15.0,
+                      fontSize: 15.0.sp,
                     ),
                     filled: true,
                     fillColor: isInputLocked
                         ? Colors.grey[100]
                         : const Color(0xfffbf3f8),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14.0,
-                      vertical: 12.0,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14.0.w,
+                      vertical: 12.0.h,
                     ),
                     disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(10.0.r),
                       borderSide: BorderSide(
                         color: Colors.grey.withOpacity(0.2),
-                        width: 1.0,
+                        width: 1.0.w,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(10.0.r),
                       borderSide: BorderSide(
                         color: Colors.grey.withOpacity(0.4),
-                        width: 1.0,
+                        width: 1.0.w,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: const BorderSide(
-                        color: accentColor,
-                        width: 1.5,
-                      ),
+                      borderRadius: BorderRadius.circular(10.0.r),
+                      borderSide: BorderSide(color: accentColor, width: 1.5.w),
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(10.0.r),
                       borderSide: BorderSide.none,
                     ),
                   ),
+                  style: TextStyle(fontSize: 14.sp),
                 ),
-                const SizedBox(height: 7.0),
+                SizedBox(height: 7.0.h),
               ],
             ),
           ),
@@ -1699,13 +1605,13 @@ class _Page3ContentState extends State<Page3Content> {
           // 分割线
           _buildDividerWithText(Colors.grey),
 
-          const SizedBox(height: 5),
+          SizedBox(height: 5.h),
 
           // 选择主题模板
           _buildThemeSelectionSection(areButtonsDisabled),
 
           // 底部增加一些留白
-          const SizedBox(height: 40),
+          SizedBox(height: 40.h),
         ],
       ),
     );
@@ -1721,46 +1627,46 @@ class _Page3ContentState extends State<Page3Content> {
             Icon(
               Icons.auto_awesome,
               color: isDisabled ? Colors.grey : const Color(0xFF9C27B0),
-              size: 24.0,
+              size: 24.0.w,
             ),
-            const SizedBox(width: 8.0),
+            SizedBox(width: 8.0.w),
             Text(
               '选择主题模版',
               style: TextStyle(
                 color: isDisabled ? Colors.grey : Colors.black,
-                fontSize: 18.0,
+                fontSize: 18.0.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),
             if (isDisabled) ...[
               const Spacer(),
-              const Text(
+              Text(
                 '(已选择自定义主题)',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(color: Colors.grey, fontSize: 12.sp),
               ),
             ],
           ],
         ),
-        const SizedBox(height: 10.0),
+        SizedBox(height: 10.0.h),
         // Subtitle
         Padding(
-          padding: const EdgeInsets.only(left: 0.0),
+          padding: EdgeInsets.only(left: 0.0.w),
           child: Text(
             '快速开始，从热门主题中挑选一个',
             style: TextStyle(
               color: isDisabled ? Colors.grey[400] : Colors.grey[600],
-              fontSize: 14.5,
+              fontSize: 14.5.sp,
             ),
           ),
         ),
-        const SizedBox(height: 20.0),
+        SizedBox(height: 20.0.h),
         LayoutBuilder(
           builder: (context, constraints) {
             return Wrap(
-              spacing: 12.0,
-              runSpacing: 12.0,
+              spacing: 12.0.w,
+              runSpacing: 12.0.h,
               children: List.generate(_themeOptions.length, (index) {
-                final double cardWidth = (constraints.maxWidth - 12.0) / 2;
+                final double cardWidth = (constraints.maxWidth - 12.0.w) / 2;
 
                 return ThemeCard(
                   width: cardWidth,
@@ -1843,7 +1749,7 @@ class _ThemeCardState extends State<ThemeCard>
   @override
   Widget build(BuildContext context) {
     final List<Color> gradientColors = widget.data['colors'] as List<Color>;
-    const double cardHeight = 110.0;
+    final double cardHeight = 110.0.w;
 
     return GestureDetector(
       onTapDown: _handleTapDown,
@@ -1861,23 +1767,23 @@ class _ThemeCardState extends State<ThemeCard>
               Container(
                 width: widget.width,
                 height: cardHeight,
-                padding: const EdgeInsets.all(14.0),
+                padding: EdgeInsets.all(14.0.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: BorderRadius.circular(16.0.r),
                   border: Border.all(
                     color: widget.isSelected
                         ? Colors.pinkAccent
                         : Colors.grey.withOpacity(0.1),
-                    width: widget.isSelected ? 1.5 : 1.0,
+                    width: widget.isSelected ? 1.5.w : 1.0.w,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: widget.isSelected
                           ? Colors.pinkAccent.withOpacity(0.15)
                           : Colors.black.withOpacity(0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      blurRadius: 8.r,
+                      offset: Offset(0, 3.h),
                     ),
                   ],
                 ),
@@ -1886,10 +1792,10 @@ class _ThemeCardState extends State<ThemeCard>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 48.0,
-                      height: 48.0,
+                      width: 48.0.w,
+                      height: 48.0.w,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
+                        borderRadius: BorderRadius.circular(12.0.r),
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -1901,14 +1807,14 @@ class _ThemeCardState extends State<ThemeCard>
                       child: Icon(
                         widget.data['icon'] as IconData,
                         color: Colors.white,
-                        size: 24.0,
+                        size: 24.0.w,
                       ),
                     ),
                     const Spacer(),
                     Text(
                       widget.data['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 15.0,
+                      style: TextStyle(
+                        fontSize: 15.0.sp,
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,
                       ),
@@ -1920,8 +1826,8 @@ class _ThemeCardState extends State<ThemeCard>
               ),
               if (widget.isSelected)
                 Positioned(
-                  top: 13.5,
-                  right: 13.5,
+                  top: 13.5.w,
+                  right: 13.5.w,
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
                     duration: const Duration(milliseconds: 150),
@@ -1930,14 +1836,14 @@ class _ThemeCardState extends State<ThemeCard>
                       return Transform.scale(
                         scale: value,
                         child: Container(
-                          padding: const EdgeInsets.all(2),
+                          padding: EdgeInsets.all(2.w),
                           decoration: const BoxDecoration(
                             color: Colors.pinkAccent,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.check,
-                            size: 16,
+                            size: 16.w,
                             color: Colors.white,
                           ),
                         ),
@@ -1976,7 +1882,7 @@ class _Page4ModelState extends State<Page4Model> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 22.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 22.0.h),
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1984,25 +1890,25 @@ class _Page4ModelState extends State<Page4Model> {
           // 标题区域
           Row(
             children: [
-              const SizedBox(width: 8.0),
-              const Text(
+              SizedBox(width: 8.0.w),
+              Text(
                 '选择生成模型',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 18.0,
+                  fontSize: 18.0.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20.0),
+          SizedBox(height: 20.0.h),
 
           // 模型列表
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: widget.modelList.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12.0),
+            separatorBuilder: (context, index) => SizedBox(height: 12.0.h),
             itemBuilder: (context, index) {
               final option = widget.modelList[index];
               final bool isSelected = widget.selectedModel == index;
@@ -2019,7 +1925,7 @@ class _Page4ModelState extends State<Page4Model> {
           ),
 
           // 底部留白
-          const SizedBox(height: 40),
+          SizedBox(height: 40.h),
         ],
       ),
     );
@@ -2043,19 +1949,19 @@ class _Page4ModelState extends State<Page4Model> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),
+        padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 18.0.h),
         decoration: BoxDecoration(
           color: isSelected ? themeColor.withOpacity(0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(16.0.r),
           border: Border.all(
             color: isSelected ? themeColor : Colors.grey.withOpacity(0.2),
-            width: isSelected ? 1.5 : 1.0,
+            width: isSelected ? 1.5.w : 1.0.w,
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              blurRadius: 4.r,
+              offset: Offset(0, 2.h),
             ),
           ],
         ),
@@ -2069,14 +1975,17 @@ class _Page4ModelState extends State<Page4Model> {
                     title,
                     style: TextStyle(
                       color: Colors.black87,
-                      fontSize: 16.0,
+                      fontSize: 16.0.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4.0),
+                  SizedBox(height: 4.0.h),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13.0),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13.0.sp,
+                    ),
                   ),
                 ],
               ),
@@ -2094,20 +2003,20 @@ class _Page4ModelState extends State<Page4Model> {
   Widget _buildRadioIndicator(bool isSelected, Color color) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      width: 24.0,
-      height: 24.0,
+      width: 24.0.w,
+      height: 24.0.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isSelected ? color : Colors.transparent,
         border: isSelected
             ? null
-            : Border.all(color: Colors.grey.withOpacity(0.4), width: 1.5),
+            : Border.all(color: Colors.grey.withOpacity(0.4), width: 1.5.w),
       ),
       child: isSelected
           ? Center(
               child: Container(
-                width: 8.0,
-                height: 8.0,
+                width: 8.0.w,
+                height: 8.0.w,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -2119,7 +2028,7 @@ class _Page4ModelState extends State<Page4Model> {
   }
 }
 
-// 虚线边框
+// 虚线边框 (适配屏幕尺寸 + 优化绘制逻辑)
 class DashedBorderPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
@@ -2129,79 +2038,113 @@ class DashedBorderPainter extends CustomPainter {
 
   DashedBorderPainter({
     required this.color,
-    this.strokeWidth = 1.0,
-    this.radius = const Radius.circular(0),
-    this.dashWidth = 5.0,
-    this.dashSpace = 3.0,
-  });
+    double? strokeWidth,
+    Radius? radius,
+    double? dashWidth,
+    double? dashSpace,
+  }) : strokeWidth = strokeWidth ?? 1.0.w,
+       radius = radius ?? const Radius.circular(0),
+       dashWidth = dashWidth ?? 5.0.w,
+       dashSpace = dashSpace ?? 3.0.w;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round; // 优化虚线端点样式
 
-    Path path = Path();
-    RRect rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      radius,
-    );
-    path.addRRect(rrect);
-
-    PathMetric pathMetric = path.computeMetrics().first;
-    double totalLength = pathMetric.length;
-    double currentDistance = 0.0;
-
-    while (currentDistance < totalLength) {
-      final double dashLength = min(dashWidth, totalLength - currentDistance);
-      canvas.drawPath(
-        pathMetric.extractPath(currentDistance, currentDistance + dashLength),
-        paint,
+    // 修正路径绘制，避免圆角处虚线断裂
+    Path path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            strokeWidth / 2,
+            strokeWidth / 2,
+            size.width - strokeWidth,
+            size.height - strokeWidth,
+          ),
+          radius,
+        ),
       );
-      currentDistance += dashLength + dashSpace;
+
+    final pathMetrics = path.computeMetrics();
+    for (final pathMetric in pathMetrics) {
+      double totalLength = pathMetric.length;
+      double currentDistance = 0.0;
+
+      while (currentDistance < totalLength) {
+        final double dashLength = min(dashWidth, totalLength - currentDistance);
+        canvas.drawPath(
+          pathMetric.extractPath(currentDistance, currentDistance + dashLength),
+          paint,
+        );
+        currentDistance += dashLength + dashSpace;
+      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    if (oldDelegate is DashedBorderPainter) {
-      return oldDelegate.color != color ||
-          oldDelegate.strokeWidth != strokeWidth ||
-          oldDelegate.radius != radius ||
-          oldDelegate.dashWidth != dashWidth ||
-          oldDelegate.dashSpace != dashSpace;
-    }
-    return true;
+  bool shouldRepaint(covariant DashedBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.radius != radius ||
+        oldDelegate.dashWidth != dashWidth ||
+        oldDelegate.dashSpace != dashSpace;
   }
+
+  @override
+  bool shouldRebuildSemantics(covariant DashedBorderPainter oldDelegate) =>
+      true;
 }
 
-// 进度条组件
+// 进度条组件 (适配屏幕尺寸 + 优化视觉效果)
 class StepIndicator extends StatelessWidget {
   final int totalPages;
   final int currentPage;
+  final Color activeColor;
+  final Color inactiveColor;
+  final double height;
+  final double borderRadius;
 
   const StepIndicator({
     super.key,
     required this.totalPages,
     required this.currentPage,
+    this.activeColor = Colors.white,
+    this.inactiveColor = const Color(0x4DFFFFFF), // 优化透明度
+    this.height = 4.0,
+    this.borderRadius = 2.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10.0, 12, 12.0, 24.0),
+      padding: EdgeInsets.fromLTRB(10.0.w, 12.0.h, 12.0.w, 24.0.h),
       child: Row(
         children: List.generate(totalPages, (index) {
+          // 进度条动画效果
+          final isActive = index <= currentPage;
           return Expanded(
-            child: Container(
-              height: 4.0,
-              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              height: height.h,
+              margin: EdgeInsets.symmetric(horizontal: 4.0.w),
               decoration: BoxDecoration(
-                color: index <= currentPage
-                    ? Colors.white
-                    : Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2.0),
+                color: isActive ? activeColor : inactiveColor,
+                borderRadius: BorderRadius.circular(borderRadius.r),
+                // 激活状态增加阴影
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: activeColor.withOpacity(0.3),
+                          blurRadius: 2.0.r,
+                          spreadRadius: 0.5.r,
+                        ),
+                      ]
+                    : null,
               ),
             ),
           );

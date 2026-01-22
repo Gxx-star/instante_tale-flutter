@@ -2,14 +2,18 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart' hide Page;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/database/models/character.dart';
 import 'package:instant_tale/database/models/page.dart';
 import 'package:instant_tale/features/book/book_provider.dart';
 import 'package:instant_tale/ui/component/glass_button.dart';
+import 'package:instant_tale/util/audio_stream_player.dart';
 import 'package:preload_page_view/preload_page_view.dart';
-
+import 'package:rive/rive.dart' as rive;
 import '../../database/models/book.dart';
+import '../../features/book/reader/book_reader_state.dart';
 
 class BookReaderPage extends ConsumerStatefulWidget {
   const BookReaderPage({super.key});
@@ -21,10 +25,7 @@ class BookReaderPage extends ConsumerStatefulWidget {
 class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   final PreloadPageController _pageController = PreloadPageController();
   final Map<int, GlobalKey> _pageKeys = {};
-  final List<Map<String, dynamic>> _shareTargets = [
-    {'name': '微信', 'icon': 'assets/images/wei_xin.png', 'type': 'wechat'},
-    {'name': 'QQ好友', 'icon': 'assets/images/qq.png', 'type': 'qq'},
-  ];
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -33,7 +34,17 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(bookViewModelProvider);
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookReaderViewModelProvider,
+    );
+    AppGlobals().listenAndShowSnackBar(
+      ref: ref,
+      context: context,
+      provider: bookSquareViewModelProvider,
+    );
+    final state = ref.watch(bookReaderViewModelProvider);
     final book = state.currentBook;
     if (book == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -64,14 +75,17 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           // 绘本核心内容 (PageView)
           Positioned.fill(
             child: GestureDetector(
-              onTap: () =>
-                  ref.read(bookViewModelProvider.notifier).toggleControls(),
+              onTap: () => ref
+                  .read(bookReaderViewModelProvider.notifier)
+                  .toggleControls(),
               child: PreloadPageView.builder(
                 controller: _pageController,
                 preloadPagesCount: book.content.length,
                 itemCount: book.content.length,
                 onPageChanged: (index) {
-                  ref.read(bookViewModelProvider.notifier).onPageChanged(index);
+                  ref
+                      .read(bookReaderViewModelProvider.notifier)
+                      .onPageChanged(index);
                 },
                 itemBuilder: (context, index) {
                   final item = book.content[index];
@@ -84,18 +98,18 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           // 顶部导航栏 (可隐藏)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
-            top: state.isControlsVisible ? 0 : -100,
+            top: state.isControlsVisible ? 0 : -100.w,
             left: 0,
             right: 0,
-            child: _buildTopBar(context, book),
+            child: _buildTopBar(context, book, state),
           ),
 
           // 底部文本与控制区 (可隐藏)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
-            bottom: state.isControlsVisible ? 30 : -200,
-            left: 20,
-            right: 20,
+            bottom: state.isControlsVisible ? 30.w : -200.w,
+            left: 20.w,
+            right: 20.w,
             child: _buildBottomPanel(
               currentContent,
               book.content.length,
@@ -106,14 +120,15 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
           // 角色浮窗按钮 (如果当前页有特定角色交互，可以在这里增加逻辑)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
-            right: 20,
-            bottom: state.isControlsVisible ? 115 : -100,
+            right: 20.w,
+            bottom: state.isControlsVisible ? 115.w : -100.w,
             child: _buildCharacterFab(book.characters),
           ),
         ],
       ),
     );
   }
+
   // 构建绘本单页画面
   Widget _buildBookPage(BookPage content) {
     if (!_pageKeys.containsKey(content.current_page)) {
@@ -125,14 +140,14 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
         child: Hero(
           tag: content.image_url,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10),
+            margin: EdgeInsets.symmetric(horizontal: 10.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  blurRadius: 20.r,
+                  offset: Offset(0, 10.r),
                 ),
               ],
             ),
@@ -153,13 +168,17 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                         child: Icon(
                           Icons.image,
                           color: Colors.grey[300],
-                          size: 50,
+                          size: 50.w,
                         ),
                       );
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey),
+                      return Center(
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                          size: 50.w,
+                        ),
                       );
                     },
                   ),
@@ -169,9 +188,9 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 25,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 25.w,
                       ),
                       // 使用黑色渐变，从透明到半透明深色
                       decoration: BoxDecoration(
@@ -188,17 +207,17 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                       child: Text(
                         content.text, // 假设 BookPage 结构中有 text 字段
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           color: Colors.white,
                           // 白色文字，与深色蒙层形成对比
                           height: 1.5,
                           fontWeight: FontWeight.w500,
                           shadows: [
                             // 添加柔和阴影，即使在较亮的图片部分也能清晰可见
-                            const Shadow(
-                              offset: Offset(1.0, 1.0),
-                              blurRadius: 3.0,
-                              color: Color.fromARGB(150, 0, 0, 0),
+                            Shadow(
+                              offset: Offset(1.0.w, 1.0.w),
+                              blurRadius: 3.0.r,
+                              color: const Color.fromARGB(150, 0, 0, 0),
                             ),
                           ],
                         ),
@@ -218,32 +237,46 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   }
 
   // 顶部导航
-  Widget _buildTopBar(BuildContext context, Book book) {
+  Widget _buildTopBar(BuildContext context, Book book, BookReaderState state) {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.w),
         child: Row(
           children: [
             GlassButton(
               icon: Icons.arrow_back_rounded,
               onTap: () => context.pop(),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16.w),
             Expanded(
               child: Text(
                 book.bookName,
-                style: const TextStyle(
-                  fontSize: 18,
+                style: TextStyle(
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF5A4C75), // 深紫色字体
+                  color: const Color(0xFF5A4C75), // 深紫色字体
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             GlassButton(
+              icon: state.isStarred
+                  ? Icons.star_rounded
+                  : Icons.star_outline_rounded,
+              onTap: () {
+                ref
+                    .read(bookReaderViewModelProvider.notifier)
+                    .starBook(book.bookId);
+                ref.refresh(starBooksProvider);
+              },
+            ),
+            SizedBox(width: 12.w), // 按钮间距
+            GlassButton(
               icon: Icons.share,
               onTap: () => {
-                ref.read(bookViewModelProvider.notifier).shareBookPdf(book.content,_pageKeys,book.bookName)
+                ref
+                    .read(bookReaderViewModelProvider.notifier)
+                    .shareBookPdf(book.content, _pageKeys, book.bookName),
               },
             ),
           ],
@@ -255,23 +288,23 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
   // 底部内容面板
   Widget _buildBottomPanel(BookPage content, int totalPage, int displayIndex) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(24.r),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20.w),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(24.r),
             border: Border.all(
               color: Colors.white.withOpacity(0.6),
-              width: 1.5,
+              width: 1.5.r,
             ),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF7090B0).withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+                blurRadius: 20.r,
+                offset: Offset(0, 10.r),
               ),
             ],
           ),
@@ -283,27 +316,52 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.w,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF9F9F), // 强调色，类似截图中的VIP/Search按钮
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(
                       "Page $displayIndex / $totalPage",
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  // const Icon(Icons.volume_up_rounded, color: Color(0xFF9A8BB5)),
+                  ValueListenableBuilder<bool>(
+                    valueListenable:
+                        StreamAudioPlayerManager.instance.isPlayingNotifier,
+                    builder: (context, isPlaying, child) {
+                      return GestureDetector(
+                        onTap: () {
+                          if (isPlaying) {
+                            StreamAudioPlayerManager.instance.stopPlay();
+                          } else {
+                            StreamAudioPlayerManager.instance.streamPlayAudio(
+                              content.text,
+                            );
+                          }
+                        },
+                        child: isPlaying
+                            ? SizedBox(
+                                width: 30.w,
+                                height: 30.w,
+                                child: rive.RiveAnimation.asset(
+                                  'assets/riv/anim_audio_wave.riv',
+                                ),
+                              )
+                            : Icon(Icons.volume_up, size: 30.w),
+                      );
+                    },
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.w),
               // 进度条
               LinearProgressIndicator(
                 value: displayIndex / totalPage,
@@ -311,7 +369,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   Color(0xFFBFA2FF),
                 ),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(4.r),
               ),
             ],
           ),
@@ -330,20 +388,20 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
         _showCharactersSheet(context, characters);
       },
       child: Container(
-        height: 56,
-        width: 56,
+        height: 56.w,
+        width: 56.w,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF7E59F6).withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              blurRadius: 12.r,
+              offset: Offset(0, 4.r),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(3),
+        padding: EdgeInsets.all(3.w),
         child: Container(
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
@@ -353,7 +411,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
               end: Alignment.bottomRight,
             ),
           ),
-          child: const Icon(Icons.face, color: Colors.white),
+          child: Icon(Icons.face, color: Colors.white, size: 24.w),
         ),
       ),
     );
@@ -369,54 +427,57 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          height: 300,
-          decoration: const BoxDecoration(
+          height: 300.w,
+          decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
           ),
           child: Column(
             children: [
-              const SizedBox(height: 10),
+              SizedBox(height: 10.w),
               Container(
-                height: 5,
-                width: 40,
+                height: 5.w,
+                width: 40.w,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.all(20.0),
+              Padding(
+                padding: EdgeInsets.all(20.0.w),
                 child: Text(
                   "登场角色",
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
+                    color: const Color(0xFF333333),
                   ),
                 ),
               ),
               Expanded(
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   itemCount: characters.length,
                   itemBuilder: (context, index) {
                     final char = characters[index];
                     return Container(
-                      width: 120,
-                      margin: const EdgeInsets.only(right: 16),
+                      width: 120.w,
+                      margin: EdgeInsets.only(right: 16.w),
                       child: Column(
                         children: [
                           CircleAvatar(
-                            radius: 40,
+                            radius: 40.w,
                             backgroundColor: const Color(0xFFF0EBFF),
                             backgroundImage: NetworkImage(char.avatarUrl),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.w),
                           Text(
                             char.characterName.trim(),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.sp,
+                            ),
                           ),
                           Text(
                             char.desc,
@@ -424,7 +485,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 10.sp,
                               color: Colors.grey[600],
                             ),
                           ),
@@ -434,7 +495,7 @@ class _BookReaderPageState extends ConsumerState<BookReaderPage> {
                   },
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.w),
             ],
           ),
         );

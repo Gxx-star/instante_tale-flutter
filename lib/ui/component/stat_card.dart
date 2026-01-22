@@ -1,5 +1,6 @@
 // 顶部卡片
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class StatCard extends StatelessWidget {
   final String imgUrl;
@@ -22,16 +23,16 @@ class StatCard extends StatelessWidget {
     return Expanded(
       child: Container(
         // Retaining the reduced vertical padding for shorter height
-        padding: const EdgeInsets.symmetric(vertical: 2),
+        padding: EdgeInsets.symmetric(vertical: 2.w),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15.r),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
+              spreadRadius: 2.r,
+              blurRadius: 5.r,
+              offset: Offset(0, 3.r),
             ),
           ],
         ),
@@ -39,21 +40,21 @@ class StatCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Emoji/Icon
-            Image(image: AssetImage(imgUrl), width: 30, height: 30),
-            const SizedBox(height: 4),
+            Image(image: AssetImage(imgUrl), width: 30.w, height: 30.w),
+            SizedBox(height: 4.w),
             // Title
             Text(
               title,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.w),
             // Value
             Text(
               value,
               style: TextStyle(
-                fontSize: 18,
-                color: color, // Use passed color
-                fontWeight: FontWeight.bold
+                  fontSize: 18.sp,
+                  color: color, // Use passed color
+                  fontWeight: FontWeight.bold
               ),
             ),
           ],

@@ -9,7 +9,6 @@ import 'package:instant_tale/ui/component/my_snackbar.dart';
 import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pdf/widgets.dart';
 
 /// 全局单例，用于保存全局状态和工具实例
 class AppGlobals {

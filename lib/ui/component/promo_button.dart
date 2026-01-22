@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 // 推广内容
 class PromoButton extends StatefulWidget {
   // 移除 final VoidCallback onTap;
@@ -20,7 +22,7 @@ class _PromoButtonState extends State<PromoButton> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: GestureDetector(
         onTap: () {
 
@@ -30,19 +32,19 @@ class _PromoButtonState extends State<PromoButton> {
           onEnter: (_) => setState(() => _isHovering = true),
           onExit: (_) => setState(() => _isHovering = false),
           child: Container(
-            height: 120,
+            height: 120.w,
             width: double.infinity,
-            margin: const EdgeInsets.only(top: 10),
+            margin: EdgeInsets.only(top: 10.w),
             decoration: BoxDecoration(
               color: Color(0xfff3e8f7), // 更浅的粉色背景
-              borderRadius: BorderRadius.circular(15), // 圆角
-              border: Border.all(color: Color(0xffeba9d3), width: 1.5),
+              borderRadius: BorderRadius.circular(15.r), // 圆角
+              border: Border.all(color: Color(0xffeba9d3), width: 1.5.r),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(_isHovering ? 0.4 : 0.1),
-                  spreadRadius: 2,
-                  blurRadius: 10, // 悬浮时更明显的模糊
-                  offset: Offset(0, _isHovering ? 8 : 3), // 悬浮时下边界更深的阴影
+                  spreadRadius: 2.r,
+                  blurRadius: 10.r, // 悬浮时更明显的模糊
+                  offset: Offset(0, _isHovering ? 8.r : 3.r), // 悬浮时下边界更深的阴影
                 ),
               ],
             ),
@@ -54,12 +56,12 @@ class _PromoButtonState extends State<PromoButton> {
                   top: 0,
                   right: 0,
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 40.w,
+                    height: 40.w,
                     decoration: BoxDecoration(
                       color: _purpleColor.withOpacity(0.1),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(60),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(60.r),
                       ),
                     ),
                   ),
@@ -69,12 +71,12 @@ class _PromoButtonState extends State<PromoButton> {
                   bottom: 0,
                   left: 0,
                   child: Container(
-                    width: 35, // 较小的宽度
-                    height: 35, // 较小的高度
+                    width: 35.w, // 较小的宽度
+                    height: 35.w, // 较小的高度
                     decoration: BoxDecoration(
                       color: _purpleColor.withOpacity(0.1),
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(60), // 较小的圆角
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(60.r), // 较小的圆角
                       ),
                     ),
                   ),
@@ -89,11 +91,11 @@ class _PromoButtonState extends State<PromoButton> {
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           children: [
-                            const TextSpan(
+                            TextSpan(
                               text: '定制专属主角绘本，限时',
                               style: TextStyle(
                                 color: Colors.black87,
-                                fontSize: 16,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.normal,
                               ),
                             ),
@@ -102,25 +104,25 @@ class _PromoButtonState extends State<PromoButton> {
                               text: '0.1元',
                               style: TextStyle(
                                 color: Color(0xffce4187),
-                                fontSize: 28,
+                                fontSize: 28.sp,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6.w),
                       // “立即抢购” 静态按钮 (无点击效果)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.w),
                         decoration: BoxDecoration(
                           color: _customPinkColor,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(20.r),
                         ),
-                        child: const Text(
+                        child: Text(
                           '立即抢购',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 // ==================== 自定义颜色类（非标准主题色）====================
@@ -120,6 +122,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFFFFFFFF),
         foregroundColor: Color(0xFF282828),
+        titleTextStyle: TextStyle(color: Colors.grey),
       ),
       buttonTheme: ButtonThemeData(
         buttonColor: const Color(0xFFA78BFA),

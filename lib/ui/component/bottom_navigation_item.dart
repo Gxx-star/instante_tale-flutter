@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BottomNavigationItem extends StatelessWidget {
   final IconData icon;
@@ -20,12 +21,12 @@ class BottomNavigationItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: isActive ? activeColor : inactiveColor, size: 28),
+        Icon(icon, color: isActive ? activeColor : inactiveColor, size: 28.h),
         Text(
           label,
           style: TextStyle(
             color: isActive ? activeColor : inactiveColor,
-            fontSize: 12,
+            fontSize: 12.sp,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),

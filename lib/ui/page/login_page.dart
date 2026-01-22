@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:instant_tale/app_globals.dart';
 import 'package:instant_tale/features/login/login_viewmodel.dart';
 import 'package:instant_tale/ui/component/my_snackbar.dart';
@@ -20,6 +21,11 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isHidden = true;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,83 +47,83 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children:
-              [
-                Padding(padding: EdgeInsets.only(top: 100)),
-                Image(
-                  image: AssetImage('assets/images/login_flag.png'),
-                  height: 200,
-                  width: 200,
+          [
+            Padding(padding: EdgeInsets.only(top: 100.h)),
+            Image(
+              image: AssetImage('assets/images/login_flag.png'),
+              height: 200.w,
+              width: 200.w,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildTab(
+                  context,
+                  ref,
+                  title: "密码登录",
+                  type: 'pwd',
+                  isActive: loginState.loginMethod == 'pwd',
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildTab(
-                      context,
-                      ref,
-                      title: "密码登录",
-                      type: 'pwd',
-                      isActive: loginState.loginMethod == 'pwd',
-                    ),
-                    const SizedBox(width: 40),
-                    _buildTab(
-                      context,
-                      ref,
-                      title: "短信登录",
-                      type: 'sms',
-                      isActive: loginState.loginMethod == 'sms',
-                    ),
-                  ],
+                SizedBox(width: 40.w),
+                _buildTab(
+                  context,
+                  ref,
+                  title: "短信登录",
+                  type: 'sms',
+                  isActive: loginState.loginMethod == 'sms',
                 ),
-                // 表单
-                Stack(
-                  children: [
-                    AnimatedSlide(
-                      offset: loginState.loginMethod == 'pwd'
-                          ? Offset.zero
-                          : Offset(-1.2, 0),
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      child: _buildPwdForm(context, loginViewModel, loginState),
-                    ),
-                    AnimatedSlide(
-                      offset: loginState.loginMethod == 'sms'
-                          ? Offset.zero
-                          : Offset(1.2, 0),
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      child: _buildSmsForm(
-                        context,
-                        loginViewModel,
-                        loginState,
-                        ref,
-                      ),
-                    ),
-                  ],
+              ],
+            ),
+            // 表单
+            Stack(
+              children: [
+                AnimatedSlide(
+                  offset: loginState.loginMethod == 'pwd'
+                      ? Offset.zero
+                      : Offset(-1.2, 0),
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: _buildPwdForm(context, loginViewModel, loginState),
                 ),
-                Spacer(),
-              ].map((child) {
-                if (child is Spacer) {
-                  return child;
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    left: 30,
-                    right: 30,
-                    bottom: 10,
+                AnimatedSlide(
+                  offset: loginState.loginMethod == 'sms'
+                      ? Offset.zero
+                      : Offset(1.2, 0),
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: _buildSmsForm(
+                    context,
+                    loginViewModel,
+                    loginState,
+                    ref,
                   ),
-                  child: child,
-                );
-              }).toList(),
+                ),
+              ],
+            ),
+            Spacer(),
+          ].map((child) {
+            if (child is Spacer) {
+              return child;
+            }
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 30.w,
+                right: 30.w,
+                bottom: 10.h,
+              ),
+              child: child,
+            );
+          }).toList(),
         ),
       ),
     );
   }
 
   Widget _buildPwdForm(
-    BuildContext context,
-    LoginViewModel loginViewModel,
-    LoginState loginState,
-  ) {
+      BuildContext context,
+      LoginViewModel loginViewModel,
+      LoginState loginState,
+      ) {
     return Column(
       children: [
         TextField(
@@ -128,7 +134,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
         Align(
           alignment: Alignment.centerLeft,
-          child: Padding(padding: EdgeInsets.only(top: 10), child: Text("密码")),
+          child: Padding(padding: EdgeInsets.only(top: 10.h), child: Text("密码")),
         ),
         TextField(
           decoration: InputDecoration(
@@ -153,7 +159,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         Align(
           alignment: Alignment.centerRight,
           child: Padding(
-            padding: EdgeInsets.only(top: 10, right: 10),
+            padding: EdgeInsets.only(top: 10.h, right: 10.w),
             child: GestureDetector(
               onTap: () {
                 context.push('/${AppRouteNames.forgetPassword}');
@@ -162,7 +168,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 "忘记密码",
                 style: TextStyle(
                   color: Color(0xFFFF00AA),
-                  fontSize: 14,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   decoration: TextDecoration.none, // 不要下划线
                 ),
@@ -171,7 +177,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
         Container(
-          width: 200,
+          width: 200.w,
           child: ElevatedButton(
             onPressed: () {
               loginViewModel.login().then((_) {
@@ -188,14 +194,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Widget _buildSmsForm(
-    BuildContext context,
-    LoginViewModel loginViewModel,
-    LoginState loginState,
-    WidgetRef ref,
-  ) {
-    final smsTimerProvider = StateProvider.autoDispose<int>((ref) {
-      return 0;
-    });
+      BuildContext context,
+      LoginViewModel loginViewModel,
+      LoginState loginState,
+      WidgetRef ref,
+      ) {
     final secondsRemaining = ref.watch(smsTimerServiceProvider);
     final timerService = ref.read(smsTimerServiceProvider.notifier);
     final bool isTimerActive = secondsRemaining > 0;
@@ -209,7 +212,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
         Align(
           alignment: Alignment.centerLeft,
-          child: Padding(padding: EdgeInsets.only(top: 10), child: Text("验证码")),
+          child: Padding(padding: EdgeInsets.only(top: 10.h), child: Text("验证码")),
         ),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -223,29 +226,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(left: 20),
+              padding: EdgeInsets.only(left: 20.w),
               child: ElevatedButton(
                 onPressed: isTimerActive
                     ? null
                     : () {
-                        loginViewModel.sendMsg().then((success){
-                          if (success) {
-                            timerService.startTimer();
-                          }
-                        });
-                      },
+                  loginViewModel.sendMsg().then((success) {
+                    if (success) {
+                      timerService.startTimer();
+                    }
+                  });
+                },
                 child: Text(
-                  isTimerActive
-                      ? '重新发送($secondsRemaining)'
-                      : '获取验证码',
+                  isTimerActive ? '重新发送($secondsRemaining)' : '获取验证码',
                 ),
               ),
             ),
           ],
         ),
-        SizedBox(height: 30),
+        SizedBox(height: 30.h),
         Container(
-          width: 200,
+          width: 200.w,
           child: ElevatedButton(
             onPressed: () {
               loginViewModel.login().then((_) {
@@ -262,12 +263,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Widget _buildTab(
-    BuildContext context,
-    WidgetRef ref, {
-    required String title,
-    required String type,
-    required bool isActive,
-  }) {
+      BuildContext context,
+      WidgetRef ref, {
+        required String title,
+        required String type,
+        required bool isActive,
+      }) {
     return GestureDetector(
       onTap: () {
         ref.watch(loginViewModelProvider.notifier).switchLoginMethod(type);
@@ -277,16 +278,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           Text(
             title,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 18.sp,
               color: isActive ? Colors.blue : Colors.grey,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
           if (isActive)
             Container(
-              width: 40,
-              height: 3,
-              margin: const EdgeInsets.only(top: 5),
+              width: 40.w,
+              height: 3.h,
+              margin: EdgeInsets.only(top: 5.h),
               color: Colors.blue,
             ),
         ],
@@ -328,7 +329,7 @@ class TimerService extends StateNotifier<int> {
 
 // 关联到 StateNotifierProvider
 final smsTimerServiceProvider =
-    StateNotifierProvider.autoDispose<TimerService, int>((ref) {
-      final service = TimerService(ref);
-      return service;
-    });
+StateNotifierProvider.autoDispose<TimerService, int>((ref) {
+  final service = TimerService(ref);
+  return service;
+});

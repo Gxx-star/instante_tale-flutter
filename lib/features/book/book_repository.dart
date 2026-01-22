@@ -6,6 +6,7 @@ import '../../database/models/book.dart';
 import '../../network/api_exceptions.dart';
 import '../../network/apis/api_service.dart';
 import '../../network/apis/book_api.dart';
+import '../../network/dto/book_data.dart';
 import '../login/login_repository.dart';
 
 class BookRepository {
@@ -16,40 +17,24 @@ class BookRepository {
   final BookApi _api = ApiService().bookApi;
 
   Stream<List<Book>> watchAllBooks() {
-    return isar.books.where().watch(fireImmediately: true);
+    return isar.books.where().sortByCreatedAtDesc().watch(
+      fireImmediately: true,
+    );
   }
 
-  Stream<List<ReadingHistoryItem>> watchReadingHistory(String userId) {
-    final historyStream = isar.readingHistorys
+  Stream<List<ReadingHistory>> watchReadingHistory(String userId) {
+    return isar.readingHistorys
         .where()
         .userIdEqualTo(userId)
         .sortByLastReadAtDesc()
         .watch(fireImmediately: true);
-    return historyStream.asyncMap((_) async {
-      final histories = await isar.readingHistorys
-          .where()
-          .userIdEqualTo(userId)
-          .sortByLastReadAtDesc()
-          .findAll();
-      List<ReadingHistoryItem> items = [];
-      for (var h in histories) {
-        final book = await isar.books
-            .where()
-            .bookIdEqualTo(h.bookId)
-            .findFirst();
-        if (book != null) {
-          items.add(ReadingHistoryItem(book, h));
-        }
-      }
-      return items;
-    });
   }
 
-  Future<void> saveReadingHistory(String bookId, String userId) async {
+  Future<void> saveReadingHistory(Book book, String userId) async {
     await isar.writeTxn(() async {
       final lastHistory = await isar.readingHistorys
           .filter()
-          .bookIdEqualTo(bookId)
+          .bookIdEqualTo(book.bookId)
           .userIdEqualTo(userId)
           .findFirst();
       if (lastHistory != null) {
@@ -57,7 +42,9 @@ class BookRepository {
         await isar.readingHistorys.put(lastHistory);
       } else {
         final history = ReadingHistory()
-          ..bookId = bookId
+          ..bookId = book.bookId
+          ..bookName = book.bookName
+          ..bookCover = book.coverUrl
           ..userId = userId
           ..lastReadAt = DateTime.now();
         await isar.readingHistorys.put(history);
@@ -120,7 +107,7 @@ class BookRepository {
     try {
       final response = await _api.deleteBook(bookId);
       if (response.code != 200) {
-        throw RepositoryException(response.message ?? '创建失败');
+        throw RepositoryException(response.message ?? '删除失败');
       }
       await isar.writeTxn(() async {
         await isar.books.where().bookIdEqualTo(bookId).deleteAll();
@@ -176,11 +163,25 @@ class BookRepository {
     }
   }
 
+  Future<void> createFastBook(List<String> charactersId) async {
+    try {
+      final response = await _api.createFastBook(charactersId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '创建失败');
+      }
+      await isar.writeTxn(() async {
+        await isar.books.put(response.data!);
+      });
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
   Future<List<Book>> findBookList(String keyword) async {
     try {
       final response = await _api.findBookList(keyword);
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message ?? '创建失败');
+        throw RepositoryException(response.message ?? '查询失败');
       }
       return response.data!;
     } on ApiException catch (e) {
@@ -192,12 +193,60 @@ class BookRepository {
     try {
       final response = await _api.findBookList('');
       if (response.code != 200 || response.data == null) {
-        throw RepositoryException(response.message ?? '创建失败');
+        throw RepositoryException(response.message ?? '同步失败');
       }
       await isar.writeTxn(() async {
         await isar.books.clear();
         await isar.books.putAll(response.data!);
       });
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<List<BookData>> loadBookPage(int page) async {
+    try {
+      final response = await _api.loadBookPage(page);
+      if (response.code != 200) {
+        throw RepositoryException(response.message ?? '加载失败');
+      }
+      return response.data == null ? [] : response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<Book> findBookById(String bookId) async {
+    try {
+      final response = await _api.findBookById(bookId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '查询失败');
+      }
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<bool> starBook(String bookId) async {
+    try {
+      final response = await _api.starBook(bookId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '收藏失败');
+      }
+      return response.data!;
+    } on ApiException catch (e) {
+      throw RepositoryException(e.message);
+    }
+  }
+
+  Future<bool> queryStarStatus(String bookId) async {
+    try {
+      final response = await _api.queryStarStatus(bookId);
+      if (response.code != 200 || response.data == null) {
+        throw RepositoryException(response.message ?? '查询失败');
+      }
+      return response.data!;
     } on ApiException catch (e) {
       throw RepositoryException(e.message);
     }

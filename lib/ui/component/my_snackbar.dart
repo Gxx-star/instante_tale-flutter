@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MySnackBar {
   static void show(BuildContext context, String message) {
@@ -14,11 +15,11 @@ class MySnackBar {
       behavior: SnackBarBehavior.floating, // 悬浮模式
       // 核心技巧：通过 margin 调整位置
       // bottom: 100 可以让它悬浮在 FAB 之上，避免把 FAB 顶上去
-      margin: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
+      margin: EdgeInsets.only(bottom: 25.w, left: 20.w, right: 20.w),
       padding: EdgeInsets.zero, // 移除默认内边距
 
       content: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.w),
         decoration: BoxDecoration(
           // 契合图片的风格：粉紫渐变
           gradient: const LinearGradient(
@@ -30,14 +31,14 @@ class MySnackBar {
             end: Alignment.centerRight,
           ),
           // 大圆角
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15.r),
           // 柔和的阴影
           boxShadow: [
             BoxShadow(
               color: const Color(0xFFFF80AB).withOpacity(0.3),
-              offset: const Offset(0, 4),
-              blurRadius: 10,
-              spreadRadius: 1,
+              offset: Offset(0, 4.r),
+              blurRadius: 10.r,
+              spreadRadius: 1.r,
             ),
           ],
         ),
@@ -45,15 +46,15 @@ class MySnackBar {
           mainAxisSize: MainAxisSize.min,
           children: [
             // 可选：加个小图标增加亲和力
-            const Icon(Icons.sentiment_satisfied_alt, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
+            Icon(Icons.sentiment_satisfied_alt, color: Colors.white, size: 20.w),
+            SizedBox(width: 10.w),
             // 文本内容
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.0, // 增加一点字间距，显得更精致
                 ),
